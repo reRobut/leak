@@ -1,742 +1,1011 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>哪里漏电？ / Electrical Leak</title>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>哪里漏电？ / Electrical Leak</title>
 
-<!-- 漫画风格字体（分语言使用） -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Black+Han+Sans&family=Noto+Sans+JP:wght@700&family=Ruslan+Display&family=Noto+Sans+SC:wght@700;900&family=Noto+Sans+TC:wght@700;900&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+		<!-- 漫画风格字体（分语言使用） -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Black+Han+Sans&family=Noto+Sans+JP:wght@700&family=Ruslan+Display&family=Noto+Sans+SC:wght@700;900&family=Noto+Sans+TC:wght@700;900&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet" />
 
-<style>
-  :root{
-    --yellow: #ffd400;
-    --yellow-light: #ffe873;
-    --ink: #14101f;
-    --accent-orange: #ff7a1a;
-    --accent-blue: #35e4ff;
-    --panel: rgba(20, 14, 33, 0.62);
-    --panel-solid: #1c1530;
-    --locked-gray: #4a4560;
-    --locked-gray-text: #8b86a3;
-  }
+		<style>
+			:root {
+				--yellow: #ffd400;
+				--yellow-light: #ffe873;
+				--ink: #14101f;
+				--accent-orange: #ff7a1a;
+				--accent-blue: #35e4ff;
+				--panel: rgba(20, 14, 33, 0.62);
+				--panel-solid: #1c1530;
+				--locked-gray: #4a4560;
+				--locked-gray-text: #8b86a3;
+			}
 
-  * { box-sizing: border-box; }
+			* {
+				box-sizing: border-box;
+			}
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100%;
-    font-family: 'Baloo 2', 'Noto Sans SC', 'Noto Sans', sans-serif;
-  }
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				min-height: 100%;
+				font-family: "Baloo 2", "Noto Sans SC", "Noto Sans", sans-serif;
+			}
 
-  .stage {
-    position: relative;
-    width: 100%;
-    min-height: 100dvh;
-    background-color: #120c1f; /* bg.png 加载失败时的兜底底色 */
-    background-image:
-      radial-gradient(ellipse at 50% 0%, rgba(255, 122, 26, 0.18), transparent 60%),
-      url('bg.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6vh 4vw 6vh;
-  }
+			.stage {
+				position: relative;
+				width: 100%;
+				min-height: 100dvh;
+				background-color: #120c1f; /* bg.png 加载失败时的兜底底色 */
+				background-image: radial-gradient(ellipse at 50% 0%, rgba(255, 122, 26, 0.18), transparent 60%), url("bg.png");
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: space-between;
+				padding: 6vh 4vw 6vh;
+			}
 
-  .screen-hidden { display: none !important; }
+			.screen-hidden {
+				display: none !important;
+			}
 
-  /* 顶部小提示：氛围电火花粒子 */
-  .spark { position: absolute; width: 6px; height: 6px; background: var(--accent-blue); border-radius: 50%; opacity: 0.85; filter: drop-shadow(0 0 6px var(--accent-blue)); animation: flicker 1.6s ease-in-out infinite; }
-  @keyframes flicker { 0%,100% { opacity: .2; transform: scale(0.6);} 50% { opacity: 1; transform: scale(1.3);} }
+			/* 顶部小提示：氛围电火花粒子 */
+			.spark {
+				position: absolute;
+				width: 6px;
+				height: 6px;
+				background: var(--accent-blue);
+				border-radius: 50%;
+				opacity: 0.85;
+				filter: drop-shadow(0 0 6px var(--accent-blue));
+				animation: flicker 1.6s ease-in-out infinite;
+			}
+			@keyframes flicker {
+				0%,
+				100% {
+					opacity: 0.2;
+					transform: scale(0.6);
+				}
+				50% {
+					opacity: 1;
+					transform: scale(1.3);
+				}
+			}
 
-  /* ===== 标题区 ===== */
-  .title-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: min(92vw, 900px);
-    min-height: 26vh;
-    margin-top: 2vh;
-  }
+			/* ===== 标题区 ===== */
+			.title-wrap {
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: min(92vw, 900px);
+				min-height: 26vh;
+				margin-top: 2vh;
+			}
 
-  .title-img {
-    position: relative;
-    z-index: 1;
-    max-width: 88vw;
-    max-height: 32vh;
-    object-fit: contain;
-    filter: drop-shadow(0 8px 18px rgba(0,0,0,0.55));
-    animation: pop-in 0.5s cubic-bezier(.2,1.4,.4,1);
-  }
+			.title-img {
+				position: relative;
+				z-index: 1;
+				max-width: 88vw;
+				max-height: 32vh;
+				object-fit: contain;
+				filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
+				animation: pop-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+			}
 
-  .title-text {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.05em;
-    text-align: center;
-    color: var(--yellow);
-    font-weight: 900;
-    line-height: 1;
-    font-size: clamp(2.1rem, 7.4vw, 4.6rem);
-    letter-spacing: 0.01em;
-    text-shadow:
-      3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
-      3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
-      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000,
-      0 10px 0 rgba(0,0,0,0.35),
-      0 3px 22px rgba(255, 122, 26, 0.55);
-    transform: rotate(-2deg);
-    animation: pop-in 0.5s cubic-bezier(.2,1.4,.4,1);
-    padding: 0 0.2em;
-  }
+			.title-text {
+				position: relative;
+				z-index: 1;
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: center;
+				gap: 0.05em;
+				text-align: center;
+				color: var(--yellow);
+				font-weight: 900;
+				line-height: 1;
+				font-size: clamp(2.1rem, 7.4vw, 4.6rem);
+				letter-spacing: 0.01em;
+				text-shadow:
+					3px 3px 0 #000,
+					-3px 3px 0 #000,
+					3px -3px 0 #000,
+					-3px -3px 0 #000,
+					3px 0 0 #000,
+					-3px 0 0 #000,
+					0 3px 0 #000,
+					0 -3px 0 #000,
+					2px 2px 0 #000,
+					-2px 2px 0 #000,
+					2px -2px 0 #000,
+					-2px -2px 0 #000,
+					0 10px 0 rgba(0, 0, 0, 0.35),
+					0 3px 22px rgba(255, 122, 26, 0.55);
+				transform: rotate(-2deg);
+				animation: pop-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+				padding: 0 0.2em;
+			}
 
-  .title-text span { display: inline-block; }
+			.title-text span {
+				display: inline-block;
+			}
 
-  /* 日语汉字笔画特别密（比如"漏""電"），描边要再收一档，
+			/* 日语汉字笔画特别密（比如"漏""電"），描边要再收一档，
      并且拉开字距，否则相邻笔画会糊在一起看不清 */
-  .title-text.lang-ja {
-    font-size: clamp(1.8rem, 5.8vw, 3.4rem);
-    letter-spacing: 0.14em;
-    text-shadow:
-      1.5px 1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px -1.5px 0 #000,
-      1.5px 0 0 #000, -1.5px 0 0 #000, 0 1.5px 0 #000, 0 -1.5px 0 #000,
-      0 6px 0 rgba(0,0,0,0.3),
-      0 3px 16px rgba(255, 122, 26, 0.5);
-  }
+			.title-text.lang-ja {
+				font-size: clamp(1.8rem, 5.8vw, 3.4rem);
+				letter-spacing: 0.14em;
+				text-shadow:
+					1.5px 1.5px 0 #000,
+					-1.5px 1.5px 0 #000,
+					1.5px -1.5px 0 #000,
+					-1.5px -1.5px 0 #000,
+					1.5px 0 0 #000,
+					-1.5px 0 0 #000,
+					0 1.5px 0 #000,
+					0 -1.5px 0 #000,
+					0 6px 0 rgba(0, 0, 0, 0.3),
+					0 3px 16px rgba(255, 122, 26, 0.5);
+			}
 
-  @keyframes pop-in {
-    0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
-    70% { opacity: 1; transform: scale(1.08) rotate(1deg); }
-    100% { opacity: 1; transform: scale(1) rotate(-2deg); }
-  }
+			@keyframes pop-in {
+				0% {
+					opacity: 0;
+					transform: scale(0.6) rotate(-8deg);
+				}
+				70% {
+					opacity: 1;
+					transform: scale(1.08) rotate(1deg);
+				}
+				100% {
+					opacity: 1;
+					transform: scale(1) rotate(-2deg);
+				}
+			}
 
-  /* ===== 首页按钮区 ===== */
-  .button-row {
-    display: flex;
-    gap: clamp(16px, 3vw, 32px);
-    flex-wrap: wrap;
-    justify-content: center;
-    z-index: 2;
-  }
+			/* ===== 首页按钮区 ===== */
+			.button-row {
+				display: flex;
+				gap: clamp(16px, 3vw, 32px);
+				flex-wrap: wrap;
+				justify-content: center;
+				z-index: 2;
+			}
 
-  .game-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 220px;
-    justify-content: center;
-    padding: 16px 30px;
-    font-family: 'Baloo 2', 'Noto Sans SC', 'Noto Sans', sans-serif;
-    font-weight: 700;
-    font-size: clamp(1rem, 2.4vw, 1.3rem);
-    letter-spacing: 0.03em;
-    color: var(--ink);
-    background: var(--yellow);
-    border: 4px solid #000;
-    border-radius: 14px;
-    box-shadow: 0 7px 0 #000;
-    cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-  }
-  .game-btn:hover { transform: translateY(-2px); }
-  .game-btn:active { transform: translateY(6px); box-shadow: 0 1px 0 #000; }
+			.game-btn {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				min-width: 220px;
+				justify-content: center;
+				padding: 16px 30px;
+				font-family: "Baloo 2", "Noto Sans SC", "Noto Sans", sans-serif;
+				font-weight: 700;
+				font-size: clamp(1rem, 2.4vw, 1.3rem);
+				letter-spacing: 0.03em;
+				color: var(--ink);
+				background: var(--yellow);
+				border: 4px solid #000;
+				border-radius: 14px;
+				box-shadow: 0 7px 0 #000;
+				cursor: pointer;
+				transition:
+					transform 0.12s ease,
+					box-shadow 0.12s ease;
+			}
+			.game-btn:hover {
+				transform: translateY(-2px);
+			}
+			.game-btn:active {
+				transform: translateY(6px);
+				box-shadow: 0 1px 0 #000;
+			}
 
-  .btn-lang { background: var(--accent-blue); }
+			.btn-lang {
+				background: var(--accent-blue);
+			}
 
-  .btn-icon { width: 22px; height: 22px; flex-shrink: 0; }
-  .btn-icon svg { width: 100%; height: 100%; display: block; }
+			.btn-icon {
+				width: 22px;
+				height: 22px;
+				flex-shrink: 0;
+			}
+			.btn-icon svg {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
 
-  /* ===== 语言选择弹窗 ===== */
-  .modal {
-    position: fixed; inset: 0;
-    background: rgba(8, 5, 15, 0.72);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 10;
-    transition: opacity 0.2s ease;
-  }
-  .modal.hidden { opacity: 0; pointer-events: none; }
+			/* ===== 语言选择弹窗 ===== */
+			.modal {
+				position: fixed;
+				inset: 0;
+				background: rgba(8, 5, 15, 0.72);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 10;
+				transition: opacity 0.2s ease;
+			}
+			.modal.hidden {
+				opacity: 0;
+				pointer-events: none;
+			}
 
-  .modal-card {
-    position: relative;
-    width: min(92vw, 560px);
-    max-height: 84vh;
-    overflow-y: auto;
-    background: var(--panel-solid);
-    border: 4px solid #000;
-    border-radius: 22px;
-    padding: 28px 24px 24px;
-    box-shadow: 0 14px 0 rgba(0,0,0,0.5);
-    animation: pop-in 0.25s cubic-bezier(.2,1.4,.4,1);
-  }
+			.modal-card {
+				position: relative;
+				width: min(92vw, 560px);
+				max-height: 84vh;
+				overflow-y: auto;
+				background: var(--panel-solid);
+				border: 4px solid #000;
+				border-radius: 22px;
+				padding: 28px 24px 24px;
+				box-shadow: 0 14px 0 rgba(0, 0, 0, 0.5);
+				animation: pop-in 0.25s cubic-bezier(0.2, 1.4, 0.4, 1);
+			}
 
-  .modal-card h2 {
-    margin: 0 0 18px;
-    text-align: center;
-    color: var(--yellow);
-    font-weight: 900;
-    text-shadow:
-      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000,
-      1.5px 0 0 #000, -1.5px 0 0 #000, 0 1.5px 0 #000, 0 -1.5px 0 #000;
-    font-size: clamp(1.3rem, 4vw, 1.8rem);
-  }
+			.modal-card h2 {
+				margin: 0 0 18px;
+				text-align: center;
+				color: var(--yellow);
+				font-weight: 900;
+				text-shadow:
+					2px 2px 0 #000,
+					-2px 2px 0 #000,
+					2px -2px 0 #000,
+					-2px -2px 0 #000,
+					1.5px 0 0 #000,
+					-1.5px 0 0 #000,
+					0 1.5px 0 #000,
+					0 -1.5px 0 #000;
+				font-size: clamp(1.3rem, 4vw, 1.8rem);
+			}
 
-  .lang-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
+			.lang-grid {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				gap: 12px;
+			}
 
-  .lang-option {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    padding: 12px 14px;
-    border: 3px solid #000;
-    border-radius: 14px;
-    background: #2a2145;
-    color: #fff;
-    cursor: pointer;
-    font-family: 'Noto Sans', 'Noto Sans SC', sans-serif;
-    font-weight: 700;
-    transition: transform 0.1s ease, background 0.15s ease;
-  }
-  .lang-option:hover { background: #3a2d63; transform: translateY(-2px); }
-  .lang-option.active { background: var(--yellow); color: var(--ink); }
-  .lang-option small { font-weight: 500; opacity: 0.75; font-size: 0.75em; }
+			.lang-option {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 2px;
+				padding: 12px 14px;
+				border: 3px solid #000;
+				border-radius: 14px;
+				background: #2a2145;
+				color: #fff;
+				cursor: pointer;
+				font-family: "Noto Sans", "Noto Sans SC", sans-serif;
+				font-weight: 700;
+				transition:
+					transform 0.1s ease,
+					background 0.15s ease;
+			}
+			.lang-option:hover {
+				background: #3a2d63;
+				transform: translateY(-2px);
+			}
+			.lang-option.active {
+				background: var(--yellow);
+				color: var(--ink);
+			}
+			.lang-option small {
+				font-weight: 500;
+				opacity: 0.75;
+				font-size: 0.75em;
+			}
 
-  .close-btn {
-    position: absolute;
-    top: 12px; right: 12px;
-    width: 34px; height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    line-height: 1;
-    font-size: 1.1rem;
-    border-radius: 50%;
-    background: var(--yellow);
-    border: 3px solid #000;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #000;
-  }
-  .close-btn:active { transform: translateY(3px); box-shadow: none; }
+			.close-btn {
+				position: absolute;
+				top: 12px;
+				right: 12px;
+				width: 34px;
+				height: 34px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0;
+				line-height: 1;
+				font-size: 1.1rem;
+				border-radius: 50%;
+				background: var(--yellow);
+				border: 3px solid #000;
+				font-weight: 900;
+				cursor: pointer;
+				box-shadow: 0 4px 0 #000;
+			}
+			.close-btn:active {
+				transform: translateY(3px);
+				box-shadow: none;
+			}
 
-  /* ===== 选关画面 ===== */
-  #levelsStage { justify-content: center; }
+			/* ===== 选关画面 ===== */
+			#levelsStage {
+				justify-content: center;
+			}
 
-  .level-panel {
-    position: relative;
-    width: min(92vw, 640px);
-    max-height: 84vh;
-    overflow-y: auto;
-    background: var(--panel-solid);
-    border: 4px solid #000;
-    border-radius: 22px;
-    padding: 34px 28px 28px;
-    box-shadow: 0 14px 0 rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    animation: pop-in 0.35s cubic-bezier(.2,1.4,.4,1);
-  }
+			.level-panel {
+				position: relative;
+				width: min(92vw, 640px);
+				max-height: 84vh;
+				overflow-y: auto;
+				background: var(--panel-solid);
+				border: 4px solid #000;
+				border-radius: 22px;
+				padding: 34px 28px 28px;
+				box-shadow: 0 14px 0 rgba(0, 0, 0, 0.5);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+			}
 
-  .back-btn {
-    position: absolute;
-    top: 24px; left: 24px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background: var(--yellow);
-    color: var(--ink);
-    border: 4px solid #000;
-    border-radius: 14px;
-    box-shadow: 0 5px 0 #000;
-    font-weight: 700;
-    font-size: 1rem;
-    font-family: 'Baloo 2', 'Noto Sans SC', 'Noto Sans', sans-serif;
-    cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-  }
-  .back-btn:hover { transform: translateY(-2px); }
-  .back-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #000; }
-  .back-btn svg { width: 18px; height: 18px; }
+			.back-btn {
+				position: absolute;
+				top: 24px;
+				left: 24px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 18px;
+				background: var(--yellow);
+				color: var(--ink);
+				border: 4px solid #000;
+				border-radius: 14px;
+				box-shadow: 0 5px 0 #000;
+				font-weight: 700;
+				font-size: 1rem;
+				font-family: "Baloo 2", "Noto Sans SC", "Noto Sans", sans-serif;
+				cursor: pointer;
+				transition:
+					transform 0.12s ease,
+					box-shadow 0.12s ease;
+			}
+			.back-btn:hover {
+				transform: translateY(-2px);
+			}
+			.back-btn:active {
+				transform: translateY(4px);
+				box-shadow: 0 1px 0 #000;
+			}
+			.back-btn svg {
+				width: 18px;
+				height: 18px;
+			}
 
-  h1.page-title {
-    margin: 8px 0 6px;
-    text-align: center;
-    color: var(--yellow);
-    font-weight: 900;
-    text-shadow:
-      3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
-      2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
-      0 8px 0 rgba(0,0,0,0.3);
-    font-size: clamp(1.8rem, 6vw, 3rem);
-    transform: rotate(-1deg);
-  }
+			h1.page-title {
+				margin: 8px 0 6px;
+				text-align: center;
+				color: var(--yellow);
+				font-weight: 900;
+				text-shadow:
+					3px 3px 0 #000,
+					-3px 3px 0 #000,
+					3px -3px 0 #000,
+					-3px -3px 0 #000,
+					2px 0 0 #000,
+					-2px 0 0 #000,
+					0 2px 0 #000,
+					0 -2px 0 #000,
+					0 8px 0 rgba(0, 0, 0, 0.3);
+				font-size: clamp(1.8rem, 6vw, 3rem);
+				transform: rotate(-1deg);
+			}
 
-  .progress-text {
-    color: #d9d4ec;
-    font-weight: 700;
-    margin-bottom: 4vh;
-    font-size: clamp(0.9rem, 2.2vw, 1.05rem);
-  }
+			.progress-text {
+				color: #d9d4ec;
+				font-weight: 700;
+				margin-bottom: 4vh;
+				font-size: clamp(0.9rem, 2.2vw, 1.05rem);
+			}
 
-  .level-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: clamp(16px, 3vw, 28px);
-    max-width: 620px;
-    width: 100%;
-    justify-items: center;
-  }
+			.level-grid {
+				display: grid;
+				grid-template-columns: repeat(5, 1fr);
+				gap: clamp(16px, 3vw, 28px);
+				max-width: 620px;
+				width: 100%;
+				justify-items: center;
+			}
 
-  .level-circle {
-    position: relative;
-    width: clamp(58px, 12vw, 88px);
-    height: clamp(58px, 12vw, 88px);
-    border-radius: 50%;
-    border: 4px solid #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: clamp(1.2rem, 3.4vw, 1.7rem);
-    text-decoration: none;
-    color: var(--ink);
-    font-family: 'Baloo 2', sans-serif;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
+			.level-circle {
+				position: relative;
+				width: clamp(58px, 12vw, 88px);
+				height: clamp(58px, 12vw, 88px);
+				border-radius: 50%;
+				border: 4px solid #000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: 800;
+				font-size: clamp(1.2rem, 3.4vw, 1.7rem);
+				text-decoration: none;
+				color: var(--ink);
+				font-family: "Baloo 2", sans-serif;
+				transition:
+					transform 0.12s ease,
+					box-shadow 0.12s ease;
+				-webkit-tap-highlight-color: transparent;
+			}
 
-  .level-circle.is-completed { background: var(--accent-blue); box-shadow: 0 6px 0 #000; cursor: pointer; }
-  .level-circle.is-current { background: var(--yellow); box-shadow: 0 6px 0 #000; cursor: pointer; }
-  .level-circle.is-locked {
-    background: var(--locked-gray);
-    color: var(--locked-gray-text);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
-    cursor: not-allowed;
-    pointer-events: none;
-  }
+			.level-circle.is-completed {
+				background: var(--accent-blue);
+				box-shadow: 0 6px 0 #000;
+				cursor: pointer;
+			}
+			.level-circle.is-current {
+				background: var(--yellow);
+				box-shadow: 0 6px 0 #000;
+				cursor: pointer;
+			}
+			.level-circle.is-locked {
+				background: var(--locked-gray);
+				color: var(--locked-gray-text);
+				box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+				cursor: not-allowed;
+				pointer-events: none;
+			}
 
-  .level-circle.is-completed:hover,
-  .level-circle.is-current:hover { transform: translateY(-3px); }
-  .level-circle.is-completed:active,
-  .level-circle.is-current:active { transform: translateY(5px); box-shadow: 0 1px 0 #000; }
+			.level-circle.is-completed:hover,
+			.level-circle.is-current:hover {
+				transform: translateY(-3px);
+			}
+			.level-circle.is-completed:active,
+			.level-circle.is-current:active {
+				transform: translateY(5px);
+				box-shadow: 0 1px 0 #000;
+			}
 
-  .lock-icon { width: 42%; height: 42%; }
+			.lock-icon {
+				width: 42%;
+				height: 42%;
+			}
 
-  .check-badge {
-    position: absolute;
-    top: -6px; right: -6px;
-    width: 24px; height: 24px;
-    background: var(--ink);
-    border: 3px solid #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .check-badge svg { width: 13px; height: 13px; }
+			.check-badge {
+				position: absolute;
+				top: -6px;
+				right: -6px;
+				width: 24px;
+				height: 24px;
+				background: var(--ink);
+				border: 3px solid #000;
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.check-badge svg {
+				width: 13px;
+				height: 13px;
+			}
 
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 18px;
-    margin-top: 5vh;
-    font-size: 0.85rem;
-    color: #d9d4ec;
-  }
-  .legend-item { display: flex; align-items: center; gap: 8px; }
-  .legend-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #000; flex-shrink: 0; }
-  .dot-completed { background: var(--accent-blue); }
-  .dot-current { background: var(--yellow); }
-  .dot-locked { background: var(--locked-gray); }
+			.legend {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 18px;
+				margin-top: 5vh;
+				font-size: 0.85rem;
+				color: #d9d4ec;
+			}
+			.legend-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.legend-dot {
+				width: 16px;
+				height: 16px;
+				border-radius: 50%;
+				border: 2px solid #000;
+				flex-shrink: 0;
+			}
+			.dot-completed {
+				background: var(--accent-blue);
+			}
+			.dot-current {
+				background: var(--yellow);
+			}
+			.dot-locked {
+				background: var(--locked-gray);
+			}
 
-  .reset-link {
-    margin-top: 22px;
-    background: none;
-    border: none;
-    color: #7d76a0;
-    font-size: 0.8rem;
-    text-decoration: underline;
-    cursor: pointer;
-    font-family: inherit;
-  }
+			.reset-link {
+				margin-top: 22px;
+				background: none;
+				border: none;
+				color: #7d76a0;
+				font-size: 0.8rem;
+				text-decoration: underline;
+				cursor: pointer;
+				font-family: inherit;
+			}
 
-  @media (max-width: 480px) {
-    .lang-grid { grid-template-columns: 1fr; }
-    .button-row { flex-direction: column; align-items: stretch; }
-    .game-btn { min-width: unset; }
-  }
+			@media (max-width: 480px) {
+				.lang-grid {
+					grid-template-columns: 1fr;
+				}
+				.button-row {
+					flex-direction: column;
+					align-items: stretch;
+				}
+				.game-btn {
+					min-width: unset;
+				}
+			}
 
-  @media (max-width: 420px) {
-    .level-grid { grid-template-columns: repeat(3, 1fr); }
-  }
-</style>
-</head>
-<body>
+			@media (max-width: 420px) {
+				.level-grid {
+					grid-template-columns: repeat(3, 1fr);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- ============ 画面一：首页 ============ -->
+		<div class="stage" id="homeStage">
+			<!-- 环境电火花粒子（装饰） -->
+			<div class="spark" style="top: 12%; left: 10%; animation-delay: 0s"></div>
+			<div class="spark" style="top: 20%; left: 85%; animation-delay: 0.4s"></div>
+			<div class="spark" style="top: 8%; left: 60%; animation-delay: 0.9s"></div>
 
-<!-- ============ 画面一：首页 ============ -->
-<div class="stage" id="homeStage">
-  <!-- 环境电火花粒子（装饰） -->
-  <div class="spark" style="top:12%; left:10%; animation-delay:0s;"></div>
-  <div class="spark" style="top:20%; left:85%; animation-delay:.4s;"></div>
-  <div class="spark" style="top:8%; left:60%; animation-delay:.9s;"></div>
+			<div class="title-wrap">
+				<img
+					id="titleImg"
+					class="title-img"
+					src="title.png"
+					alt="title"
+					onerror="
+						this.style.display = 'none';
+						document.getElementById('titleText').style.display = 'flex';
+					" />
+				<div id="titleText" class="title-text" style="display: none"></div>
+			</div>
 
-  <div class="title-wrap">
-    <img id="titleImg" class="title-img" src="title.png" alt="title"
-         onerror="this.style.display='none'; document.getElementById('titleText').style.display='flex';">
-    <div id="titleText" class="title-text" style="display:none;"></div>
-  </div>
+			<div class="button-row">
+				<button class="game-btn btn-level" id="btnLevel">
+					<span class="btn-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<polygon points="13 2 3 14 11 14 9 22 21 10 13 10 13 2"></polygon>
+						</svg>
+					</span>
+					<span id="labelLevel"></span>
+				</button>
+				<button class="game-btn btn-lang" id="btnLang">
+					<span class="btn-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="9"></circle>
+							<line x1="3" y1="12" x2="21" y2="12"></line>
+							<path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"></path>
+						</svg>
+					</span>
+					<span id="labelLang"></span>
+				</button>
+			</div>
+		</div>
 
-  <div class="button-row">
-    <button class="game-btn btn-level" id="btnLevel">
-      <span class="btn-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="13 2 3 14 11 14 9 22 21 10 13 10 13 2"></polygon>
-        </svg>
-      </span>
-      <span id="labelLevel"></span>
-    </button>
-    <button class="game-btn btn-lang" id="btnLang">
-      <span class="btn-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"></circle>
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"></path>
-        </svg>
-      </span>
-      <span id="labelLang"></span>
-    </button>
-  </div>
-</div>
+		<!-- ============ 画面二：选关 ============ -->
+		<div class="stage screen-hidden" id="levelsStage">
+			<button class="back-btn" id="btnBack">
+				<svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="15 18 9 12 15 6"></polyline>
+				</svg>
+				<span id="labelBack"></span>
+			</button>
 
-<!-- ============ 画面二：选关 ============ -->
-<div class="stage screen-hidden" id="levelsStage">
-  <button class="back-btn" id="btnBack">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#14101f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="15 18 9 12 15 6"></polyline>
-    </svg>
-    <span id="labelBack"></span>
-  </button>
+			<div class="level-panel">
+				<h1 class="page-title" id="levelsPageTitle"></h1>
+				<div class="progress-text" id="progressText"></div>
 
-  <div class="level-panel">
-    <h1 class="page-title" id="levelsPageTitle"></h1>
-    <div class="progress-text" id="progressText"></div>
+				<div class="level-grid" id="levelGrid"></div>
 
-    <div class="level-grid" id="levelGrid"></div>
+				<div class="legend">
+					<div class="legend-item"><span class="legend-dot dot-completed"></span><span id="legendCompleted"></span></div>
+					<div class="legend-item"><span class="legend-dot dot-current"></span><span id="legendUnlocked"></span></div>
+					<div class="legend-item"><span class="legend-dot dot-locked"></span><span id="legendLocked"></span></div>
+				</div>
 
-    <div class="legend">
-      <div class="legend-item"><span class="legend-dot dot-completed"></span><span id="legendCompleted"></span></div>
-      <div class="legend-item"><span class="legend-dot dot-current"></span><span id="legendUnlocked"></span></div>
-      <div class="legend-item"><span class="legend-dot dot-locked"></span><span id="legendLocked"></span></div>
-    </div>
+				<button class="reset-link" id="resetProgress"></button>
+			</div>
+		</div>
 
-    <button class="reset-link" id="resetProgress"></button>
-  </div>
-</div>
+		<!-- ============ 语言选择弹窗 ============ -->
+		<div class="modal hidden" id="langModal">
+			<div class="modal-card">
+				<button class="close-btn" id="closeModal">✕</button>
+				<h2 id="modalTitle"></h2>
+				<div class="lang-grid" id="langGrid"></div>
+			</div>
+		</div>
 
-<!-- ============ 语言选择弹窗 ============ -->
-<div class="modal hidden" id="langModal">
-  <div class="modal-card">
-    <button class="close-btn" id="closeModal">✕</button>
-    <h2 id="modalTitle"></h2>
-    <div class="lang-grid" id="langGrid"></div>
-  </div>
-</div>
+		<script>
+			// ================== 语言数据 ==================
+			// hasImage:true -> 使用 title.png（该图已包含中英文双语标题）
+			// hasImage:false -> 用代码生成漫画描边文字标题，font 指定专属字体
+			const LANGS = {
+				en: {
+					name: "English",
+					native: "English",
+					hasImage: true,
+					title: "ELECTRICAL LEAK",
+					level: "LEVEL SELECT",
+					lang: "LANGUAGE",
+					modal: "SELECT LANGUAGE",
+					font: "'Luckiest Guy', cursive",
+					back: "BACK",
+					completed: "Completed",
+					unlocked: "Unlocked",
+					locked: "Locked",
+					reset: "Reset Progress (test)",
+					progress: (p, t) => `Cleared ${p} / ${t}`,
+				},
+				"zh-CN": {
+					name: "Simplified Chinese",
+					native: "简体中文",
+					hasImage: true,
+					title: "哪里漏电？",
+					level: "选择关卡",
+					lang: "语言设置",
+					modal: "选择语言",
+					font: "'Noto Sans SC', sans-serif",
+					script: "cjk",
+					back: "返回",
+					completed: "已通关",
+					unlocked: "已解锁",
+					locked: "未解锁",
+					reset: "重置进度（测试用）",
+					progress: (p, t) => `已通关 ${p} / ${t} 关`,
+				},
+				"zh-TW": {
+					name: "Traditional Chinese",
+					native: "繁體中文",
+					hasImage: false,
+					title: "哪裡漏電？",
+					level: "選擇關卡",
+					lang: "語言設定",
+					modal: "選擇語言",
+					font: "'Noto Sans TC', sans-serif",
+					script: "cjk",
+					back: "返回",
+					completed: "已過關",
+					unlocked: "已解鎖",
+					locked: "未解鎖",
+					reset: "重置進度（測試用）",
+					progress: (p, t) => `已過關 ${p} / ${t} 關`,
+				},
+				de: {
+					name: "German",
+					native: "Deutsch",
+					hasImage: false,
+					title: "STROMLECK!",
+					level: "LEVEL WÄHLEN",
+					lang: "SPRACHE",
+					modal: "SPRACHE WÄHLEN",
+					font: "'Luckiest Guy', cursive",
+					back: "ZURÜCK",
+					completed: "Geschafft",
+					unlocked: "Freigeschaltet",
+					locked: "Gesperrt",
+					reset: "Fortschritt zurücksetzen (Test)",
+					progress: (p, t) => `${p} / ${t} geschafft`,
+				},
+				fr: {
+					name: "French",
+					native: "Français",
+					hasImage: false,
+					title: "FUITE ÉLECTRIQUE !",
+					level: "CHOISIR NIVEAU",
+					lang: "LANGUE",
+					modal: "CHOISIR LA LANGUE",
+					font: "'Luckiest Guy', cursive",
+					back: "RETOUR",
+					completed: "Terminé",
+					unlocked: "Débloqué",
+					locked: "Verrouillé",
+					reset: "Réinitialiser (test)",
+					progress: (p, t) => `${p} / ${t} terminés`,
+				},
+				ru: {
+					name: "Russian",
+					native: "Русский",
+					hasImage: false,
+					title: "УТЕЧКА ТОКА!",
+					level: "ВЫБОР УРОВНЯ",
+					lang: "ЯЗЫК",
+					modal: "ВЫБОР ЯЗЫКА",
+					font: "'Ruslan Display', cursive",
+					back: "НАЗАД",
+					completed: "Пройдено",
+					unlocked: "Открыто",
+					locked: "Заблокировано",
+					reset: "Сбросить прогресс (тест)",
+					progress: (p, t) => `Пройдено ${p} / ${t}`,
+				},
+				ja: {
+					name: "Japanese",
+					native: "日本語",
+					hasImage: false,
+					title: "漏電どこ!?",
+					level: "レベル選択",
+					lang: "言語設定",
+					modal: "言語を選択",
+					font: "'Noto Sans JP', sans-serif",
+					script: "cjk",
+					weight: "700",
+					back: "もどる",
+					completed: "クリア済み",
+					unlocked: "解放済み",
+					locked: "ロック中",
+					reset: "進行状況をリセット（テスト用）",
+					progress: (p, t) => `クリア ${p} / ${t}`,
+				},
+				"pt-BR": {
+					name: "Portuguese - Brazil",
+					native: "Português (Brasil)",
+					hasImage: false,
+					title: "FUGA DE CORRENTE!",
+					level: "SELECIONAR FASE",
+					lang: "IDIOMA",
+					modal: "SELECIONE O IDIOMA",
+					font: "'Luckiest Guy', cursive",
+					back: "VOLTAR",
+					completed: "Concluída",
+					unlocked: "Desbloqueada",
+					locked: "Bloqueada",
+					reset: "Redefinir progresso (teste)",
+					progress: (p, t) => `${p} / ${t} concluídas`,
+				},
+				"es-LA": {
+					name: "Spanish - Latin America",
+					native: "Español (Latinoamérica)",
+					hasImage: false,
+					title: "¡FUGA DE CORRIENTE!",
+					level: "SELECCIONAR NIVEL",
+					lang: "IDIOMA",
+					modal: "SELECCIONA EL IDIOMA",
+					font: "'Luckiest Guy', cursive",
+					back: "VOLVER",
+					completed: "Completado",
+					unlocked: "Desbloqueado",
+					locked: "Bloqueado",
+					reset: "Reiniciar progreso (prueba)",
+					progress: (p, t) => `${p} / ${t} completados`,
+				},
+				ko: {
+					name: "Korean",
+					native: "한국어",
+					hasImage: false,
+					title: "누전 어디야?!",
+					level: "레벨 선택",
+					lang: "언어 설정",
+					modal: "언어 선택",
+					font: "'Black Han Sans', sans-serif",
+					script: "cjk",
+					back: "뒤로",
+					completed: "완료",
+					unlocked: "해제됨",
+					locked: "잠김",
+					reset: "진행 상황 초기화 (테스트)",
+					progress: (p, t) => `${p} / ${t} 클리어`,
+				},
+			};
 
-<script>
-  // ================== 语言数据 ==================
-  // hasImage:true -> 使用 title.png（该图已包含中英文双语标题）
-  // hasImage:false -> 用代码生成漫画描边文字标题，font 指定专属字体
-  const LANGS = {
-    'en': {
-      name: 'English', native: 'English', hasImage: true,
-      title: 'ELECTRICAL LEAK', level: 'LEVEL SELECT', lang: 'LANGUAGE', modal: 'SELECT LANGUAGE',
-      font: "'Luckiest Guy', cursive",
-      back: 'BACK', completed: 'Completed', unlocked: 'Unlocked', locked: 'Locked',
-      reset: 'Reset Progress (test)', progress: (p, t) => `Cleared ${p} / ${t}`
-    },
-    'zh-CN': {
-      name: 'Simplified Chinese', native: '简体中文', hasImage: true,
-      title: '哪里漏电？', level: '选择关卡', lang: '语言设置', modal: '选择语言',
-      font: "'Noto Sans SC', sans-serif", script: 'cjk',
-      back: '返回', completed: '已通关', unlocked: '已解锁', locked: '未解锁',
-      reset: '重置进度（测试用）', progress: (p, t) => `已通关 ${p} / ${t} 关`
-    },
-    'zh-TW': {
-      name: 'Traditional Chinese', native: '繁體中文', hasImage: false,
-      title: '哪裡漏電？', level: '選擇關卡', lang: '語言設定', modal: '選擇語言',
-      font: "'Noto Sans TC', sans-serif", script: 'cjk',
-      back: '返回', completed: '已過關', unlocked: '已解鎖', locked: '未解鎖',
-      reset: '重置進度（測試用）', progress: (p, t) => `已過關 ${p} / ${t} 關`
-    },
-    'de': {
-      name: 'German', native: 'Deutsch', hasImage: false,
-      title: 'STROMLECK!', level: 'LEVEL WÄHLEN', lang: 'SPRACHE', modal: 'SPRACHE WÄHLEN',
-      font: "'Luckiest Guy', cursive",
-      back: 'ZURÜCK', completed: 'Geschafft', unlocked: 'Freigeschaltet', locked: 'Gesperrt',
-      reset: 'Fortschritt zurücksetzen (Test)', progress: (p, t) => `${p} / ${t} geschafft`
-    },
-    'fr': {
-      name: 'French', native: 'Français', hasImage: false,
-      title: 'FUITE ÉLECTRIQUE !', level: 'CHOISIR NIVEAU', lang: 'LANGUE', modal: 'CHOISIR LA LANGUE',
-      font: "'Luckiest Guy', cursive",
-      back: 'RETOUR', completed: 'Terminé', unlocked: 'Débloqué', locked: 'Verrouillé',
-      reset: 'Réinitialiser (test)', progress: (p, t) => `${p} / ${t} terminés`
-    },
-    'ru': {
-      name: 'Russian', native: 'Русский', hasImage: false,
-      title: 'УТЕЧКА ТОКА!', level: 'ВЫБОР УРОВНЯ', lang: 'ЯЗЫК', modal: 'ВЫБОР ЯЗЫКА',
-      font: "'Ruslan Display', cursive",
-      back: 'НАЗАД', completed: 'Пройдено', unlocked: 'Открыто', locked: 'Заблокировано',
-      reset: 'Сбросить прогресс (тест)', progress: (p, t) => `Пройдено ${p} / ${t}`
-    },
-    'ja': {
-      name: 'Japanese', native: '日本語', hasImage: false,
-      title: '漏電どこ!?', level: 'レベル選択', lang: '言語設定', modal: '言語を選択',
-      font: "'Noto Sans JP', sans-serif", script: 'cjk', weight: '700',
-      back: 'もどる', completed: 'クリア済み', unlocked: '解放済み', locked: 'ロック中',
-      reset: '進行状況をリセット（テスト用）', progress: (p, t) => `クリア ${p} / ${t}`
-    },
-    'pt-BR': {
-      name: 'Portuguese - Brazil', native: 'Português (Brasil)', hasImage: false,
-      title: 'VAZAMENTO ELÉTRICO!', level: 'SELECIONAR FASE', lang: 'IDIOMA', modal: 'SELECIONE O IDIOMA',
-      font: "'Luckiest Guy', cursive",
-      back: 'VOLTAR', completed: 'Concluída', unlocked: 'Desbloqueada', locked: 'Bloqueada',
-      reset: 'Redefinir progresso (teste)', progress: (p, t) => `${p} / ${t} concluídas`
-    },
-    'es-LA': {
-      name: 'Spanish - Latin America', native: 'Español (Latinoamérica)', hasImage: false,
-      title: '¡FUGA ELÉCTRICA!', level: 'SELECCIONAR NIVEL', lang: 'IDIOMA', modal: 'SELECCIONA EL IDIOMA',
-      font: "'Luckiest Guy', cursive",
-      back: 'VOLVER', completed: 'Completado', unlocked: 'Desbloqueado', locked: 'Bloqueado',
-      reset: 'Reiniciar progreso (prueba)', progress: (p, t) => `${p} / ${t} completados`
-    },
-    'ko': {
-      name: 'Korean', native: '한국어', hasImage: false,
-      title: '누전 어디야?!', level: '레벨 선택', lang: '언어 설정', modal: '언어 선택',
-      font: "'Black Han Sans', sans-serif", script: 'cjk',
-      back: '뒤로', completed: '완료', unlocked: '해제됨', locked: '잠김',
-      reset: '진행 상황 초기화 (테스트)', progress: (p, t) => `${p} / ${t} 클리어`
-    }
-  };
+			// ================== 关卡进度 ==================
+			const TOTAL_LEVELS = 10;
+			const STORAGE_KEY = "leak_progress";
 
-  // ================== 关卡进度 ==================
-  const TOTAL_LEVELS = 10;
-  const STORAGE_KEY = 'leak_progress';
+			// 默认进度：目前只做好了第 1 关，所以初始进度为 0（0 关通关 → 第 1 关解锁，其余全部上锁）。
+			// 之后每做好新的一关，等玩家实际通关后调用 window.markLevelComplete(n) 会自动往后解锁，这里不用再手动改。
+			const DEFAULT_PROGRESS = 0;
 
-  // 默认进度：目前只做好了第 1 关，所以初始进度为 0（0 关通关 → 第 1 关解锁，其余全部上锁）。
-  // 之后每做好新的一关，等玩家实际通关后调用 window.markLevelComplete(n) 会自动往后解锁，这里不用再手动改。
-  const DEFAULT_PROGRESS = 0;
+			function getProgress() {
+				const raw = localStorage.getItem(STORAGE_KEY);
+				if (raw === null) return DEFAULT_PROGRESS;
+				const v = parseInt(raw, 10);
+				if (Number.isNaN(v)) return 0;
+				return Math.max(0, Math.min(TOTAL_LEVELS, v));
+			}
 
-  function getProgress() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return DEFAULT_PROGRESS;
-    const v = parseInt(raw, 10);
-    if (Number.isNaN(v)) return 0;
-    return Math.max(0, Math.min(TOTAL_LEVELS, v));
-  }
+			// 关卡页面（如 3.html）通关后调用：parent 或本页 window.markLevelComplete(3)，再跳回首页选关画面
+			function markLevelComplete(n) {
+				const current = getProgress();
+				if (n > current) localStorage.setItem(STORAGE_KEY, String(n));
+			}
+			window.markLevelComplete = markLevelComplete;
 
-  // 关卡页面（如 3.html）通关后调用：parent 或本页 window.markLevelComplete(3)，再跳回首页选关画面
-  function markLevelComplete(n) {
-    const current = getProgress();
-    if (n > current) localStorage.setItem(STORAGE_KEY, String(n));
-  }
-  window.markLevelComplete = markLevelComplete;
-
-  const lockIconSVG = `
+			const lockIconSVG = `
     <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="5" y="11" width="14" height="10" rx="2"></rect>
       <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
     </svg>`;
 
-  const checkIconSVG = `
+			const checkIconSVG = `
     <svg viewBox="0 0 24 24" fill="none" stroke="#ffd400" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="20 6 9 17 4 12"></polyline>
     </svg>`;
 
-  function renderLevels() {
-    const L = LANGS[currentLang];
-    const progress = getProgress();
+			function renderLevels() {
+				const L = LANGS[currentLang];
+				const progress = getProgress();
 
-    document.getElementById('labelBack').textContent = L.back;
-    const pageTitleEl = document.getElementById('levelsPageTitle');
-    pageTitleEl.textContent = L.level;
-    document.getElementById('legendCompleted').textContent = L.completed;
-    document.getElementById('legendUnlocked').textContent = L.unlocked;
-    document.getElementById('legendLocked').textContent = L.locked;
-    document.getElementById('resetProgress').textContent = L.reset;
-    document.getElementById('progressText').textContent = L.progress(progress, TOTAL_LEVELS);
+				document.getElementById("labelBack").textContent = L.back;
+				const pageTitleEl = document.getElementById("levelsPageTitle");
+				pageTitleEl.textContent = L.level;
+				document.getElementById("legendCompleted").textContent = L.completed;
+				document.getElementById("legendUnlocked").textContent = L.unlocked;
+				document.getElementById("legendLocked").textContent = L.locked;
+				document.getElementById("resetProgress").textContent = L.reset;
+				document.getElementById("progressText").textContent = L.progress(progress, TOTAL_LEVELS);
 
-    const grid = document.getElementById('levelGrid');
-    grid.innerHTML = '';
+				const grid = document.getElementById("levelGrid");
+				grid.innerHTML = "";
 
-    for (let n = 1; n <= TOTAL_LEVELS; n++) {
-      const isCompleted = n <= progress;
-      const isCurrent = n === progress + 1;
-      const isLocked = n > progress + 1;
+				for (let n = 1; n <= TOTAL_LEVELS; n++) {
+					const isCompleted = n <= progress;
+					const isCurrent = n === progress + 1;
+					const isLocked = n > progress + 1;
 
-      const el = document.createElement(isLocked ? 'span' : 'a');
-      el.className = 'level-circle ' + (isCompleted ? 'is-completed' : isCurrent ? 'is-current' : 'is-locked');
+					const el = document.createElement(isLocked ? "span" : "a");
+					el.className = "level-circle " + (isCompleted ? "is-completed" : isCurrent ? "is-current" : "is-locked");
 
-      if (!isLocked) {
-        el.href = `${n}.html`;
-      } else {
-        el.setAttribute('aria-disabled', 'true');
-      }
+					if (!isLocked) {
+						el.href = `${n}.html`;
+					} else {
+						el.setAttribute("aria-disabled", "true");
+					}
 
-      if (isLocked) {
-        el.innerHTML = lockIconSVG;
-      } else {
-        el.textContent = n;
-        if (isCompleted) {
-          const badge = document.createElement('span');
-          badge.className = 'check-badge';
-          badge.innerHTML = checkIconSVG;
-          el.appendChild(badge);
-        }
-      }
+					if (isLocked) {
+						el.innerHTML = lockIconSVG;
+					} else {
+						el.textContent = n;
+						if (isCompleted) {
+							const badge = document.createElement("span");
+							badge.className = "check-badge";
+							badge.innerHTML = checkIconSVG;
+							el.appendChild(badge);
+						}
+					}
 
-      grid.appendChild(el);
-    }
-  }
+					grid.appendChild(el);
+				}
+			}
 
-  // ================== 画面切换 ==================
-  const homeStage = document.getElementById('homeStage');
-  const levelsStage = document.getElementById('levelsStage');
+			// ================== 画面切换 ==================
+			const homeStage = document.getElementById("homeStage");
+			const levelsStage = document.getElementById("levelsStage");
 
-  function showHome() {
-    levelsStage.classList.add('screen-hidden');
-    homeStage.classList.remove('screen-hidden');
-  }
-  function showLevels() {
-    renderLevels();
-    homeStage.classList.add('screen-hidden');
-    levelsStage.classList.remove('screen-hidden');
-  }
+			function showHome() {
+				levelsStage.classList.add("screen-hidden");
+				homeStage.classList.remove("screen-hidden");
+			}
+			function showLevels() {
+				renderLevels();
+				homeStage.classList.add("screen-hidden");
+				levelsStage.classList.remove("screen-hidden");
+			}
 
-  // ================== 首页语言逻辑 ==================
-  const titleImg = document.getElementById('titleImg');
-  const titleText = document.getElementById('titleText');
-  const labelLevel = document.getElementById('labelLevel');
-  const labelLang = document.getElementById('labelLang');
-  const langGrid = document.getElementById('langGrid');
-  const langModal = document.getElementById('langModal');
-  const modalTitle = document.getElementById('modalTitle');
+			// ================== 首页语言逻辑 ==================
+			const titleImg = document.getElementById("titleImg");
+			const titleText = document.getElementById("titleText");
+			const labelLevel = document.getElementById("labelLevel");
+			const labelLang = document.getElementById("labelLang");
+			const langGrid = document.getElementById("langGrid");
+			const langModal = document.getElementById("langModal");
+			const modalTitle = document.getElementById("modalTitle");
 
-  let currentLang = detectDefaultLang();
+			let currentLang = detectDefaultLang();
 
-  function detectDefaultLang() {
-    const nav = (navigator.language || 'en').toLowerCase();
-    if (nav.startsWith('zh-tw') || nav.startsWith('zh-hk')) return 'zh-TW';
-    if (nav.startsWith('zh')) return 'zh-CN';
-    if (nav.startsWith('de')) return 'de';
-    if (nav.startsWith('fr')) return 'fr';
-    if (nav.startsWith('ru')) return 'ru';
-    if (nav.startsWith('ja')) return 'ja';
-    if (nav.startsWith('pt')) return 'pt-BR';
-    if (nav.startsWith('es')) return 'es-LA';
-    if (nav.startsWith('ko')) return 'ko';
-    return 'en';
-  }
+			function detectDefaultLang() {
+				const nav = (navigator.language || "en").toLowerCase();
+				if (nav.startsWith("zh-tw") || nav.startsWith("zh-hk")) return "zh-TW";
+				if (nav.startsWith("zh")) return "zh-CN";
+				if (nav.startsWith("de")) return "de";
+				if (nav.startsWith("fr")) return "fr";
+				if (nav.startsWith("ru")) return "ru";
+				if (nav.startsWith("ja")) return "ja";
+				if (nav.startsWith("pt")) return "pt-BR";
+				if (nav.startsWith("es")) return "es-LA";
+				if (nav.startsWith("ko")) return "ko";
+				return "en";
+			}
 
-  // 把文字拆成单字 span，做出手绘漫画拟声词的错落效果
-  function renderComicText(text) {
-    return [...text].map((ch, i) => {
-      if (ch === ' ') return ' ';
-      const rot = (i % 2 === 0 ? -1 : 1) * (4 + (i * 7) % 7);
-      const ty = (i % 3 === 0) ? -4 : (i % 3 === 1 ? 3 : -1);
-      return `<span style="transform: rotate(${rot}deg) translateY(${ty}px);">${ch}</span>`;
-    }).join('');
-  }
+			// 把文字拆成单字 span，做出手绘漫画拟声词的错落效果
+			function renderComicText(text) {
+				return [...text]
+					.map((ch, i) => {
+						if (ch === " ") return " ";
+						const rot = (i % 2 === 0 ? -1 : 1) * (4 + ((i * 7) % 7));
+						const ty = i % 3 === 0 ? -4 : i % 3 === 1 ? 3 : -1;
+						return `<span style="transform: rotate(${rot}deg) translateY(${ty}px);">${ch}</span>`;
+					})
+					.join("");
+			}
 
-  function applyLang(code) {
-    currentLang = code;
-    const L = LANGS[code];
+			function applyLang(code) {
+				currentLang = code;
+				const L = LANGS[code];
 
-    labelLevel.textContent = L.level;
-    labelLang.textContent = L.lang;
-    modalTitle.textContent = L.modal;
+				labelLevel.textContent = L.level;
+				labelLang.textContent = L.lang;
+				modalTitle.textContent = L.modal;
 
-    if (L.hasImage) {
-      titleImg.src = 'title.png';
-      titleImg.style.display = 'block';
-      titleText.style.display = 'none';
-    } else {
-      titleImg.style.display = 'none';
-      titleText.style.display = 'flex';
-      titleText.style.fontFamily = L.font;
-      titleText.style.fontWeight = L.weight || '900';
-      titleText.classList.toggle('lang-ja', code === 'ja');
-      titleText.innerHTML = renderComicText(L.title);
-      // 重新触发弹出动画
-      titleText.style.animation = 'none';
-      void titleText.offsetWidth;
-      titleText.style.animation = '';
-    }
+				if (L.hasImage) {
+					titleImg.src = "title.png";
+					titleImg.style.display = "block";
+					titleText.style.display = "none";
+				} else {
+					titleImg.style.display = "none";
+					titleText.style.display = "flex";
+					titleText.style.fontFamily = L.font;
+					titleText.style.fontWeight = L.weight || "900";
+					titleText.classList.toggle("lang-ja", code === "ja");
+					titleText.innerHTML = renderComicText(L.title);
+					// 重新触发弹出动画
+					titleText.style.animation = "none";
+					void titleText.offsetWidth;
+					titleText.style.animation = "";
+				}
 
-    // 语言弹窗高亮当前选中项
-    document.querySelectorAll('.lang-option').forEach(el => {
-      el.classList.toggle('active', el.dataset.code === code);
-    });
+				// 语言弹窗高亮当前选中项
+				document.querySelectorAll(".lang-option").forEach((el) => {
+					el.classList.toggle("active", el.dataset.code === code);
+				});
 
-    // 若选关画面当前可见，联动刷新其文案
-    if (!levelsStage.classList.contains('screen-hidden')) {
-      renderLevels();
-    }
-  }
+				// 若选关画面当前可见，联动刷新其文案
+				if (!levelsStage.classList.contains("screen-hidden")) {
+					renderLevels();
+				}
+			}
 
-  function buildLangGrid() {
-    langGrid.innerHTML = '';
-    Object.entries(LANGS).forEach(([code, L]) => {
-      const btn = document.createElement('div');
-      btn.className = 'lang-option';
-      btn.dataset.code = code;
-      btn.innerHTML = `${L.native}<small>${L.name}</small>`;
-      btn.addEventListener('click', () => {
-        applyLang(code);
-        closeModal();
-      });
-      langGrid.appendChild(btn);
-    });
-  }
+			function buildLangGrid() {
+				langGrid.innerHTML = "";
+				Object.entries(LANGS).forEach(([code, L]) => {
+					const btn = document.createElement("div");
+					btn.className = "lang-option";
+					btn.dataset.code = code;
+					btn.innerHTML = `${L.native}<small>${L.name}</small>`;
+					btn.addEventListener("click", () => {
+						applyLang(code);
+						closeModal();
+					});
+					langGrid.appendChild(btn);
+				});
+			}
 
-  function openModal() { langModal.classList.remove('hidden'); }
-  function closeModal() { langModal.classList.add('hidden'); }
+			function openModal() {
+				langModal.classList.remove("hidden");
+			}
+			function closeModal() {
+				langModal.classList.add("hidden");
+			}
 
-  document.getElementById('btnLang').addEventListener('click', openModal);
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  langModal.addEventListener('click', (e) => { if (e.target === langModal) closeModal(); });
+			document.getElementById("btnLang").addEventListener("click", openModal);
+			document.getElementById("closeModal").addEventListener("click", closeModal);
+			langModal.addEventListener("click", (e) => {
+				if (e.target === langModal) closeModal();
+			});
 
-  document.getElementById('btnLevel').addEventListener('click', showLevels);
-  document.getElementById('btnBack').addEventListener('click', showHome);
-  document.getElementById('resetProgress').addEventListener('click', () => {
-    localStorage.removeItem(STORAGE_KEY);
-    renderLevels();
-  });
+			document.getElementById("btnLevel").addEventListener("click", showLevels);
+			document.getElementById("btnBack").addEventListener("click", showHome);
+			document.getElementById("resetProgress").addEventListener("click", () => {
+				localStorage.removeItem(STORAGE_KEY);
+				renderLevels();
+			});
 
-  buildLangGrid();
-  applyLang(currentLang);
-</script>
-
-</body>
+			buildLangGrid();
+			applyLang(currentLang);
+		</script>
+	</body>
 </html>
