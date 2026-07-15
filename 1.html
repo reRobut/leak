@@ -1928,6 +1928,13 @@ function applyLang(code) {
 	try {
 		localStorage.setItem(LANG_STORAGE_KEY, code);
 	} catch (e) {}
+	// 同步地址栏的 ?lang= 参数,这样死亡后 location.reload() 重生时才能读到刚切换的语言,
+	// 而不是又倒退回进入本关时 index.html 带过来的那个旧语言
+	try {
+		const url = new URL(location.href);
+		url.searchParams.set("lang", code);
+		history.replaceState(null, "", url);
+	} catch (e) {}
 	const L = I18N[code];
 	document.documentElement.lang = code;
 
@@ -2008,7 +2015,7 @@ function buildLangPicker() {
 		const btn = document.createElement("div");
 		btn.className = "lang-pick-btn";
 		btn.dataset.code = code;
-		btn.innerHTML = `${native}<small>${code}</small>`;
+		btn.textContent = native;
 		btn.addEventListener("click", () => applyLang(code));
 		grid.appendChild(btn);
 	});
