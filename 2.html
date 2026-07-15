@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暗流 · 钢筋带电案</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --paper-dark:#eef1f6;
+    --ink:#14171a;
+    --ink-dim:#5b6068;
+    --brass:#1a56c4;
+    --brass-light:#4d82d6;
+    --brass-dark:#0f3480;
+    --danger:#d32f2f;
+    --danger-light:#e8908c;
+    --safe:#1a56c4;
+    --crt:#4d82d6;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:#000000;
+    color:var(--ink);
+    font-family: Georgia, "Songti SC", serif;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+
+  .game-window{
+    position:relative;
+    width:min(96vw, 960px);
+    aspect-ratio: 900 / 560;
+    border:4px solid #000;
+    border-radius:3px;
+    box-shadow: 0 0 0 1px var(--brass-dark), 0 20px 60px rgba(0,0,0,.7);
+    overflow:hidden;
+    cursor:default;
+  }
+
+  .scene{ position:absolute; inset:0; display:none; }
+  .scene.active{ display:block; animation:fadein .35s ease; }
+  @keyframes fadein{ from{opacity:0;} to{opacity:1;} }
+  .scene svg{ width:100%; height:100%; display:block; }
+
+  .hotspot{ cursor:pointer; }
+  .hotspot .hit{ fill:transparent; }
+  .lbl{ opacity:0; transition:.15s; font-size:12px; fill:#14171a; font-family:"Courier New",monospace; paint-order:stroke; stroke:#fff; stroke-width:3px; stroke-linejoin:round; }
+  .tag-tripped{ animation:blink 1.1s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.2;} }
+  @keyframes haze{ 0%,100%{opacity:.12; transform:scale(1);} 50%{opacity:.38; transform:scale(1.08);} }
+  .heat-mist{ animation:haze 2.6s ease-in-out infinite; transform-origin:center; transform-box:fill-box; }
+  @keyframes smokeRise{
+    0%{ opacity:0; transform:translateY(0) scale(.6); }
+    20%{ opacity:.5; }
+    65%{ opacity:.28; }
+    100%{ opacity:0; transform:translateY(-46px) scale(1.5); }
+  }
+  .smoke-puff{ animation:smokeRise 3s ease-out infinite; transform-origin:center; transform-box:fill-box; }
+  #mainbreakerKnob{ transition:cx .22s ease; }
+
+  .nav-arrow{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:44px; height:44px; border-radius:50%; z-index:20;
+    background:var(--paper);
+    border:2px solid var(--brass);
+    box-shadow: 0 3px 8px rgba(0,0,0,.4);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:.15s; opacity:.9;
+  }
+  .nav-arrow:hover{ opacity:1; transform:translateY(-50%) scale(1.08); }
+  .nav-arrow:active{ transform:translateY(-50%) scale(.95); }
+  .nav-arrow.left{ left:12px; }
+  .nav-arrow.right{ right:12px; }
+  .nav-arrow svg{ width:18px; height:18px; }
+
+  .meter{
+    position:absolute; top:12px; right:12px; width:110px; z-index:15;
+    background:var(--paper);
+    border:3px solid var(--ink); border-radius:8px; padding:8px 9px 9px;
+    box-shadow:0 8px 18px rgba(0,0,0,.4);
+  }
+  .meter .mhead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding:0 2px;}
+  .meter .mhead span{ font-size:9px; letter-spacing:1.3px; color:var(--ink-dim); text-transform:uppercase; font-family:"Courier New",monospace;}
+  .meter .status{
+    font-size:9px; padding:1px 5px; border-radius:3px; font-weight:700; letter-spacing:1px;
+    background:var(--ink); color:var(--paper); font-family:"Courier New",monospace;
+  }
+  .meter .status.safe{ background:var(--safe); color:#fff; }
+  .meter .status.caution{ background:var(--danger-light); color:#4a0e0e; }
+  .meter .status.danger{ background:var(--danger); color:#fff; }
+
+  .toolbody{ min-height:64px; display:flex; align-items:center; justify-content:center; }
+  .pen-shape{ position:relative; width:20px; height:60px; }
+  .pen-body{
+    position:absolute; left:3px; top:0; width:14px; height:44px; border-radius:4px 4px 2px 2px;
+    background:var(--brass);
+    border:1px solid var(--brass-dark);
+  }
+  .pen-clip{ position:absolute; left:1px; top:6px; width:4px; height:16px; background:var(--ink); border-radius:1px; }
+  .pen-tip{
+    position:absolute; left:6px; top:44px; width:0; height:0;
+    border-left:4px solid transparent; border-right:4px solid transparent; border-top:14px solid var(--ink-dim);
+    transition:.2s;
+  }
+  .pen-tip.lvl1{ border-top-color:var(--danger-light); filter:drop-shadow(0 0 5px rgba(216,144,140,.9)); }
+  .pen-tip.lvl2{ border-top-color:var(--danger); filter:drop-shadow(0 0 5px rgba(211,47,47,.9)); }
+  .pen-win{
+    position:absolute; left:5px; top:12px; width:10px; height:10px; border-radius:50%;
+    background:#c7cdd3; border:1px solid var(--ink-dim); transition:.2s;
+  }
+  .pen-win.lvl1{ background:var(--danger-light); box-shadow:0 0 8px 2px rgba(216,144,140,.9); animation:blink .8s infinite; }
+  .pen-win.lvl2{ background:var(--danger); box-shadow:0 0 8px 2px rgba(211,47,47,.9); animation:blink .45s infinite; }
+
+  .casefile{
+    position:absolute; left:12px; bottom:12px; z-index:16;
+    width:40px; height:40px; border-radius:6px; cursor:pointer;
+    background:var(--paper);
+    border:2px solid var(--brass); display:none; align-items:center; justify-content:center;
+    font-size:20px; box-shadow:0 4px 12px rgba(0,0,0,.4);
+    animation:pulse 1.8s infinite;
+  }
+  .casefile.show{ display:flex; }
+  @keyframes pulse{ 0%,100%{box-shadow:0 0 8px rgba(26,86,196,.3);} 50%{box-shadow:0 0 18px rgba(26,86,196,.75);} }
+
+  .notebook-btn{
+    position:absolute; left:12px; top:12px; z-index:16;
+    width:40px; height:40px; border-radius:6px; cursor:pointer;
+    background:var(--paper);
+    border:2px solid var(--brass); display:flex; align-items:center; justify-content:center;
+    font-size:19px; box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+  .notebook-btn:hover{ filter:brightness(1.08); }
+  .notebook-badge{
+    position:absolute; top:-6px; right:-6px; min-width:16px; height:16px; padding:0 3px;
+    border-radius:8px; background:var(--danger); color:#fff; font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; font-family:"Courier New",monospace;
+    border:1px solid var(--ink);
+  }
+
+  .hp-bar{
+    position:absolute; left:60px; top:12px; z-index:16;
+    width:130px; height:40px; padding:0 10px;
+    background:var(--paper);
+    border:2px solid var(--brass); border-radius:6px;
+    display:flex; align-items:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+  .hp-track{
+    width:100%; height:12px; border-radius:6px; overflow:hidden;
+    background:var(--ink); border:1px solid #000;
+  }
+  .hp-fill{
+    height:100%; width:100%;
+    background:var(--danger);
+    transition:width .4s ease;
+  }
+  .clue-item{
+    padding:9px 11px; margin:8px 0; border-radius:4px; font-size:12.5px; line-height:1.6;
+    border:1px dashed var(--brass); background:var(--paper-dark); color:var(--ink);
+  }
+  .clue-item.locked{ opacity:.42; }
+  .clue-item.locked .t{ color:var(--ink-dim); }
+  .clue-item .t{ font-weight:700; color:var(--brass); margin-bottom:3px; }
+  .clue-item .t:before{ content:"● "; }
+  .clue-item.locked .t:before{ content:"○ "; }
+
+  .toast{
+    position:fixed; top:26px; right:calc(50% - 480px + 14px); z-index:80;
+    background:var(--paper); border:2px solid var(--brass);
+    padding:9px 14px; border-radius:4px; font-size:12px; max-width:250px; color:var(--ink);
+    font-family:"Courier New",monospace;
+    transform:translateX(300px); transition:transform .35s ease;
+    box-shadow:0 10px 24px rgba(0,0,0,.4);
+  }
+  @media (max-width:1050px){ .toast{ right:16px; } }
+  .toast.show{ transform:translateX(0); }
+  .toast b{ color:var(--brass); display:block; font-size:10px; letter-spacing:1px; margin-bottom:2px;}
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.78); backdrop-filter:blur(2px);
+    display:none; align-items:center; justify-content:center; z-index:90; padding:24px;
+  }
+  .modal-bg.show{ display:flex; }
+  .modal{
+    width:min(620px,100%); max-height:86vh; overflow-y:auto;
+    background:var(--paper);
+    border:5px solid var(--ink); border-radius:6px; padding:24px 26px;
+    box-shadow:0 30px 70px rgba(0,0,0,.6);
+    position:relative;
+  }
+  .modal:before{
+    content:"🔍 特写"; position:absolute; top:-14px; left:20px; background:var(--brass);
+    color:#fff; font-size:11px; padding:3px 10px; border-radius:3px; letter-spacing:1px;
+    font-family:"Courier New",monospace; border:1px solid var(--brass-dark);
+  }
+  .modal.report:before{ content:"📁 结案报告"; }
+  .modal h3{ margin:0 0 4px; font-size:19px; letter-spacing:1px; color:var(--ink); font-family:Georgia,serif;}
+  .modal .sub{ color:var(--ink-dim); font-size:11px; margin-bottom:14px; font-family:"Courier New",monospace;}
+  .modal p{ line-height:1.8; font-size:13.5px; color:var(--ink); margin:0 0 12px;}
+  .modal .section-t{ color:var(--brass); font-size:11.5px; letter-spacing:2px; margin:18px 0 8px; text-transform:uppercase; font-family:"Courier New",monospace;}
+  .modal ul{ margin:0; padding-left:18px; line-height:1.85; font-size:13px; }
+  .modal-close{
+    margin-top:12px; padding:9px 18px; border-radius:20px; border:2px solid var(--ink);
+    background:var(--paper); color:var(--ink); cursor:pointer; font-size:12.5px;
+    letter-spacing:1px; font-family:Georgia,serif;
+  }
+  .modal-close:hover{ filter:brightness(.95); }
+
+  .image-modal{ padding:10px; width:min(460px,100%); overflow:visible; }
+  .image-modal:before{ content:none; }
+  .zoom-svg{ width:100%; display:block; border-radius:4px; background:#000000; }
+  .modal-close-icon{
+    position:absolute; top:-14px; right:-14px; width:30px; height:30px; border-radius:50%;
+    background:var(--paper); border:2px solid var(--ink); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; z-index:2;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);
+  }
+  .modal-close-icon:hover{ filter:brightness(.95); }
+  .zoom-tool{ cursor:pointer; transition:.15s; }
+  .zoom-tool:hover{ filter:drop-shadow(0 0 6px rgba(77,130,214,.9)); }
+  .zoom-hint{ text-align:center; color:#cfd8e4; font-size:11px; font-family:"Courier New",monospace; margin-top:8px; letter-spacing:.5px; }
+
+  .modal.gameover{ text-align:center; background:var(--ink); border-color:var(--danger); }
+  .modal.gameover:before{ content:none; }
+  .modal.gameover h3{ color:var(--danger-light); font-size:26px; letter-spacing:2px; margin-bottom:6px; }
+  .modal.gameover .sub{ color:#fff; font-size:14px; margin-bottom:22px; font-family:Georgia,serif; letter-spacing:1px;}
+  .reborn-btn{ background:var(--paper); color:var(--ink); border-color:var(--paper); font-weight:700; padding:11px 26px; }
+
+  .modal.reborn-modal{ text-align:center; background:var(--brass); border-color:var(--brass-dark); }
+  .modal.reborn-modal:before{ content:none; }
+  .modal.reborn-modal h3{ color:#fff; font-size:24px; letter-spacing:2px; margin-bottom:6px; }
+  .modal.reborn-modal .sub{ color:#dce9ff; font-size:11px; margin-bottom:16px; font-family:"Courier New",monospace; letter-spacing:2px;}
+  .modal.reborn-modal p{ text-align:center; color:#fff; }
+
+  .modal.repair-modal{ text-align:center; background:var(--brass); border-color:var(--brass-dark); width:min(640px,100%); }
+  .modal.repair-modal:before{ content:none; }
+  .modal.repair-modal h3{ color:#fff; font-size:26px; letter-spacing:2px; margin-bottom:6px; }
+  .modal.repair-modal .sub{ color:#dce9ff; font-size:11px; margin-bottom:18px; font-family:"Courier New",monospace; letter-spacing:2px;}
+  .repair-analysis{ text-align:left; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.25); border-radius:6px; padding:16px 18px; margin-bottom:22px; }
+  .repair-analysis p{ color:#fff; font-size:13.5px; line-height:1.85; margin:0 0 12px; }
+  .repair-analysis p:last-child{ margin-bottom:0; }
+  .repair-btns{ display:flex; gap:12px; justify-content:center; }
+  .repair-btn{ background:var(--paper); color:var(--ink); border-color:var(--paper); font-weight:700; padding:11px 20px; margin-top:0; }
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--brass); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="game-window" id="gameWindow">
+
+  <!-- ================= SCENE 1: 室内(裸露立柱 / PVC立柱 / 瓷砖地面) ================= -->
+  <div class="scene active" id="scene-s1">
+    <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="mistBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="10"/>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="900" height="560" fill="#e9e6df"/>
+      <rect x="0" y="0" width="900" height="120" fill="#dcd8cf"/>
+      <rect x="0" y="440" width="900" height="120" fill="#c7c2b6"/>
+
+      <!-- 瓷砖地面 -->
+      <g class="hotspot" data-id="tileFloor" data-touch="true" data-test="true">
+        <rect x="250" y="440" width="400" height="120" class="hit"/>
+        <g stroke="#a29c8c" stroke-width="1.4">
+          <line x1="250" y1="470" x2="650" y2="470"/>
+          <line x1="250" y1="500" x2="650" y2="500"/>
+          <line x1="250" y1="530" x2="650" y2="530"/>
+          <line x1="300" y1="440" x2="300" y2="560"/>
+          <line x1="360" y1="440" x2="360" y2="560"/>
+          <line x1="420" y1="440" x2="420" y2="560"/>
+          <line x1="480" y1="440" x2="480" y2="560"/>
+          <line x1="540" y1="440" x2="540" y2="560"/>
+          <line x1="600" y1="440" x2="600" y2="560"/>
+        </g>
+        <g class="glow-target">
+          <ellipse cx="330" cy="480" rx="34" ry="20" fill="#c23a2e" filter="url(#mistBlur)" class="heat-mist" style="animation-delay:0s"/>
+          <ellipse cx="420" cy="505" rx="40" ry="22" fill="#c23a2e" filter="url(#mistBlur)" class="heat-mist" style="animation-delay:.6s"/>
+          <ellipse cx="540" cy="490" rx="36" ry="20" fill="#c23a2e" filter="url(#mistBlur)" class="heat-mist" style="animation-delay:1.2s"/>
+          <ellipse cx="470" cy="525" rx="30" ry="18" fill="#c23a2e" filter="url(#mistBlur)" class="heat-mist" style="animation-delay:1.8s"/>
+        </g>
+        <text x="450" y="425" text-anchor="middle" class="lbl">瓷砖地面(发热)</text>
+      </g>
+
+      <!-- 裸露铁质立柱 -->
+      <g class="hotspot" data-id="ironColumn" data-touch="true" data-test="true">
+        <rect x="130" y="70" width="86" height="390" class="hit"/>
+        <rect x="150" y="70" width="46" height="390" rx="4" fill="#42474b" stroke="#1c1f22" stroke-width="3" class="glow-target"/>
+        <!-- 上法兰盘 -->
+        <rect x="136" y="58" width="74" height="16" rx="2" fill="#33383c" stroke="#1c1f22" stroke-width="2.5"/>
+        <circle cx="145" cy="66" r="3" fill="#6a6f73"/>
+        <circle cx="201" cy="66" r="3" fill="#6a6f73"/>
+        <circle cx="145" cy="66" r="1.4" fill="#1c1f22"/>
+        <circle cx="201" cy="66" r="1.4" fill="#1c1f22"/>
+        <!-- 下法兰盘 -->
+        <rect x="136" y="456" width="74" height="16" rx="2" fill="#33383c" stroke="#1c1f22" stroke-width="2.5"/>
+        <circle cx="145" cy="464" r="3" fill="#6a6f73"/>
+        <circle cx="201" cy="464" r="3" fill="#6a6f73"/>
+        <circle cx="145" cy="464" r="1.4" fill="#1c1f22"/>
+        <circle cx="201" cy="464" r="1.4" fill="#1c1f22"/>
+        <text x="173" y="45" text-anchor="middle" class="lbl">裸露铁质立柱</text>
+      </g>
+
+      <!-- PVC包裹工字钢立柱 -->
+      <g class="hotspot" data-id="pvcColumn" data-touch="true" data-test="true">
+        <rect x="668" y="70" width="96" height="390" class="hit"/>
+        <rect x="686" y="70" width="60" height="390" rx="8" fill="#e7e5df" stroke="#b9b6ac" stroke-width="3" class="glow-target"/>
+        <text x="716" y="55" text-anchor="middle" class="lbl">PVC包裹工字钢立柱</text>
+      </g>
+
+      <text x="450" y="150" text-anchor="middle" fill="#9a9488" font-size="13" font-family="Courier New,monospace" letter-spacing="1">室内 · 承重立柱与地面</text>
+    </svg>
+  </div>
+
+  <!-- ================= SCENE 2: 总闸 / 配电箱(无漏电保护) ================= -->
+  <div class="scene" id="scene-s2">
+    <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="900" height="560" fill="#f7f7f4"/>
+      <rect x="0" y="440" width="900" height="120" fill="#e4e2da"/>
+
+      <g id="cabinetClosed" class="hotspot" data-action="open-panel">
+        <rect x="300" y="80" width="300" height="380" rx="6" class="glow-target" fill="#5c6b60" stroke="#232f2a" stroke-width="3"/>
+        <rect x="320" y="100" width="260" height="340" rx="4" fill="#3c4a42" stroke="#232f2a"/>
+        <text x="450" y="280" text-anchor="middle" fill="#c9d4cf" font-size="30" font-weight="bold" font-family="Georgia,serif" letter-spacing="4">配电箱</text>
+        <text x="450" y="55" text-anchor="middle" class="lbl" font-size="13">检查配电箱</text>
+      </g>
+
+      <g id="cabinetOpen" style="display:none">
+        <rect x="220" y="55" width="460" height="430" rx="6" fill="#465850" stroke="#232f2a" stroke-width="3"/>
+
+        <g class="hotspot" data-id="mainbreaker" data-touch="true" data-test="true">
+          <rect x="270" y="185" width="360" height="150" rx="8" fill="transparent" class="hit"/>
+          <text x="450" y="220" text-anchor="middle" fill="#e8e6de" font-size="20" font-weight="bold" font-family="Georgia,serif">总闸</text>
+          <rect id="mainbreakerTrack" x="380" y="243" width="140" height="56" rx="28" class="glow-target" fill="#5f8f5a" stroke="#232f2a" stroke-width="2"/>
+          <circle id="mainbreakerKnob" cx="490" cy="271" r="22" fill="#fff" stroke="#232f2a" stroke-width="2"/>
+          <text x="450" y="325" text-anchor="middle" class="lbl">总闸</text>
+        </g>
+
+      </g>
+    </svg>
+  </div>
+
+  <!-- ================= SCENE 3: 楼体外墙 · 钢筋绕线处(冒烟) ================= -->
+  <div class="scene" id="scene-s3">
+    <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="smokeBlurMain" x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="6"/>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="900" height="560" fill="#8f8471"/>
+      <g stroke="#78705f" stroke-width="1">
+        <line x1="0" y1="120" x2="900" y2="120"/>
+        <line x1="0" y1="220" x2="900" y2="220"/>
+        <line x1="0" y1="320" x2="900" y2="320"/>
+        <line x1="0" y1="420" x2="900" y2="420"/>
+        <line x1="100" y1="0" x2="100" y2="560"/>
+        <line x1="260" y1="0" x2="260" y2="560"/>
+        <line x1="420" y1="0" x2="420" y2="560"/>
+        <line x1="580" y1="0" x2="580" y2="560"/>
+        <line x1="740" y1="0" x2="740" y2="560"/>
+      </g>
+      <!-- 墙面钻孔,钢筋从此垂直于墙面水平支出 -->
+      <ellipse cx="395" cy="270" rx="30" ry="40" fill="#332c22"/>
+      <ellipse cx="395" cy="270" rx="21" ry="30" fill="#181410"/>
+
+      <g class="hotspot" data-id="rebarWire" data-touch="true" data-test="true">
+        <rect x="0" y="195" width="900" height="120" class="hit"/>
+
+        <!-- 钢筋:从墙洞水平支出,垂直于墙面 -->
+        <rect id="l2Rebar" x="395" y="257" width="200" height="26" rx="13" fill="#9a958a" stroke="#5a5648" stroke-width="2" class="glow-target"/>
+        <ellipse cx="595" cy="270" rx="7" ry="13" fill="#807b6f" stroke="#5a5648" stroke-width="2"/>
+        <line x1="445" y1="257" x2="445" y2="283" stroke="#5a5648" stroke-width="2"/>
+        <line x1="505" y1="257" x2="505" y2="283" stroke="#5a5648" stroke-width="2"/>
+        <line x1="560" y1="257" x2="560" y2="283" stroke="#5a5648" stroke-width="2"/>
+
+        <!-- 两根线水平贯穿整个画面,彼此隔开、平行;各自在钢筋处绕成一个"又"字中间那样的圈,钢筋从圈心穿过 -->
+        <g id="l2WireIntact">
+          <!-- 白线(冒烟那根),圈在钢筋左段 -->
+          <path d="M0 250 L432 250 Q450 250 452 266" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="460" cy="270" rx="13" ry="20" fill="none" stroke="#efeadd" stroke-width="6"/>
+          <path d="M468 266 Q470 250 488 250 L900 250" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 黑线,圈在钢筋右段,与白线平行、隔开一点 -->
+          <path d="M0 290 L517 290 Q535 290 537 274" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="545" cy="270" rx="13" ry="20" fill="none" stroke="#221f1c" stroke-width="6"/>
+          <path d="M553 274 Q555 290 573 290 L900 290" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <!-- 剪断后的残端 -->
+        <g id="l2WireCutStubs" style="display:none">
+          <path d="M0 250 L432 250 Q450 250 452 266" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M468 266 Q470 250 488 250 L900 250" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0 290 L517 290 Q535 290 537 274" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M553 274 Q555 290 573 290 L900 290" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <!-- 修复完成:绝缘包裹 + 重新接好 -->
+        <g id="l2WireFixed" style="display:none">
+          <rect x="440" y="246" width="36" height="48" rx="8" fill="#3a3a3a"/>
+          <rect x="525" y="246" width="36" height="48" rx="8" fill="#3a3a3a"/>
+          <path d="M0 250 L432 250 Q450 250 452 266" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M468 266 Q470 250 488 250 L900 250" fill="none" stroke="#efeadd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0 290 L517 290 Q535 290 537 274" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M553 274 Q555 290 573 290 L900 290" fill="none" stroke="#221f1c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+
+        <!-- 白线在圈住钢筋处磨破,持续冒烟(烟雾特效) -->
+        <g id="l2Smoke">
+          <ellipse cx="460" cy="235" rx="15" ry="11" fill="#d9d5c8" filter="url(#smokeBlurMain)" class="smoke-puff" style="animation-delay:0s"/>
+          <ellipse cx="470" cy="228" rx="12" ry="9" fill="#d9d5c8" filter="url(#smokeBlurMain)" class="smoke-puff" style="animation-delay:.9s"/>
+          <ellipse cx="450" cy="230" rx="13" ry="10" fill="#d9d5c8" filter="url(#smokeBlurMain)" class="smoke-puff" style="animation-delay:1.8s"/>
+          <ellipse cx="462" cy="240" rx="10" ry="7" fill="#d9d5c8" filter="url(#smokeBlurMain)" class="smoke-puff" style="animation-delay:2.5s"/>
+        </g>
+
+        <text x="495" y="375" text-anchor="middle" class="lbl">缠线处 · 冒烟(白线)</text>
+      </g>
+
+      <!-- 放大镜:打开破损点特写 / 维修弹窗 -->
+      <g class="hotspot" data-id="zoom" data-touch="true">
+        <circle cx="490" cy="175" r="26" class="hit"/>
+        <circle cx="486" cy="171" r="13" fill="none" stroke="#2b2016" stroke-width="4" class="glow-target"/>
+        <line x1="495" y1="180" x2="506" y2="191" stroke="#2b2016" stroke-width="5" stroke-linecap="round"/>
+        <text x="490" y="211" text-anchor="middle" class="lbl">特写 / 检修</text>
+      </g>
+
+      <text x="450" y="90" text-anchor="middle" fill="#e8e2d2" font-size="13" font-family="Courier New,monospace" letter-spacing="1">楼体外墙 · 钢筋绕线处</text>
+    </svg>
+  </div>
+
+  <!-- ================= SHARED CHROME ================= -->
+  <div class="nav-arrow left" id="navLeft" title="上一个场景">
+    <svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="nav-arrow right" id="navRight" title="下一个场景">
+    <svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+
+  <div class="meter" id="meter">
+    <div class="mhead"><span>右键验电</span><span class="status" id="mstatus">待机</span></div>
+    <div class="toolbody">
+      <div class="pen-shape">
+        <div class="pen-body"></div>
+        <div class="pen-clip"></div>
+        <div class="pen-win" id="penWin"></div>
+        <div class="pen-tip" id="penTip"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notebook-btn" id="notebookBtn" title="线索笔记本">📓<span class="notebook-badge" id="notebookBadge" style="display:none">0</span></div>
+  <div class="hp-bar" title="生命值"><div class="hp-track"><div class="hp-fill" id="hpFill"></div></div></div>
+
+  <div class="casefile" id="casefileBtn" title="结案报告">📁</div>
+</div>
+
+<div class="toast" id="toast"><b>发现新线索</b><span id="toastText"></span></div>
+
+<!-- 破损点特写 / 维修弹窗 -->
+<div class="modal-bg" id="wireModal">
+  <div class="modal image-modal">
+    <div class="modal-close-icon" onclick="closeWireModal()">✕</div>
+    <svg class="zoom-svg" id="svgWireModal" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="smokeBlurModal" x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="4.5"/>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="400" height="260" fill="#1c1710"/>
+
+      <!-- 墙洞(局部,画面左边缘) -->
+      <ellipse cx="14" cy="130" rx="20" ry="48" fill="#332c22"/>
+      <ellipse cx="10" cy="130" rx="14" ry="38" fill="#181410"/>
+
+      <!-- 钢筋:水平从墙洞支出 -->
+      <rect x="20" y="113" width="335" height="34" rx="17" fill="#9a958a" stroke="#5a5648" stroke-width="2"/>
+      <ellipse cx="355" cy="130" rx="8" ry="17" fill="#807b6f" stroke="#5a5648" stroke-width="2"/>
+      <line x1="100" y1="113" x2="100" y2="147" stroke="#5a5648" stroke-width="2"/>
+      <line x1="190" y1="113" x2="190" y2="147" stroke="#5a5648" stroke-width="2"/>
+      <line x1="280" y1="113" x2="280" y2="147" stroke="#5a5648" stroke-width="2"/>
+
+      <!-- 白线(冒烟破损那根),水平方向延伸到左右边缘,在钢筋处绕成一个圈,钢筋从圈心穿过 -->
+      <path id="wmLiveEntry" d="M0 60 L170 60 Q186 60 188 106" fill="none" stroke="#efeadd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse id="wmLiveRing" cx="190" cy="130" rx="11" ry="24" fill="none" stroke="#efeadd" stroke-width="7"/>
+      <path id="wmLiveExit" d="M192 106 Q194 60 210 60 L400 60" fill="none" stroke="#efeadd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="wmLiveStubL" d="M0 60 L170 60 Q186 60 188 106" fill="none" stroke="#efeadd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="display:none"/>
+      <path id="wmLiveStubR" d="M192 106 Q194 60 210 60 L400 60" fill="none" stroke="#efeadd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="display:none"/>
+
+      <!-- 黑线,同样水平延伸到左右边缘,挂在钢筋同一处,和白线绕在一起、紧贴(过紧缠绕) -->
+      <path id="wmNeutralEntry" d="M0 185 L192 185 Q208 185 210 154" fill="none" stroke="#221f1c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse id="wmNeutralRing" cx="210" cy="130" rx="11" ry="24" fill="none" stroke="#221f1c" stroke-width="7"/>
+      <path id="wmNeutralExit" d="M212 154 Q214 185 230 185 L400 185" fill="none" stroke="#221f1c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="wmNeutralStubL" d="M0 185 L192 185 Q208 185 210 154" fill="none" stroke="#221f1c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="display:none"/>
+      <path id="wmNeutralStubR" d="M212 154 Q214 185 230 185 L400 185" fill="none" stroke="#221f1c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="display:none"/>
+
+      <!-- 白线冒烟(烟雾特效) -->
+      <g id="wmSmoke">
+        <ellipse cx="190" cy="95" rx="12" ry="9" fill="#d9d5c8" filter="url(#smokeBlurModal)" class="smoke-puff" style="animation-delay:0s"/>
+        <ellipse cx="198" cy="88" rx="10" ry="7" fill="#d9d5c8" filter="url(#smokeBlurModal)" class="smoke-puff" style="animation-delay:.9s"/>
+        <ellipse cx="182" cy="90" rx="10" ry="8" fill="#d9d5c8" filter="url(#smokeBlurModal)" class="smoke-puff" style="animation-delay:1.8s"/>
+      </g>
+
+      <!-- 图省事的"一刀全剪"陷阱区:两个圈紧贴在一起,乍看像一股线 -->
+      <g id="wmBundleTrap" class="hotspot zoom-tool">
+        <rect x="176" y="103" width="48" height="54" fill="#ffffff10" stroke="#e0c24a" stroke-width="1.5" stroke-dasharray="4 3" rx="6"/>
+        <text x="200" y="97" text-anchor="middle" fill="#e0c24a" font-size="10" font-family="Courier New,monospace">一刀剪断?</text>
+      </g>
+
+      <!-- 单独剪断点:白线(内圈左侧) -->
+      <g id="wmLiveCutPoint" class="hotspot zoom-tool">
+        <circle cx="179" cy="130" r="9" fill="#efeadd" stroke="#1c1710" stroke-width="1.5"/>
+        <text x="165" y="180" text-anchor="middle" fill="#efeadd" font-size="9" font-family="Courier New,monospace">剪白线</text>
+      </g>
+      <!-- 单独剪断点:黑线(外圈右侧) -->
+      <g id="wmNeutralCutPoint" class="hotspot zoom-tool">
+        <circle cx="221" cy="130" r="9" fill="#221f1c" stroke="#efeadd" stroke-width="1.5"/>
+        <text x="235" y="180" text-anchor="middle" fill="#cfd8e4" font-size="9" font-family="Courier New,monospace">剪黑线</text>
+      </g>
+
+      <!-- 绝缘包裹目标环(两根都剪断之后出现) -->
+      <circle id="wmTapeTarget" cx="200" cy="130" r="30" fill="none" stroke="#f0d47e" stroke-width="1.5" stroke-dasharray="3 3" style="display:none"/>
+      <!-- 已包好的绝缘层 -->
+      <rect id="wmTapeDone" x="170" y="98" width="60" height="64" rx="10" fill="#3a3a3a" style="display:none"/>
+
+      <!-- 可拖拽:绝缘胶带 -->
+      <g id="wmTapeIcon" transform="translate(60,225)" style="cursor:grab; display:none">
+        <circle r="18" fill="transparent"/>
+        <circle r="14" fill="#e0c24a" stroke="#8a6c2e" stroke-width="2"/>
+        <circle r="5" fill="#1c1710"/>
+        <text x="0" y="30" text-anchor="middle" fill="#e0c24a" font-size="9" font-family="Courier New,monospace">拖到钢筋</text>
+      </g>
+
+      <!-- 重新接线目标(接在剪口之间) -->
+      <rect id="wmReconnectTarget" x="165" y="92" width="70" height="76" fill="none" stroke="#f0d47e" stroke-width="1.5" stroke-dasharray="3 3" style="display:none"/>
+
+      <!-- 可拖拽:新导线段 -->
+      <g id="wmReconnectIcon" transform="translate(340,225)" style="cursor:grab; display:none">
+        <circle r="18" fill="transparent"/>
+        <rect x="-16" y="-6" width="32" height="12" rx="6" fill="#3a3a3a" stroke="#7a8a98" stroke-width="1.5"/>
+        <text x="0" y="30" text-anchor="middle" fill="#cfd8e4" font-size="9" font-family="Courier New,monospace">拖去接线</text>
+      </g>
+    </svg>
+    <div class="zoom-hint" id="wmHint">先右键验电确认,再分别左键剪断白线、黑线——千万别想着一刀全剪。</div>
+  </div>
+</div>
+
+<!-- clue notebook modal -->
+<div class="modal-bg" id="cluesModal">
+  <div class="modal">
+    <h3>线索笔记本</h3>
+    <div class="sub" id="cluesProgress">已发现 0 / 0 条线索</div>
+    <div id="cluesList"></div>
+    <button class="modal-close" onclick="closeModal('cluesModal')">合上笔记本</button>
+  </div>
+</div>
+
+<!-- final report modal -->
+<div class="modal-bg" id="reportModal">
+  <div class="modal report">
+    <h3>结案报告</h3>
+    <div class="sub">CASE FILE · 08 · 钢筋带电案</div>
+
+    <p>这栋居民楼入户的一路<b>火线</b>,在穿墙布线时被缠绕得过紧,长期机械挤压把绝缘皮磨穿了一整圈,裸露的铜芯直接压在了楼体的金属构件上——室内承重立柱、外墙钢筋、室外金属楼梯立柱,这些钢筋原本互相连通,如今变成了一整套隐形的带电网络。</p>
+
+    <p>更棘手的是,这处破损点在总闸的<b>前端</b>,属于供电公司的进户线源头,不受用户自家总闸管辖。业主以为拉了总闸就万事大吉,实际上总闸只切断了闸后的自家线路,闸前这一路故障线,以及被它搭上的整套楼体钢筋,从始至终都没有断电。</p>
+
+    <p>更雪上加霜的是,这栋楼<b>没有安装漏电保护器</b>,没有任何设备会在有人触碰带电金属体时自动跳闸保护——一旦有人靠上立柱或者楼梯扶手,后果全凭运气。</p>
+
+    <p>抢修时同样不能大意:现场同时存在零线、火线两根裸露导体,绝不能图省事一把钳子把两根一起剪断——那样钳子(以及握钳子的人)会瞬间成为零火之间的短路通道。正确做法是先验电确认,再零火分开、逐根处理。</p>
+
+    <div class="section-t">整改建议</div>
+    <ul>
+      <li>联系供电公司,在进户总表前端彻底隔离该故障火线,而不是仅仅依赖用户自家总闸。</li>
+      <li>对钢筋裸露搭接处重新包覆绝缘层,并对缠绕过紧的线路做规范化改布线。</li>
+      <li>加装漏电保护器,为类似的建筑金属体带电故障提供最后一道自动跳闸防线。</li>
+      <li>排查楼内其他金属构件(扶手、管道、护栏)是否存在同类搭接风险。</li>
+    </ul>
+
+    <button class="modal-close" onclick="closeModal('reportModal')">合上卷宗</button>
+  </div>
+</div>
+
+<!-- game over modal -->
+<div class="modal-bg" id="gameOverModal">
+  <div class="modal gameover">
+    <h3>⚡ 你被电死了。</h3>
+    <div class="sub">下辈子注意点。</div>
+    <button class="modal-close reborn-btn" id="rebornBtn">开启下一世</button>
+  </div>
+</div>
+
+<!-- reborn modal -->
+<div class="modal-bg" id="rebornModal">
+  <div class="modal reborn-modal">
+    <h3>我重生了！</h3>
+    <div class="sub">NEW LIFE</div>
+    <p>上一世,我在工作中因为粗心不小心被电死。这一世,我要成为电工王！</p>
+    <button class="modal-close reborn-btn" onclick="closeModal('rebornModal')">这一世,开始</button>
+  </div>
+</div>
+
+<!-- repair complete modal -->
+<div class="modal-bg" id="repairModal">
+  <div class="modal repair-modal">
+    <h3>✔ 维修完成</h3>
+    <div class="sub">REPAIR COMPLETE</div>
+    <div class="repair-analysis">
+      <p>入户火线因缠绕过紧磨破绝缘,裸铜芯搭接在楼体钢筋上,而破损点又恰好在总闸前端,导致总闸怎么拉都断不掉这套"隐形带电"的钢筋网络——楼里还偏偏没装漏电保护器,风险全靠人自己躲。</p>
+      <p>火线、零线分开逐根剪断,排除了持续放电;裸露的钢筋搭接点重新包好绝缘层;剪口处接上新的绝缘导线——这一路线路终于恢复了正常、安全的状态。</p>
+    </div>
+    <div class="repair-btns">
+      <button class="modal-close repair-btn" id="nextLevelBtn">下一关</button>
+      <button class="modal-close repair-btn" id="levelMapBtn">返回关卡地图</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================= DATA ========================= */
+const CLUE_TEXT = {
+  clue_iron_column_live:   '裸露立柱居然带电',
+  clue_pvc_column_live:    '包胶立柱一样带电',
+  clue_tile_floor_warm:    '瓷砖地面发热,另有隐情',
+  clue_rebar_wire_smoke:   '钢筋缠线处冒烟烧焦',
+  clue_wire_bare_copper:   '火线绝缘破损,铜芯搭接钢筋',
+  clue_live_cut:           '火线已单独剪断',
+  clue_neutral_cut:        '零线已单独剪断',
+  clue_wires_separated_ok: '零火分离,冒烟消失',
+  clue_rebar_insulated:    '钢筋裸露处已包好绝缘层',
+  clue_wire_reconnect_done:'导线已重新接好',
+  clue_ground_metal_safe:  '复测立柱,终于测不到电了',
+};
+const CLUE_DESC = {
+  clue_iron_column_live:'验电笔一碰裸露立柱就冲到最高档——这根承重立柱本不该带电,现在却和火线没什么两样。',
+  clue_pvc_column_live:'包着一层PVC看着规规矩矩,验电笔照样报警——保护的是穿在里面的线,不是已经带电的钢结构本体。',
+  clue_tile_floor_warm:'地面确实有点烫,但验电笔毫无反应,应该是地暖管道,和这起漏电没关系。',
+  clue_rebar_wire_smoke:'钢筋和电线缠在一起的地方冒着细烟,偶尔还蹦一下火花,是持续接地放电的证据。',
+  clue_wire_bare_copper:'扒开这一段才看清楚:白线的绝缘皮被缠得过紧磨穿了一整圈,里面的铜芯直接压在钢筋上。',
+  clue_live_cut:'先认清楚火线,单独剪断——冒烟明显小了一圈。',
+  clue_neutral_cut:'零线也单独剪开了,这一路彻底断电。',
+  clue_wires_separated_ok:'零火两根都已分开剪断,持续放电的现象终于消失了。',
+  clue_rebar_insulated:'给钢筋裸露的搭接点重新包上绝缘层,以后就算再有类似情况,也不会直接怼到钢筋上了。',
+  clue_wire_reconnect_done:'剪断的两头用新的绝缘导线重新接好,这一路线路恢复正常供电。',
+  clue_ground_metal_safe:'跑回楼里再测一次立柱,验电笔彻底没反应了——这次是真的安全了。',
+};
+const CORE_IDS = ['clue_iron_column_live','clue_pvc_column_live','clue_rebar_wire_smoke','clue_wire_bare_copper'];
+
+let discovered = new Set();
+let panelOpen=false, reportShown=false, repairDone=false;
+let mainSwitchOn = true;
+let liveCut=false, neutralCut=false, rebarInsulated=false, wireReconnected=false;
+let structureRepaired=false;
+
+function wireStillLive(){ return !(liveCut && neutralCut); }
+function checkWiresSeparated(){
+  if(liveCut && neutralCut){ reveal('clue_wires_separated_ok'); }
+}
+
+/* ========================= HP / 触电系统 ========================= */
+let hp = 100;
+function updateHP(){ $('#hpFill').style.width = Math.max(0,hp) + '%'; }
+function shock(level){
+  if(level>=2){ hp = 0; }
+  else if(level===1){ hp = Math.max(0, hp-50); }
+  updateHP();
+  if(hp<=0){ gameOver(); }
+}
+function gameOver(){
+  closeModal('wireModal');
+  openModal('gameOverModal');
+}
+$('#rebornBtn').addEventListener('click', ()=>{
+  try{ sessionStorage.setItem('reborn','1'); }catch(e){}
+  location.reload();
+});
+window.addEventListener('load', ()=>{
+  let reborn=false;
+  try{ reborn = sessionStorage.getItem('reborn')==='1'; sessionStorage.removeItem('reborn'); }catch(e){}
+  if(reborn){ setTimeout(()=> openModal('rebornModal'), 400); }
+});
+
+const SCENES = ['s1','s2','s3'];
+let sceneIndex = 0; // 默认停在室内
+
+/* ========================= HELPERS ========================= */
+function $(s,r=document){return r.querySelector(s);}
+function $all(s,r=document){return [...r.querySelectorAll(s)];}
+
+function reveal(id){
+  const existed = discovered.has(id);
+  discovered.add(id);
+  if(!existed){
+    toast(id);
+    updateNotebookBadge();
+    checkAutoReport();
+  }
+}
+function toast(id){
+  const t = CLUE_TEXT[id];
+  if(!t) return;
+  $('#toastText').textContent = t;
+  const el = $('#toast');
+  el.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+function updateNotebookBadge(){
+  const badge = $('#notebookBadge');
+  if(discovered.size>0){
+    badge.style.display='flex';
+    badge.textContent = discovered.size;
+  }
+}
+function renderNotebook(){
+  const ids = Object.keys(CLUE_TEXT);
+  $('#cluesProgress').textContent = `已发现 ${discovered.size} / ${ids.length} 条线索`;
+  const list = $('#cluesList');
+  list.innerHTML = '';
+  ids.forEach(id=>{
+    const found = discovered.has(id);
+    const div = document.createElement('div');
+    div.className = 'clue-item ' + (found?'found':'locked');
+    div.innerHTML = `<div class="t">${found? CLUE_TEXT[id] : '尚未发现的线索'}</div>` + (found? `<div class="d">${CLUE_DESC[id]}</div>` : '');
+    list.appendChild(div);
+  });
+}
+$('#notebookBtn').addEventListener('click', ()=>{
+  renderNotebook();
+  openModal('cluesModal');
+});
+function checkAutoReport(){
+  if(reportShown) return;
+  const ok = CORE_IDS.every(id=>discovered.has(id));
+  if(ok){
+    reportShown = true;
+    $('#casefileBtn').classList.add('show');
+    setTimeout(()=> openModal('reportModal'), 700);
+  }
+}
+$('#casefileBtn').addEventListener('click', ()=> openModal('reportModal'));
+
+function checkRepairComplete(){
+  if(repairDone) return;
+  if(liveCut && neutralCut && rebarInsulated && wireReconnected){
+    structureRepaired = true;
+    repairDone = true;
+    updateWireModalStage();
+    setTimeout(()=>{ closeModal('wireModal'); openModal('repairModal'); }, 600);
+  }
+}
+$('#nextLevelBtn').addEventListener('click', ()=>{
+  closeModal('repairModal');
+  $('#toastText').textContent = '下一关制作中,敬请期待!';
+  const el = $('#toast');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2600);
+});
+$('#levelMapBtn').addEventListener('click', ()=>{
+  closeModal('repairModal');
+  showScene(0);
+});
+function openModal(id){ $('#'+id).classList.add('show'); }
+function closeModal(id){ $('#'+id).classList.remove('show'); }
+
+/* ========================= TOOL: 验电笔 ========================= */
+function usePen(level){
+  const statusText = level===0 ? '无电' : (level===1 ? '有微弱电压' : '危险');
+  const statusClass = level===0 ? 'safe' : (level===1 ? 'caution' : 'danger');
+  $('#mstatus').textContent = statusText;
+  $('#mstatus').className = 'status ' + statusClass;
+  const winClass = level===0 ? '' : (level===1 ? 'lvl1' : 'lvl2');
+  $('#penWin').className = 'pen-win ' + winClass;
+  $('#penTip').className = 'pen-tip ' + winClass;
+}
+function resetTool(){ usePen(0); $('#mstatus').textContent='待机'; $('#mstatus').className='status'; }
+
+/* ========================= SCENE NAV ========================= */
+function showScene(idx){
+  sceneIndex = (idx+SCENES.length)%SCENES.length;
+  $all('.scene').forEach(s=>s.classList.remove('active'));
+  $('#scene-'+SCENES[sceneIndex]).classList.add('active');
+  resetTool();
+}
+$('#navLeft').addEventListener('click', ()=> showScene(sceneIndex-1));
+$('#navRight').addEventListener('click', ()=> showScene(sceneIndex+1));
+
+/* ========================= SCENE 1: 室内 ========================= */
+function s1Touch(id){
+  if(id==='ironColumn' || id==='pvcColumn'){
+    if(structureRepaired){ reveal('clue_ground_metal_safe'); return; }
+    shock(1);
+    return;
+  }
+  if(id==='tileFloor'){ reveal('clue_tile_floor_warm'); }
+}
+function s1Test(id){
+  if(id==='ironColumn'){
+    const live = !structureRepaired;
+    usePen(live?2:0);
+    if(live) reveal('clue_iron_column_live'); else reveal('clue_ground_metal_safe');
+  }
+  if(id==='pvcColumn'){
+    const live = !structureRepaired;
+    usePen(live?2:0);
+    if(live) reveal('clue_pvc_column_live'); else reveal('clue_ground_metal_safe');
+  }
+  if(id==='tileFloor'){
+    usePen(0);
+    reveal('clue_tile_floor_warm');
+  }
+}
+
+/* ========================= SCENE 2: 配电箱 ========================= */
+$('#cabinetClosed').addEventListener('click', ()=>{
+  panelOpen = true;
+  $('#cabinetClosed').style.display='none';
+  $('#cabinetOpen').style.display='block';
+});
+function updateBreakerVisual(){
+  $('#mainbreakerTrack').setAttribute('fill', mainSwitchOn ? '#5f8f5a' : '#8a3a3a');
+  $('#mainbreakerKnob').setAttribute('cx', mainSwitchOn ? 490 : 410);
+}
+updateBreakerVisual();
+function toggleMainSwitch(){
+  mainSwitchOn = !mainSwitchOn; // 纯手动开关,不受任何条件限制——但这次不管开关怎么切,楼体钢筋照样带电
+  updateBreakerVisual();
+}
+function s2Touch(id){
+  if(id==='mainbreaker'){ toggleMainSwitch(); }
+}
+function s2Test(id){
+  if(id==='mainbreaker'){ usePen(0); }
+}
+
+/* ========================= SCENE 3: 钢筋绕线处 ========================= */
+function updateOutdoorWireVisual(){
+  const stillLive = wireStillLive();
+  $('#l2Smoke').style.display = stillLive ? '' : 'none';
+  if(structureRepaired){
+    $('#l2WireIntact').style.display='none';
+    $('#l2WireCutStubs').style.display='none';
+    $('#l2WireFixed').style.display='';
+  } else if(!stillLive){
+    $('#l2WireIntact').style.display='none';
+    $('#l2WireCutStubs').style.display='';
+    $('#l2WireFixed').style.display='none';
+  } else {
+    $('#l2WireIntact').style.display='';
+    $('#l2WireCutStubs').style.display='none';
+    $('#l2WireFixed').style.display='none';
+  }
+}
+function s3Touch(id){
+  if(id==='rebarWire'){
+    if(wireStillLive()){ shock(2); return; }
+    reveal('clue_wires_separated_ok');
+    return;
+  }
+  if(id==='zoom'){ openWireModal(); }
+}
+function s3Test(id){
+  if(id==='rebarWire'){
+    const live = wireStillLive();
+    usePen(live?2:0);
+    if(live) reveal('clue_rebar_wire_smoke');
+  }
+}
+
+/* ---------- 破损点 / 维修弹窗内部逻辑 ---------- */
+function openWireModal(){
+  reveal('clue_wire_bare_copper');
+  updateWireModalStage();
+  openModal('wireModal');
+}
+function closeWireModal(){ closeModal('wireModal'); }
+
+function updateWireModalStage(){
+  // 贴在一起的裸线(未剪):完整线(入口+圈+出口) vs 残端
+  $('#wmLiveEntry').style.display = liveCut ? 'none' : '';
+  $('#wmLiveRing').style.display  = liveCut ? 'none' : '';
+  $('#wmLiveExit').style.display  = liveCut ? 'none' : '';
+  $('#wmNeutralEntry').style.display = neutralCut ? 'none' : '';
+  $('#wmNeutralRing').style.display  = neutralCut ? 'none' : '';
+  $('#wmNeutralExit').style.display  = neutralCut ? 'none' : '';
+  $('#wmLiveStubL').style.display   = liveCut ? '' : 'none';
+  $('#wmLiveStubR').style.display   = liveCut ? '' : 'none';
+  $('#wmNeutralStubL').style.display= neutralCut ? '' : 'none';
+  $('#wmNeutralStubR').style.display= neutralCut ? '' : 'none';
+  $('#wmSmoke').style.display = (liveCut && neutralCut) ? 'none' : '';
+
+  // 一刀全剪陷阱:只在两根都还没剪时可用
+  $('#wmBundleTrap').style.display = (!liveCut && !neutralCut) ? '' : 'none';
+  // 单独剪断点:各自剪完就消失
+  $('#wmLiveCutPoint').style.display    = liveCut ? 'none' : '';
+  $('#wmNeutralCutPoint').style.display = neutralCut ? 'none' : '';
+
+  const bothCut = liveCut && neutralCut;
+  // 绝缘包裹阶段
+  $('#wmTapeTarget').style.display = (bothCut && !rebarInsulated) ? '' : 'none';
+  $('#wmTapeIcon').style.display   = (bothCut && !rebarInsulated) ? '' : 'none';
+  $('#wmTapeDone').style.display   = rebarInsulated ? '' : 'none';
+
+  // 接线阶段
+  $('#wmReconnectTarget').style.display = (rebarInsulated && !wireReconnected) ? '' : 'none';
+  $('#wmReconnectIcon').style.display   = (rebarInsulated && !wireReconnected) ? '' : 'none';
+
+  // 修复完成后,把接线图形也画成最终态(重新恢复完整的圈)
+  if(wireReconnected){
+    $('#wmLiveStubL').style.display='none';
+    $('#wmLiveStubR').style.display='none';
+    $('#wmNeutralStubL').style.display='none';
+    $('#wmNeutralStubR').style.display='none';
+    $('#wmLiveEntry').style.display='';
+    $('#wmLiveRing').style.display='';
+    $('#wmLiveExit').style.display='';
+    $('#wmNeutralEntry').style.display='';
+    $('#wmNeutralRing').style.display='';
+    $('#wmNeutralExit').style.display='';
+  }
+
+  const hint = $('#wmHint');
+  if(!liveCut && !neutralCut) hint.textContent = '先右键验电确认,再分别左键剪断白线、黑线——千万别想着一刀全剪。';
+  else if(!bothCut) hint.textContent = '很好,继续把剩下那一根也单独剪断。';
+  else if(!rebarInsulated) hint.textContent = '把绝缘胶带拖到钢筋裸露的搭接点上。';
+  else if(!wireReconnected) hint.textContent = '把新导线拖到剪口之间,完成接线。';
+  else hint.textContent = '这一路线路已经修复。';
+
+  updateOutdoorWireVisual();
+}
+
+$('#wmBundleTrap').addEventListener('click', ()=>{
+  if(liveCut || neutralCut) return; // 已经不是"一整捆"了
+  shock(2); // 图省事一把全剪,钳子同时搭上零火两根——当场去世
+});
+$('#wmLiveCutPoint').addEventListener('click', ()=>{
+  if(liveCut) return;
+  liveCut = true;
+  reveal('clue_live_cut');
+  checkWiresSeparated();
+  updateWireModalStage();
+});
+$('#wmNeutralCutPoint').addEventListener('click', ()=>{
+  if(neutralCut) return;
+  neutralCut = true;
+  reveal('clue_neutral_cut');
+  checkWiresSeparated();
+  updateWireModalStage();
+});
+
+/* 绝缘胶带 / 新导线:拖拽到目标区域 */
+function setupModalDrag(iconId, targetX, targetY, restX, restY, onDrop){
+  const svg = $('#svgWireModal');
+  const icon = $('#'+iconId);
+  function svgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+  let dragging=false;
+  icon.addEventListener('pointerdown', (e)=>{
+    if(icon.style.display==='none') return;
+    dragging=true;
+    icon.setPointerCapture(e.pointerId);
+    icon.style.cursor='grabbing';
+  });
+  icon.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const p = svgPoint(e);
+    icon.setAttribute('transform', `translate(${p.x},${p.y})`);
+  });
+  function endDrag(){
+    if(!dragging) return;
+    dragging=false;
+    icon.style.cursor='grab';
+    const m = /translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/.exec(icon.getAttribute('transform'));
+    const cx = m?parseFloat(m[1]):restX, cy = m?parseFloat(m[2]):restY;
+    const dist = Math.hypot(cx-targetX, cy-targetY);
+    if(dist<40){ onDrop(); }
+    else { icon.setAttribute('transform', `translate(${restX},${restY})`); }
+  }
+  icon.addEventListener('pointerup', endDrag);
+  icon.addEventListener('pointercancel', endDrag);
+}
+setupModalDrag('wmTapeIcon', 200, 130, 60, 225, ()=>{
+  rebarInsulated = true;
+  reveal('clue_rebar_insulated');
+  updateWireModalStage();
+});
+setupModalDrag('wmReconnectIcon', 200, 130, 340, 225, ()=>{
+  wireReconnected = true;
+  reveal('clue_wire_reconnect_done');
+  updateWireModalStage();
+  checkRepairComplete();
+});
+
+/* ========================= INPUT: LEFT CLICK = TOUCH, RIGHT CLICK = TESTER ========================= */
+document.addEventListener('click', (e)=>{
+  const hs = e.target.closest('.hotspot');
+  if(!hs) return;
+  if(hs.id==='cabinetClosed') return;
+  if(hs.closest('#wireModal')) return; // 弹窗内部有自己的监听
+  const id = hs.dataset.id;
+  if(!id) return;
+  const scene = hs.closest('.scene').id.replace('scene-','');
+  if(scene==='s1') s1Touch(id);
+  if(scene==='s2') s2Touch(id);
+  if(scene==='s3') s3Touch(id);
+});
+
+document.addEventListener('contextmenu', (e)=>{
+  const target = e.target.closest('[data-test="true"]');
+  if(!target){
+    if(e.target.closest('.game-window')) e.preventDefault();
+    return;
+  }
+  e.preventDefault();
+  const id = target.dataset.id;
+  const scene = target.closest('.scene').id.replace('scene-','');
+  if(scene==='s1') s1Test(id);
+  if(scene==='s2') s2Test(id);
+  if(scene==='s3') s3Test(id);
+});
+
+updateOutdoorWireVisual();
+updateWireModalStage();
+</script>
+</body>
+</html>
