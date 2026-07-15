@@ -602,6 +602,16 @@
 			.modal.gameover:before {
 				content: none;
 			}
+			.gameover-img {
+				display: block;
+				max-width: 220px;
+				max-height: 220px;
+				width: auto;
+				height: auto;
+				margin: 0 auto 14px;
+				border-radius: 6px;
+				filter: drop-shadow(0 0 14px rgba(211, 47, 47, 0.55));
+			}
 			.modal.gameover h3 {
 				color: var(--danger-light);
 				font-size: 26px;
@@ -1316,6 +1326,7 @@
 		<!-- game over modal -->
 		<div class="modal-bg" id="gameOverModal">
 			<div class="modal gameover">
+				<img class="gameover-img" src="dead.png" alt="" onerror="this.style.display='none'" />
 				<h3 data-i18n="gameOverTitle">⚡ 你被电死了。</h3>
 				<div class="sub" data-i18n="gameOverSub">下辈子注意点。</div>
 				<button class="modal-close reborn-btn" id="rebornBtn" data-i18n="rebornBtnText">开启下一世</button>
