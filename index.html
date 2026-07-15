@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>哪里漏电？ / Electrical Leak</title>
+		<title>Electrical Leak</title>
 
 		<!-- 漫画风格字体（分语言使用） -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -805,6 +805,7 @@
 			// ================== 关卡进度 ==================
 			const TOTAL_LEVELS = 10;
 			const STORAGE_KEY = "leak_progress";
+			const LANG_STORAGE_KEY = "leak_lang"; // 语言设置持久化 key,关卡页面(如 1.html)也会读取同一个 key 以继承语言
 
 			// 默认进度：目前只做好了第 1 关，所以初始进度为 0（0 关通关 → 第 1 关解锁，其余全部上锁）。
 			// 之后每做好新的一关，等玩家实际通关后调用 window.markLevelComplete(n) 会自动往后解锁，这里不用再手动改。
@@ -861,7 +862,7 @@
 					el.className = "level-circle " + (isCompleted ? "is-completed" : isCurrent ? "is-current" : "is-locked");
 
 					if (!isLocked) {
-						el.href = `${n}.html`;
+						el.href = `${n}.html?lang=${encodeURIComponent(currentLang)}`;
 					} else {
 						el.setAttribute("aria-disabled", "true");
 					}
@@ -908,6 +909,12 @@
 			let currentLang = detectDefaultLang();
 
 			function detectDefaultLang() {
+				// 1) 优先使用之前保存过的语言选择
+				try {
+					const saved = localStorage.getItem(LANG_STORAGE_KEY);
+					if (saved && LANGS[saved]) return saved;
+				} catch (e) {}
+				// 2) 否则根据浏览器语言猜测
 				const nav = (navigator.language || "en").toLowerCase();
 				if (nav.startsWith("zh-tw") || nav.startsWith("zh-hk")) return "zh-TW";
 				if (nav.startsWith("zh")) return "zh-CN";
@@ -936,6 +943,11 @@
 			function applyLang(code) {
 				currentLang = code;
 				const L = LANGS[code];
+
+				// 持久化保存,关卡页面(如 1.html)会读取同一个 key 继承语言设置
+				try {
+					localStorage.setItem(LANG_STORAGE_KEY, code);
+				} catch (e) {}
 
 				labelLevel.textContent = L.level;
 				labelLang.textContent = L.lang;
