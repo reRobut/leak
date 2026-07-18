@@ -499,7 +499,6 @@
 					<p data-i18n="repairP2">由于全楼接地电阻本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的上游——不管住户怎么在家里拉闸都没用。真正的解法在老电表间:先隔窗验电确认无误,打开箱门后危险随即解除,再用绝缘套把这处破损的火线重新包好。</p>
 				</div>
 				<div class="repair-btns">
-					<button class="modal-close repair-btn" id="nextLevelBtn" data-i18n="nextLevelBtn">下一关</button>
 					<button class="modal-close repair-btn" id="levelMapBtn" data-i18n="levelMapBtn">返回关卡地图</button>
 				</div>
 			</div>
@@ -539,7 +538,7 @@
 					repairTitle: `✔ 维修完成`, repairSub: `维修完成`,
 					repairP1: `这里是全楼的老电表间——早年的电表就装在这几扇窗子后面,后来改造,电表被挪到了别处,几乎没人会再打开检查。客户家的火线绝缘皮破损,火线搭在了箱门上,造成一片焦黑的打火痕迹。`,
 					repairP2: `由于全楼接地电阻本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的上游——不管住户怎么在家里拉闸都没用。真正的解法在老电表间:先隔窗验电确认无误,打开箱门后危险随即解除,再用绝缘套把这处破损的火线重新包好。`,
-					nextLevelBtn: `下一关`, levelMapBtn: `返回关卡地图`, nextLevelToast: `下一关制作中,敬请期待!`,
+					levelMapBtn: `返回关卡地图`,
 					penNone: `无电`, penLow: `有微弱电压`, penDanger: `危险`,
 					zoomPrefix: `🔍 特写`, reportPrefix: `📁 结案报告`,
 					cluesProgress: `已发现 {d} / {t} 条线索`,
@@ -556,7 +555,7 @@
 				},
 				"en": {
 					cabinetHeader: `INDOOR PANEL · IN-HOME CONTROL`,
-					mainBreakerLabel: `Main Breaker`, rcdLabel: `RCD`, rcdLbl: `Residual-Current Device`,
+					mainBreakerLabel: `Main`, rcdLabel: `RCD`, rcdLbl: `RCD`,
 					hoodLbl: `Range Hood`,
 					sceneLabel_s3: `Old Meter Room`, sceneHint_s3: `Inspect the old meter room`,
 					doorPanelLbl: `Inside of the door`, wirePanelLbl: `Wiring`, insulationSleeveLbl: `Insulation sleeve, drag onto the bare wire`,
@@ -580,7 +579,7 @@
 					repairTitle: `✔ Repair Complete`, repairSub: `REPAIR COMPLETE`,
 					repairP1: `This is the building's old meter room — the meters used to sit behind these windows. After a later renovation they were moved elsewhere, and almost no one opens this room to check anymore. The customer's live wire had damaged insulation and came to rest against the cabinet door, leaving a patch of scorched black arc marks.`,
 					repairP2: `Because the building's grounding resistance was already too high, this leakage current flowed back through the earth network into every household's outlet earth pins, quietly putting every earthed appliance casing at close to 220V. All of this happened upstream of the main breaker — no matter how a resident flipped switches at home, it made no difference. The real fix is here in the old meter room: test through the window first, open the door once confirmed safe, then re-insulate the damaged wire with an insulation sleeve.`,
-					nextLevelBtn: `Next Level`, levelMapBtn: `Back to Level Map`, nextLevelToast: `The next level is in progress, stay tuned!`,
+					levelMapBtn: `Back to Level Map`,
 					penNone: `No voltage`, penLow: `Slight voltage`, penDanger: `Danger`,
 					zoomPrefix: `🔍 Close-up`, reportPrefix: `📁 Case File`,
 					cluesProgress: `{d} / {t} clues found`,
@@ -595,9 +594,9 @@
 						clue_other_splices_ok: {t:`The other meter windows are clean`, d:`Opening the remaining meter windows, the doors are all clean bare metal with no arc marks, and the wires all sit properly in place — clearing them of suspicion.`},
 					}
 				},
-				"es": {
+				"es-LA": {
 					cabinetHeader: `PANEL INTERIOR · CONTROL DE LA VIVIENDA`,
-					mainBreakerLabel: `Interruptor principal`, rcdLabel: `Diferencial`, rcdLbl: `Interruptor diferencial`,
+					mainBreakerLabel: `Principal`, rcdLabel: `Diferencial`, rcdLbl: `Diferencial`,
 					hoodLbl: `Campana extractora`,
 					sceneLabel_s3: `Antiguo cuarto de medidores`, sceneHint_s3: `Revisar el antiguo cuarto de medidores`,
 					doorPanelLbl: `Interior de la puerta`, wirePanelLbl: `Cableado`, insulationSleeveLbl: `Funda aislante, arrástrala sobre el cable pelado`,
@@ -621,7 +620,7 @@
 					repairTitle: `✔ Reparación completa`, repairSub: `REPARACIÓN COMPLETA`,
 					repairP1: `Este es el antiguo cuarto de medidores de todo el edificio: los medidores solían estar detrás de estas ventanas. Tras una reforma posterior los trasladaron a otro sitio, y casi nadie vuelve a abrir esta sala para revisarla. El cable de fase de la vivienda del cliente tenía el aislamiento dañado y quedó apoyado contra la puerta del gabinete, dejando una mancha de marcas de arco ennegrecidas.`,
 					repairP2: `Como la resistencia de puesta a tierra del edificio ya era demasiado alta, esta corriente de fuga refluyó por la red de tierra hacia los pines de tierra de los enchufes de cada vivienda, dejando con tensión —cerca de 220V— la carcasa de cualquier aparato conectado a tierra. Todo esto ocurrió antes del interruptor principal: por más que un vecino manipulara sus propios interruptores en casa, no cambiaba nada. La solución real está aquí, en el antiguo cuarto de medidores: probar primero a través de la ventana, abrir la puerta una vez confirmado que es seguro, y volver a aislar el cable dañado con una funda aislante.`,
-					nextLevelBtn: `Siguiente nivel`, levelMapBtn: `Volver al mapa de niveles`, nextLevelToast: `¡El siguiente nivel está en construcción, mantente atento!`,
+					levelMapBtn: `Volver al mapa de niveles`,
 					penNone: `Sin corriente`, penLow: `Voltaje leve`, penDanger: `Peligro`,
 					zoomPrefix: `🔍 Primer plano`, reportPrefix: `📁 Expediente`,
 					cluesProgress: `{d} / {t} pistas encontradas`,
@@ -638,7 +637,7 @@
 				},
 				"ko": {
 					cabinetHeader: `실내 배전함 · 세대 총괄 제어`,
-					mainBreakerLabel: `총개폐기`, rcdLabel: `누전차단기`, rcdLbl: `누전 차단기`,
+					mainBreakerLabel: `총개폐기`, rcdLabel: `누전차단기`, rcdLbl: `누전차단기`,
 					hoodLbl: `레인지 후드`,
 					sceneLabel_s3: `옛 전기계량기실`, sceneHint_s3: `옛 전기계량기실 조사하기`,
 					doorPanelLbl: `문 안쪽`, wirePanelLbl: `배선`, insulationSleeveLbl: `절연 슬리브, 드래그해서 노출된 전선에 씌우세요`,
@@ -662,7 +661,7 @@
 					repairTitle: `✔ 수리 완료`, repairSub: `수리 완료`,
 					repairP1: `이곳은 건물 전체의 옛 전기계량기실이다——예전에는 계량기가 바로 이 창문들 뒤에 설치되어 있었다. 이후 개조 공사를 거치며 계량기는 다른 곳으로 옮겨졌고, 이제는 이 방을 열어 점검하는 사람이 거의 없다. 고객 집으로 들어가는 활선의 절연피복이 손상되어 활선이 배전함 문에 닿아 있었고, 그 결과 새까맣게 그을린 아크 흔적이 남았다.`,
 					repairP2: `건물 전체의 접지 저항이 원래부터 심하게 높았기 때문에, 이 누설 전류는 접지망을 타고 각 세대 콘센트의 접지 구멍으로 역류해 들어갔고, 집안에서 접지된 모든 전자제품 외함이 은밀히 220V에 가까운 전압을 띠게 되었다. 이 모든 일은 총개폐기의 상류에서 벌어진 것이라, 세대마다 아무리 집 안의 개폐기를 껐다 켰다 해봐야 아무 소용이 없었다. 진짜 해법은 이 옛 전기계량기실에 있다: 먼저 창 너머로 검전하고, 안전이 확인되면 문을 연 뒤, 절연 슬리브로 손상된 전선을 다시 감싸는 것이다.`,
-					nextLevelBtn: `다음 레벨`, levelMapBtn: `레벨 맵으로 돌아가기`, nextLevelToast: `다음 레벨은 제작 중입니다, 기대해 주세요!`,
+					levelMapBtn: `레벨 맵으로 돌아가기`,
 					penNone: `무전압`, penLow: `약한 전압 감지`, penDanger: `위험`,
 					zoomPrefix: `🔍 클로즈업`, reportPrefix: `📁 사건 보고서`,
 					cluesProgress: `{d} / {t}개 단서 발견`,
@@ -703,7 +702,7 @@
 					repairTitle: `✔ 維修完成`, repairSub: `維修完成`,
 					repairP1: `這裡是全樓的老電表間——早年的電表就裝在這幾扇窗子後面,後來改造,電表被挪到了別處,幾乎沒人會再打開檢查。客戶家的火線絕緣皮破損,火線搭在了箱門上,造成一片焦黑的打火痕跡。`,
 					repairP2: `由於全樓接地電阻本就偏高,這股漏電流順著接地網路"倒灌"進了各家插座的地線插孔,家裡所有接了地線的電器外殼都悄悄帶上了接近220V的電壓。這一切都發生在總開關的上游——不管住戶怎麼在家裡拉閘都沒用。真正的解法在老電表間:先隔窗驗電確認無誤,打開箱門後危險隨即解除,再用絕緣套把這處破損的火線重新包好。`,
-					nextLevelBtn: `下一關`, levelMapBtn: `返回關卡地圖`, nextLevelToast: `下一關製作中,敬請期待!`,
+					levelMapBtn: `返回關卡地圖`,
 					penNone: `無電`, penLow: `有微弱電壓`, penDanger: `危險`,
 					zoomPrefix: `🔍 特寫`, reportPrefix: `📁 結案報告`,
 					cluesProgress: `已發現 {d} / {t} 條線索`,
@@ -720,7 +719,7 @@
 				},
 				"de": {
 					cabinetHeader: `INNENVERTEILER · WOHNUNGSSTEUERUNG`,
-					mainBreakerLabel: `Hauptschalter`, rcdLabel: `FI-Schutzschalter`, rcdLbl: `Fehlerstrom-Schutzschalter`,
+					mainBreakerLabel: `Haupt`, rcdLabel: `FI-Schalter`, rcdLbl: `FI-Schalter`,
 					hoodLbl: `Dunstabzugshaube`,
 					sceneLabel_s3: `Alter Zählerraum`, sceneHint_s3: `Alten Zählerraum untersuchen`,
 					doorPanelLbl: `Innenseite der Tür`, wirePanelLbl: `Verkabelung`, insulationSleeveLbl: `Isolierhülse, auf das blanke Kabel ziehen`,
@@ -744,7 +743,7 @@
 					repairTitle: `✔ Reparatur abgeschlossen`, repairSub: `REPARATUR ABGESCHLOSSEN`,
 					repairP1: `Dies ist der alte Zählerraum des ganzen Gebäudes — früher standen die Stromzähler genau hinter diesen Fenstern. Nach einem späteren Umbau wurden sie andernorts untergebracht, und heute öffnet kaum noch jemand diesen Raum zur Kontrolle. Die Isolierung des Außenleiters in der Wohnung des Kunden war beschädigt, sodass der Leiter an der Schranktür auflag und dort verkohlte, schwarze Brandspuren hinterließ.`,
 					repairP2: `Da der Erdungswiderstand des Gebäudes ohnehin schon zu hoch war, floss dieser Fehlerstrom über das Erdungsnetz zurück in die Schutzkontakte sämtlicher Steckdosen und setzte jedes geerdete Gerätegehäuse unbemerkt unter fast 220V. All das geschah vor dem Hauptschalter — egal wie die Bewohner zu Hause ihre Schalter betätigten, es änderte nichts. Die wirkliche Lösung liegt hier im alten Zählerraum: zuerst durch das Fenster prüfen, nach Bestätigung der Sicherheit die Tür öffnen, und den beschädigten Leiter dann mit einer Isolierhülse neu isolieren.`,
-					nextLevelBtn: `Nächstes Level`, levelMapBtn: `Zurück zur Levelkarte`, nextLevelToast: `Das nächste Level ist in Arbeit, bleib dran!`,
+					levelMapBtn: `Zurück zur Levelkarte`,
 					penNone: `Keine Spannung`, penLow: `Leichte Spannung`, penDanger: `Gefahr`,
 					zoomPrefix: `🔍 Nahaufnahme`, reportPrefix: `📁 Fallakte`,
 					cluesProgress: `{d} / {t} Hinweise gefunden`,
@@ -761,7 +760,7 @@
 				},
 				"fr": {
 					cabinetHeader: `TABLEAU INTÉRIEUR · CONTRÔLE DU LOGEMENT`,
-					mainBreakerLabel: `Disjoncteur principal`, rcdLabel: `Différentiel`, rcdLbl: `Disjoncteur différentiel`,
+					mainBreakerLabel: `Général`, rcdLabel: `Différentiel`, rcdLbl: `Différentiel`,
 					hoodLbl: `Hotte aspirante`,
 					sceneLabel_s3: `Ancien local des compteurs`, sceneHint_s3: `Inspecter l'ancien local des compteurs`,
 					doorPanelLbl: `Intérieur de la porte`, wirePanelLbl: `Câblage`, insulationSleeveLbl: `Gaine isolante, glissez-la sur le fil dénudé`,
@@ -785,7 +784,7 @@
 					repairTitle: `✔ Réparation terminée`, repairSub: `RÉPARATION TERMINÉE`,
 					repairP1: `Voici l'ancien local des compteurs de tout l'immeuble — autrefois, les compteurs se trouvaient juste derrière ces fenêtres. Après une rénovation ultérieure, ils ont été déplacés ailleurs, et presque plus personne n'ouvre cette pièce pour la vérifier. Le fil de phase du logement du client avait son isolant endommagé et reposait contre la porte de l'armoire, laissant une tache de traces d'arc noircies.`,
 					repairP2: `La résistance de terre de l'immeuble étant déjà trop élevée, ce courant de fuite est remonté par le réseau de terre jusqu'aux broches de terre des prises de chaque logement, mettant discrètement sous tension —près de 220V— le boîtier de tout appareil mis à la terre. Tout cela s'est produit en amont du disjoncteur principal — quoi que fasse un résident avec ses interrupteurs chez lui, cela ne changeait rien. La vraie solution se trouve ici, dans l'ancien local des compteurs : tester d'abord à travers la fenêtre, ouvrir la porte une fois la sécurité confirmée, puis réisoler le fil endommagé avec une gaine isolante.`,
-					nextLevelBtn: `Niveau suivant`, levelMapBtn: `Retour à la carte des niveaux`, nextLevelToast: `Le niveau suivant est en préparation, restez à l'écoute !`,
+					levelMapBtn: `Retour à la carte des niveaux`,
 					penNone: `Pas de tension`, penLow: `Légère tension`, penDanger: `Danger`,
 					zoomPrefix: `🔍 Gros plan`, reportPrefix: `📁 Dossier`,
 					cluesProgress: `{d} / {t} indices trouvés`,
@@ -802,7 +801,7 @@
 				},
 				"ru": {
 					cabinetHeader: `ВНУТРЕННИЙ ЩИТ · УПРАВЛЕНИЕ КВАРТИРОЙ`,
-					mainBreakerLabel: `Главный автомат`, rcdLabel: `УЗО`, rcdLbl: `Устройство защитного отключения`,
+					mainBreakerLabel: `Автомат`, rcdLabel: `УЗО`, rcdLbl: `УЗО`,
 					hoodLbl: `Вытяжка`,
 					sceneLabel_s3: `Старая комната счётчиков`, sceneHint_s3: `Осмотреть старую комнату счётчиков`,
 					doorPanelLbl: `Внутренняя сторона дверцы`, wirePanelLbl: `Проводка`, insulationSleeveLbl: `Изоляционная муфта, перетащите на оголённый провод`,
@@ -826,7 +825,7 @@
 					repairTitle: `✔ Ремонт завершён`, repairSub: `РЕМОНТ ЗАВЕРШЁН`,
 					repairP1: `Это старая комната счётчиков всего дома — раньше счётчики стояли прямо за этими окошками. После позднейшей реконструкции их перенесли в другое место, и теперь эту комнату почти никто не открывает для проверки. Изоляция фазного провода в квартире клиента была повреждена, провод лёг на дверцу щита, оставив пятно почерневших следов дуги.`,
 					repairP2: `Поскольку сопротивление заземления дома и так было слишком высоким, этот ток утечки пошёл по сети заземления обратно в заземляющие контакты розеток каждой квартиры, незаметно подняв корпус любого заземлённого прибора почти до 220В. Всё это происходило до главного автомата — как бы жильцы ни щёлкали выключателями дома, это ничего не меняло. Настоящее решение здесь, в старой комнате счётчиков: сначала проверить через окошко, после подтверждения безопасности открыть дверцу, а затем заново заизолировать повреждённый провод изоляционной муфтой.`,
-					nextLevelBtn: `Следующий уровень`, levelMapBtn: `Назад к карте уровней`, nextLevelToast: `Следующий уровень в разработке, следите за обновлениями!`,
+					levelMapBtn: `Назад к карте уровней`,
 					penNone: `Нет напряжения`, penLow: `Слабое напряжение`, penDanger: `Опасно`,
 					zoomPrefix: `🔍 Крупный план`, reportPrefix: `📁 Дело`,
 					cluesProgress: `Найдено улик: {d} / {t}`,
@@ -867,7 +866,7 @@
 					repairTitle: `✔ 修理完了`, repairSub: `修理完了`,
 					repairP1: `ここは建物全体の旧電気メーター室だ——かつてメーターはこの窓の裏側に設置されていた。その後の改修でメーターは別の場所へ移され、今ではこの部屋を開けて点検する人はほとんどいない。お客様宅の電源線は絶縁被覆が破損し、電線が配電盤の扉に触れて、真っ黒に焦げたアーク痕を残していた。`,
 					repairP2: `建物全体の接地抵抗がもともと高すぎたため、この漏れ電流は接地網を伝って各戸コンセントの接地極へ逆流し、接地されたあらゆる電化製品の外装をひそかに220V近い電圧に帯電させていた。これらはすべて主開閉器の上流側で起きていたことであり、住人が自宅でどうブレーカーを操作しても意味がなかった。本当の解決策はこの旧電気メーター室にある——まず窓越しに検電し、安全を確認してから扉を開け、破損した電線を絶縁スリーブで巻き直す。`,
-					nextLevelBtn: `次のレベル`, levelMapBtn: `レベルマップに戻る`, nextLevelToast: `次のレベルは制作中です、お楽しみに!`,
+					levelMapBtn: `レベルマップに戻る`,
 					penNone: `無電圧`, penLow: `微弱な電圧あり`, penDanger: `危険`,
 					zoomPrefix: `🔍 クローズアップ`, reportPrefix: `📁 事件報告書`,
 					cluesProgress: `{d} / {t} 件の手がかりを発見`,
@@ -884,7 +883,7 @@
 				},
 				"pt-BR": {
 					cabinetHeader: `QUADRO INTERNO · CONTROLE DA RESIDÊNCIA`,
-					mainBreakerLabel: `Disjuntor geral`, rcdLabel: `DR`, rcdLbl: `Dispositivo Diferencial Residual`,
+					mainBreakerLabel: `Geral`, rcdLabel: `DR`, rcdLbl: `DR`,
 					hoodLbl: `Coifa`,
 					sceneLabel_s3: `Antiga sala de medidores`, sceneHint_s3: `Inspecionar a antiga sala de medidores`,
 					doorPanelLbl: `Parte interna da porta`, wirePanelLbl: `Fiação`, insulationSleeveLbl: `Luva isolante, arraste até o fio exposto`,
@@ -908,7 +907,7 @@
 					repairTitle: `✔ Reparo concluído`, repairSub: `REPARO CONCLUÍDO`,
 					repairP1: `Esta é a antiga sala de medidores do prédio inteiro — antigamente os medidores ficavam bem atrás dessas janelas. Após uma reforma posterior, foram transferidos para outro lugar, e quase ninguém mais abre esta sala para verificar. O fio fase da casa do cliente estava com o isolamento danificado e ficou encostado na porta do quadro, deixando uma mancha de marcas de arco enegrecidas.`,
 					repairP2: `Como a resistência de aterramento do prédio já era alta demais, essa corrente de fuga voltou pela rede de aterramento até os pinos terra das tomadas de cada residência, deixando discretamente energizada — a quase 220V — a carcaça de qualquer aparelho aterrado. Tudo isso aconteceu a montante do disjuntor geral — por mais que um morador mexesse nos disjuntores em casa, não fazia diferença. A solução real está aqui, na antiga sala de medidores: testar primeiro através da janela, abrir a porta assim que confirmada a segurança, e reisolar o fio danificado com uma luva isolante.`,
-					nextLevelBtn: `Próximo nível`, levelMapBtn: `Voltar ao mapa de níveis`, nextLevelToast: `O próximo nível está em produção, fique ligado!`,
+					levelMapBtn: `Voltar ao mapa de níveis`,
 					penNone: `Sem tensão`, penLow: `Tensão leve`, penDanger: `Perigo`,
 					zoomPrefix: `🔍 Close`, reportPrefix: `📁 Relatório do caso`,
 					cluesProgress: `{d} / {t} pistas encontradas`,
@@ -944,15 +943,28 @@
 				return c ? c.d : "";
 			}
 
+			function resolveLangCode(code) {
+				if (!code) return "zh-CN";
+				if (I18N[code]) return code;
+				// 精确匹配失败:按基础语言(连字符/下划线前的部分)兜底匹配,
+				// 比如菜单传来的是 "es-419"/"es_MX" 这类地区变体,也能对上我们这里的 "es"
+				const base = code.split(/[-_]/)[0].toLowerCase();
+				const keys = Object.keys(I18N);
+				let found = keys.find((k) => k.toLowerCase() === base);
+				if (found) return found;
+				found = keys.find((k) => k.toLowerCase().split(/[-_]/)[0] === base);
+				if (found) return found;
+				return "zh-CN";
+			}
 			function applyLang(code) {
-				if (!I18N[code]) code = "zh-CN";
+				code = resolveLangCode(code);
 				currentLang = code;
 				GameUI.saveLang(code, LANG_STORAGE_KEY);
 				GameUI.syncLangUrl(code);
 				const L = Object.assign({}, I18N["zh-CN"], I18N[code]);
 				document.documentElement.lang = code;
 
-				GameUI.applyDataI18n(L, code);
+				GameUI.applyDataI18n(L, code); // 配电箱/总闸/漏保这些共享词汇由 guide.js 的 GameUI.GLOSSARY 统一提供翻译,这里不需要也不应该再覆盖
 
 				if (lastPenLevel === null) {
 					GameUI.resetMeterStandby(L.meterStandby);
@@ -966,11 +978,10 @@
 				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
 			}
 
+			// 配电箱/总闸/漏保这些共享组件的收窄,guide.js 已经通过 data-fit-width 自动处理了,这里只需要列本关自己独有的文字
 			const SVG_FIT_MAP = [
-				{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 360 },
-				{ selector: '[data-i18n="cabinetHeader"]', maxWidth: 420 },
-				{ selector: '[data-i18n="mainBreakerLabel"]', maxWidth: 330 },
-				{ selector: '[data-i18n="rcdLabel"]', maxWidth: 330 },
+				{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 300 },
+				{ selector: '[data-i18n="insulationSleeveLbl"]', maxWidth: 220 },
 			];
 
 			const CORE_IDS = CLUE_IDS.slice();
@@ -1068,10 +1079,6 @@
 					setTimeout(() => openModal("repairModal"), 500);
 				}
 			}
-			$("#nextLevelBtn").addEventListener("click", () => {
-				closeModal("repairModal");
-				location.href = `4.html?lang=${encodeURIComponent(currentLang)}`;
-			});
 			$("#levelMapBtn").addEventListener("click", () => {
 				closeModal("repairModal");
 				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;

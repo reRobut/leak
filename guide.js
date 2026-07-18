@@ -754,14 +754,14 @@
 		);
 		ensureCabinetStyles();
 		const header = cfg.headerKey
-			? `<text x="250" y="85" fill="#d9c79e" font-size="12" font-family="Courier New,monospace" data-i18n="${cfg.headerKey}">${cfg.headerDefault}</text>`
+			? `<text x="250" y="85" fill="#d9c79e" font-size="12" font-family="Courier New,monospace" data-i18n="${cfg.headerKey}" data-fit-width="380">${cfg.headerDefault}</text>`
 			: "";
 		return (
 			'<g id="cabinetClosed" class="hotspot" data-action="open-panel">' +
 			'<rect x="300" y="80" width="300" height="380" rx="6" class="glow-target" fill="#5c6b60" stroke="#232f2a" stroke-width="3"/>' +
 			'<rect x="320" y="100" width="260" height="340" rx="4" fill="#3c4a42" stroke="#232f2a"/>' +
-			`<text x="450" y="280" text-anchor="middle" fill="#c9d4cf" font-size="${cfg.bigLabelFontSize}" font-weight="bold" font-family="Georgia,serif" letter-spacing="4" data-i18n="${cfg.bigLabelKey}">${cfg.bigLabelDefault}</text>` +
-			`<text x="450" y="55" text-anchor="middle" class="lbl" font-size="13" data-i18n="${cfg.hintLabelKey}">${cfg.hintLabelDefault}</text>` +
+			`<text x="450" y="280" text-anchor="middle" fill="#c9d4cf" font-size="${cfg.bigLabelFontSize}" font-weight="bold" font-family="Georgia,serif" letter-spacing="4" data-i18n="${cfg.bigLabelKey}" data-fit-width="230">${cfg.bigLabelDefault}</text>` +
+			`<text x="450" y="55" text-anchor="middle" class="lbl" font-size="13" data-i18n="${cfg.hintLabelKey}" data-fit-width="270">${cfg.hintLabelDefault}</text>` +
 			"</g>" +
 			'<g id="cabinetOpen" style="display:none">' +
 			'<rect x="220" y="55" width="460" height="430" rx="6" fill="#465850" stroke="#232f2a" stroke-width="3"/>' +
@@ -794,15 +794,25 @@
 		const knobCx = cfg.initialOn ? trackX + 110 : trackX + 30;
 		const knobCy = trackY + 28;
 		const fill = cfg.initialOn ? "#5f8f5a" : "#8a3a3a";
+		const fitW = Math.max(60, cfg.w - 40); // 留出内边距,并且这里直接用这个开关实际的宽度算,不管调用方传了多宽的 w 都能自动适配
 		return (
 			`<g class="hotspot" data-id="${cfg.id}" data-touch="true" data-test="true">` +
 			`<rect x="${cfg.x}" y="${cfg.y}" width="${cfg.w}" height="${cfg.h}" rx="8" fill="transparent" class="hit"/>` +
-			`<text x="${cx}" y="${cfg.y + 35}" text-anchor="middle" fill="#e8e6de" font-size="22" font-weight="bold" font-family="Georgia,serif" data-i18n="${cfg.bigLabelKey}">${cfg.bigLabelDefault}</text>` +
+			`<text x="${cx}" y="${cfg.y + 35}" text-anchor="middle" fill="#e8e6de" font-size="22" font-weight="bold" font-family="Georgia,serif" data-i18n="${cfg.bigLabelKey}" data-fit-width="${fitW}">${cfg.bigLabelDefault}</text>` +
 			`<rect id="${cfg.id}Track" x="${trackX}" y="${trackY}" width="140" height="56" rx="28" class="glow-target" fill="${fill}" stroke="#232f2a" stroke-width="2"/>` +
 			`<circle id="${cfg.id}Knob" class="breaker-knob" cx="${knobCx}" cy="${knobCy}" r="22" fill="#fff" stroke="#232f2a" stroke-width="2"/>` +
-			`<text x="${cx}" y="${cfg.y + 140}" text-anchor="middle" class="lbl" data-i18n="${cfg.smallLabelKey}">${cfg.smallLabelDefault}</text>` +
+			`<text x="${cx}" y="${cfg.y + 140}" text-anchor="middle" class="lbl" data-i18n="${cfg.smallLabelKey}" data-fit-width="${fitW}">${cfg.smallLabelDefault}</text>` +
 			"</g>"
 		);
+	};
+
+	// 扫描所有带 data-fit-width 的元素并按各自标注的宽度自动收窄——配电箱/开关这些"每关尺寸都固定"的
+	// 共享组件,生成时已经把正确的可用宽度写进了 data-fit-width,关卡自己不需要再维护一份重复的 SVG_FIT_MAP
+	GameUI.fitDataWidths = function () {
+		document.querySelectorAll("[data-fit-width]").forEach((el) => {
+			const mw = parseFloat(el.getAttribute("data-fit-width"));
+			if (!isNaN(mw)) GameUI.fitSvgText(el, mw);
+		});
 	};
 
 	// 开关拨动后调用,同步轨道颜色 + 滑块位置
@@ -825,7 +835,7 @@
 		closedEl.addEventListener("click", () => {
 			closedEl.style.display = "none";
 			if (openEl) openEl.style.display = "block";
-			if (typeof onOpen === "function") onOpen();
+			if (typeof onOpen === "function") onOpen(); // 关卡自己的回调里一般都会紧接着调用 GameUI.fitAllSvgTexts(SVG_FIT_MAP),data-fit-width 的收窄已经并入了那个函数,这里不用重复调用
 		});
 	};
 
@@ -954,22 +964,66 @@
 		}
 	};
 
-	// 部分语言(如德语)单词明显更长,场景大标题等 SVG 文字超宽时自动压缩字距/字宽,而不是溢出
+	// 部分语言(如德语)单词明显更长,场景大标题等 SVG 文字超宽时自动处理,而不是任由它溢出:
+	// 文字里有空格(多个单词)就按词数从中间拆成两行;没有空格(单个长词,拆不了)才压缩字距/字宽。
 	GameUI.fitSvgText = function (el, maxWidth) {
+		// 如果上一次语言切换把它拆成了两行,这次先拼回单行原文再重新判断——
+		// 换成更短的语言之后,可能已经不需要再拆行了
+		if (el.querySelector("tspan")) {
+			el.textContent = Array.from(el.querySelectorAll("tspan"))
+				.map((t) => t.textContent)
+				.join(" ");
+		}
 		el.removeAttribute("textLength");
 		el.removeAttribute("lengthAdjust");
+
 		let len = 0;
 		try {
 			len = el.getComputedTextLength();
 		} catch (e) {
-			return; // 元素当前不可见(所在场景未激活)时测不出宽度,交给场景切换时的调用来补上
+			return; // 元素当前不可见(所在场景未激活)时测不出宽度,交给场景切换/开门时的调用来补上
 		}
-		if (len > maxWidth) {
+		if (len <= maxWidth) return; // 没超,不用处理
+
+		const text = el.textContent;
+		const words = text.trim().split(/\s+/);
+
+		if (words.length < 2) {
+			// 没有空格可拆,只能压缩字距/字宽
 			el.setAttribute("textLength", maxWidth);
 			el.setAttribute("lengthAdjust", "spacingAndGlyphs");
+			return;
 		}
+
+		// 有空格:按词数从中间拆成两行,分别居中对齐在原来的 x 上
+		const x = el.getAttribute("x");
+		const yBase = parseFloat(el.getAttribute("y")) || 0;
+		const fontSize = parseFloat(el.getAttribute("font-size")) || parseFloat(getComputedStyle(el).fontSize) || 16;
+		const lineGap = fontSize * 1.05;
+		const mid = Math.ceil(words.length / 2);
+		const lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+
+		el.textContent = "";
+		const svgNS = "http://www.w3.org/2000/svg";
+		lines.forEach((line, i) => {
+			const tspan = document.createElementNS(svgNS, "tspan");
+			tspan.setAttribute("x", x);
+			tspan.setAttribute("y", yBase + (i === 0 ? -lineGap * 0.55 : lineGap * 0.55));
+			tspan.textContent = line;
+			el.appendChild(tspan);
+			let lineLen = 0;
+			try {
+				lineLen = tspan.getComputedTextLength();
+			} catch (e) {}
+			if (lineLen > maxWidth) {
+				// 拆开之后某一行还是太长(比如某个词本身就很长),这一行单独再压缩兜底
+				tspan.setAttribute("textLength", maxWidth);
+				tspan.setAttribute("lengthAdjust", "spacingAndGlyphs");
+			}
+		});
 	};
 	GameUI.fitAllSvgTexts = function (map) {
+		GameUI.fitDataWidths(); // 配电箱/总闸/漏保这些共享组件,凡是标了 data-fit-width 的,每次调用这里都顺带收一遍
 		(map || []).forEach(({ selector, maxWidth }) => {
 			document.querySelectorAll(selector).forEach((el) => GameUI.fitSvgText(el, maxWidth));
 		});

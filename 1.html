@@ -1470,11 +1470,7 @@ function applyLang(code) {
    用 textLength + lengthAdjust 让文字在超过容器宽度时自动压缩字距/字宽,而不是溢出(算法在 GameUI.fitSvgText 里)。
    只有隐藏(display:none)的场景里,SVG 文字无法测量真实宽度,所以每次切换场景时也要重新调用一次。 */
 const SVG_FIT_MAP = [
-	{ selector: '[data-i18n="cabinetLabel"]', maxWidth: 260 },
 	{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 360 },
-	{ selector: '[data-i18n="cabinetHeader"]', maxWidth: 420 },
-	{ selector: '[data-i18n="mainBreakerLabel"]', maxWidth: 330 },
-	{ selector: '[data-i18n="rcdLabel"]', maxWidth: 330 },
 ];
 
 			const CORE_IDS = ["clue_rcd_tripped", "clue_ground_live", "clue_heater_scorched", "clue_heater_live", "clue_necklace", "clue_ground_cut", "clue_no_continuity"];
