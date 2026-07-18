@@ -151,7 +151,7 @@
 				position: absolute;
 				left: 12px;
 				bottom: 12px;
-				z-index: 16;
+				z-index: 96;
 				width: 40px;
 				height: 40px;
 				border-radius: 6px;
@@ -183,7 +183,7 @@
 				position: absolute;
 				left: 12px;
 				top: 12px;
-				z-index: 16;
+				z-index: 96;
 				width: 40px;
 				height: 40px;
 				border-radius: 6px;
@@ -254,7 +254,7 @@
 				position: absolute;
 				top: 14px;
 				left: 50%;
-				z-index: 80;
+				z-index: 97;
 				background: var(--paper);
 				border: 2px solid var(--brass);
 				padding: 9px 16px;
@@ -313,7 +313,7 @@
 				width: min(460px, 100%);
 				overflow: visible;
 			}
-			.image-modal:before {
+			.modal.image-modal:before {
 				content: none;
 			}
 			.zoom-svg {
@@ -324,10 +324,10 @@
 			}
 			.modal-close-icon {
 				position: absolute;
-				top: -14px;
-				right: -14px;
-				width: 30px;
-				height: 30px;
+				top: 8px;
+				right: 8px;
+				width: 28px;
+				height: 28px;
 				border-radius: 50%;
 				background: var(--paper);
 				border: 2px solid var(--ink);
@@ -396,15 +396,33 @@
 
 						<circle cx="180" cy="438" r="21" fill="none" stroke="#9fb6cc" stroke-width="1.5" stroke-dasharray="3 3" />
 						<rect x="165" y="423" width="30" height="30" rx="6" fill="#fbfdff" stroke="#aebccb" stroke-width="1.3" />
-						<rect x="177" y="426" width="6" height="8" rx="1.2" fill="#20242a" />
-						<rect x="169.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 174 442.75)" />
-						<rect x="181.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 186 442.75)" />
+						<g class="hotspot socket-hole" data-id="kettleHolePE" data-test="true">
+							<circle cx="180" cy="430" r="8" fill="transparent" />
+							<rect x="177" y="426" width="6" height="8" rx="1.2" fill="#20242a" />
+						</g>
+						<g class="hotspot socket-hole" data-id="kettleHoleN" data-test="true">
+							<circle cx="174" cy="442.75" r="8" fill="transparent" />
+							<rect x="169.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 174 442.75)" />
+						</g>
+						<g class="hotspot socket-hole" data-id="kettleHoleL" data-test="true">
+							<circle cx="186" cy="442.75" r="8" fill="transparent" />
+							<rect x="181.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 186 442.75)" />
+						</g>
 
 						<circle cx="260" cy="438" r="21" fill="none" stroke="#9fb6cc" stroke-width="1.5" stroke-dasharray="3 3" />
 						<rect x="245" y="423" width="30" height="30" rx="6" fill="#fbfdff" stroke="#aebccb" stroke-width="1.3" />
-						<rect x="257" y="426" width="6" height="8" rx="1.2" fill="#20242a" />
-						<rect x="249.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 254 442.75)" />
-						<rect x="261.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 266 442.75)" />
+						<g class="hotspot socket-hole" data-id="heaterHolePE" data-test="true">
+							<circle cx="260" cy="430" r="8" fill="transparent" />
+							<rect x="257" y="426" width="6" height="8" rx="1.2" fill="#20242a" />
+						</g>
+						<g class="hotspot socket-hole" data-id="heaterHoleN" data-test="true">
+							<circle cx="254" cy="442.75" r="8" fill="transparent" />
+							<rect x="249.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 254 442.75)" />
+						</g>
+						<g class="hotspot socket-hole" data-id="heaterHoleL" data-test="true">
+							<circle cx="266" cy="442.75" r="8" fill="transparent" />
+							<rect x="261.5" y="440.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 266 442.75)" />
+						</g>
 					</g>
 
 					<g class="hotspot" data-id="kettle" data-touch="true" data-test="true">
@@ -648,9 +666,18 @@
 					</svg>
 					<!-- 墙上插座:桌角插排的电源来源,插头可拖出/插回 -->
 					<rect x="660" y="352" width="32" height="32" rx="6" fill="#eef3f8" stroke="#c3ccd4" stroke-width="1.5" />
-					<rect x="673" y="356" width="6" height="8" rx="1.2" fill="#20242a" />
-					<rect x="666.5" y="368.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 671 370.75)" />
-					<rect x="676.5" y="368.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 681 370.75)" />
+					<g class="hotspot socket-hole" data-id="wallHolePE" data-test="true">
+						<circle cx="676" cy="360" r="8" fill="transparent" />
+						<rect x="673" y="356" width="6" height="8" rx="1.2" fill="#20242a" />
+					</g>
+					<g class="hotspot socket-hole" data-id="wallHoleN" data-test="true">
+						<circle cx="671" cy="370.75" r="8" fill="transparent" />
+						<rect x="666.5" y="368.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 671 370.75)" />
+					</g>
+					<g class="hotspot socket-hole" data-id="wallHoleL" data-test="true">
+						<circle cx="681" cy="370.75" r="8" fill="transparent" />
+						<rect x="676.5" y="368.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 681 370.75)" />
+					</g>
 
 					<line id="sceneWallCord" x1="702" y1="326" x2="676" y2="368" stroke="#7a8a98" stroke-width="3" stroke-linecap="round" />
 					<g id="sceneWallPlug" transform="translate(676,368)" style="cursor: grab">
@@ -783,9 +810,18 @@
 
 					<!-- 插排接墙上插座:可拖出拔下,也可以插回去 -->
 					<rect x="14" y="196" width="34" height="34" rx="6" fill="#eef3f8" stroke="#c3ccd4" stroke-width="1.5" />
-					<rect x="28" y="201" width="6" height="8" rx="1.2" fill="#20242a" />
-					<rect x="21.5" y="213.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 26 215.75)" />
-					<rect x="31.5" y="213.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 36 215.75)" />
+					<g id="wallSocketHolePE" class="zoom-tool" data-hole="PE" data-socket="wall">
+						<circle cx="31" cy="205" r="10" fill="transparent" />
+						<rect x="28" y="201" width="6" height="8" rx="1.2" fill="#20242a" />
+					</g>
+					<g id="wallSocketHoleN" class="zoom-tool" data-hole="N" data-socket="wall">
+						<circle cx="26" cy="215.75" r="10" fill="transparent" />
+						<rect x="21.5" y="213.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(-20 26 215.75)" />
+					</g>
+					<g id="wallSocketHoleL" class="zoom-tool" data-hole="L" data-socket="wall">
+						<circle cx="36" cy="215.75" r="10" fill="transparent" />
+						<rect x="31.5" y="213.5" width="9" height="4.5" rx="1" fill="#20242a" transform="rotate(20 36 215.75)" />
+					</g>
 
 					<line id="stripWallCord" x1="61" y1="190" x2="31" y2="213" stroke="#7a8a98" stroke-width="4" stroke-linecap="round" />
 					<g id="stripWallPlug" transform="translate(31,213)" style="cursor: grab">
@@ -803,9 +839,18 @@
 
 					<!-- 标准三孔插座:上方接地孔 + 下方左右两个八字斜插孔 -->
 					<rect x="172" y="76" width="96" height="96" rx="16" fill="#fbfdff" stroke="#aebccb" stroke-width="2.5" />
-					<rect x="213" y="92" width="14" height="24" rx="3" fill="#1a1a1a" />
-					<rect x="187" y="135.5" width="26" height="13" rx="3" fill="#1a1a1a" transform="rotate(-20 200 142)" />
-					<rect x="227" y="135.5" width="26" height="13" rx="3" fill="#1a1a1a" transform="rotate(20 240 142)" />
+					<g id="socketHolePE" class="zoom-tool" data-hole="PE" data-socket="strip">
+						<circle cx="220" cy="104" r="14" fill="transparent" />
+						<rect x="213" y="92" width="14" height="24" rx="3" fill="#1a1a1a" />
+					</g>
+					<g id="socketHoleN" class="zoom-tool" data-hole="N" data-socket="strip">
+						<circle cx="200" cy="142" r="14" fill="transparent" />
+						<rect x="187" y="135.5" width="26" height="13" rx="3" fill="#1a1a1a" transform="rotate(-20 200 142)" />
+					</g>
+					<g id="socketHoleL" class="zoom-tool" data-hole="L" data-socket="strip">
+						<circle cx="240" cy="142" r="14" fill="transparent" />
+						<rect x="227" y="135.5" width="26" height="13" rx="3" fill="#1a1a1a" transform="rotate(20 240 142)" />
+					</g>
 
 					<!-- 高温氧化发黑的项链,以空心椭圆链环连接,严格搭在接地孔与火线孔(右侧斜孔)之间 -->
 					<g id="zoomNecklace" class="zoom-tool">
@@ -1566,6 +1611,7 @@ const SVG_FIT_MAP = [
 				lastPenLevel = level;
 				const L = I18N[currentLang];
 				const statusText = level === 0 ? L.penNone : level === 1 ? L.penLow : L.penDanger;
+				if (level === 2) GameUI.playDangerBeep();
 				GameUI.usePen(level, statusText);
 			}
 
@@ -1632,9 +1678,23 @@ const SVG_FIT_MAP = [
 			}
 			updateRCDVisual(); // 页面加载时先同步一次(默认总闸开着、漏保跳闸)
 
+			/* 漏保已经合闸的情况下,如果后续发生的事让"漏电电流能被漏保看见"这个条件成立了
+			   (插上热水器 / 重新接好地线 / 总闸重新合上),漏保应该立刻自己跳闸,
+			   不需要等玩家再去手动扳一下开关——这才是漏保真实的工作方式:
+			   它是持续监测的,不是只在"合闸的那一下"才检查一次 */
+			function reevaluateRCD() {
+				if (rcdOn && mainSwitchOn && faultActive() && (groundFixed || heaterPlugged)) {
+					rcdOn = false;
+					updateRCDVisual();
+					GameUI.playTripSound();
+					reveal("clue_rcd_tripped");
+				}
+			}
+
 			function toggleMainSwitch() {
 				mainSwitchOn = !mainSwitchOn; // 总闸就是个手动开关,永远随便切,不受任何条件限制
 				updateRCDVisual();
+				if (mainSwitchOn) reevaluateRCD();
 			}
 			function toggleRCD() {
 				if (rcdOn) {
@@ -1645,9 +1705,11 @@ const SVG_FIT_MAP = [
 						rcdOn = true; // 短路点已消除,合闸稳定
 					} else if (groundFixed) {
 						rcdOn = false; // 真接地已恢复,漏保正常动作,短路仍在→立刻跳闸
+						GameUI.playTripSound();
 						reveal("clue_rcd_tripped");
 					} else if (heaterPlugged) {
 						rcdOn = false; // 热水器插着,漏保检测到经它泄漏的电流→跳闸
+						GameUI.playTripSound();
 						reveal("clue_rcd_tripped");
 					} else {
 						rcdOn = true; // 热水器拔了,漏保"看不见"这条泄漏路径→假性合闸成功
@@ -1681,6 +1743,21 @@ const SVG_FIT_MAP = [
 			/* ========================= SCENE 2 LOGIC ========================= */
 			function s2Touch(id) {
 				const dangerNow = dangerActive();
+
+				/* 摸孔触电:三个插座的火线孔/地线孔只要真的带电,伸手去摸就该触电,
+				   跟右键验电用的是完全同一套判定,不能验电测出"危险"、手一摸却没事 */
+				if (id === "kettleHoleL" || id === "heaterHoleL" || id === "wallHoleL") {
+					if (powerOn()) shock(2); // 火线孔:摸到就是直接接触带电导体,不管故障存不存在都是重度触电
+					return;
+				}
+				if (id === "kettleHoleN" || id === "heaterHoleN" || id === "wallHoleN") {
+					return; // 零线孔,摸了没事
+				}
+				if (id === "kettleHolePE" || id === "heaterHolePE" || id === "wallHolePE") {
+					if (dangerNow) shock(2); // 地线孔:短路故障还在、桌角插排插着墙,母线带电,摸了一样重度触电
+					return;
+				}
+
 				if (id === "kettle") {
 					if (kettlePlugged && dangerNow) {
 						shock(2);
@@ -1701,8 +1778,46 @@ const SVG_FIT_MAP = [
 					openModal("socketModal");
 				}
 			}
+			// "桌角插排"(项链短路点所在的那个,靠墙、带自己的插头)本身是否有电:
+			// 总闸+漏保都合上,且它自己插着墙上插座——和短路故障存不存在无关。
+			// 注意:烧水壶/热水器插的是另一张桌子的插排,直接接墙,不受这个变量影响。
+			function stripLive() {
+				return powerOn() && stripWallPlugged;
+			}
 			function s2Test(id) {
 				const dangerNow = dangerActive();
+
+				/* 三孔插座逐孔验电:烧水壶插座 / 热水器插座 / 桌角插排自己的插孔(在弹窗里),
+				   - 火线孔:烧水壶、热水器这张桌子的插排是直接接墙的,没有独立的墙插头,
+				     只要总闸+漏保合上就有电,和"桌角插排"插没插墙无关
+				   - 零线孔:这次的相地短路故障不会波及零线,始终安全
+				   - 地线孔:全楼各插座的地线并联共用同一根母线,只要短路故障还在(项链没拔)、
+				     且桌角插排插着墙(短路电流真的在流)就会一起带电;项链一拔,或桌角插排拔了墙,
+				     母线上没有电流流动,地线孔立刻恢复安全——这跟烧水壶/热水器插座本身接不接墙无关 */
+				if (id === "kettleHoleL" || id === "heaterHoleL") {
+					usePen(powerOn() ? 2 : 0);
+					return;
+				}
+				/* 墙上插座是插排的电源来源,本身就是进线端:只要总闸+漏保都合上就有电,
+				   不需要"插排插着墙上插座"这个条件——反过来说,插排插不插正是由这个插座决定的 */
+				if (id === "wallHoleL") {
+					usePen(powerOn() ? 2 : 0);
+					return;
+				}
+				if (id === "kettleHoleN" || id === "heaterHoleN" || id === "wallHoleN") {
+					usePen(0);
+					return;
+				}
+				if (id === "wallHolePE" || id === "kettleHolePE" || id === "heaterHolePE") {
+					// 三个插座的地线孔本质是同一根裸露母线,只要短路故障还在(项链没拔)、
+					// 桌角插排插着墙(短路电流真的在流),就该是同一个危险档位,不分测的是哪个插座
+					usePen(dangerNow ? 2 : 0);
+					if (dangerNow) {
+						reveal(id === "heaterHolePE" ? "clue_heater_live" : id === "kettleHolePE" ? "clue_kettle_live" : "clue_ground_live");
+					}
+					return;
+				}
+
 				if (id === "kettle") {
 					const live = kettlePlugged && dangerNow;
 					usePen(live ? 2 : 0);
@@ -1721,6 +1836,22 @@ const SVG_FIT_MAP = [
 					usePen(dangerNow ? 2 : 0);
 				}
 			}
+			function touchSocketHole(hole, socketType) {
+				if (hole === "L") {
+					const live = socketType === "wall" ? powerOn() : stripLive();
+					if (live) shock(2); // 火线孔:摸到就是直接接触带电导体,重度触电
+					return;
+				}
+				if (hole === "N") return; // 零线孔,摸了没事
+				if (hole === "PE") {
+					if (dangerActive()) shock(2); // 地线孔带电时,摸了一样重度触电
+				}
+			}
+			$("#svgSocketModal").addEventListener("click", (e) => {
+				const holeEl = e.target.closest("[data-hole]");
+				if (!holeEl) return;
+				touchSocketHole(holeEl.dataset.hole, holeEl.dataset.socket);
+			});
 			$("#zoomNecklace").addEventListener("click", () => {
 				if (dangerActive()) {
 					shock(2); // 此刻插排确实带电,徒手去摘发黑的链子——直接电死
@@ -1737,6 +1868,67 @@ const SVG_FIT_MAP = [
 				$("#stripFaceUp").style.display = "none";
 				$("#stripFaceDown").style.display = "block";
 			}
+
+			/* 弹窗大图里一共有两个插座可以验电:
+			   1) 项链卡住的那个(插排自己的出口):火线孔要看插排本身有没有电(stripLive)
+			   2) 左下角那个墙上插座(插排的电源来源):它自己就是进线端,火线孔只看总闸+漏保,
+			      不需要"插排插着"这个条件——这个条件反而是由它决定的
+			   地线孔两边共用同一根全屋地线母线,判定完全一样;零线孔两边都始终安全。
+			   用坐标就近判定而不是直接绑定在孔的图形上,是因为项链还卡在孔上时会挡住点击,
+			   但验电这个动作物理上不应该被一条项链挡住。 */
+			function testSocketHole(hole, socketType) {
+				const dangerNow = dangerActive();
+				if (hole === "L") {
+					const live = socketType === "wall" ? powerOn() : stripLive();
+					usePen(live ? 2 : 0);
+					return;
+				}
+				if (hole === "N") {
+					usePen(0);
+					return;
+				}
+				if (hole === "PE") {
+					usePen(dangerNow ? 2 : 0);
+					if (dangerNow) reveal("clue_ground_live");
+				}
+			}
+			$("#svgSocketModal").addEventListener("contextmenu", (e) => {
+				e.preventDefault();
+
+				// 优先精确命中孔位图形本身(左键能点到的地方右键也一定能测到)
+				const holeEl = e.target.closest("[data-hole]");
+				if (holeEl) {
+					testSocketHole(holeEl.dataset.hole, holeEl.dataset.socket);
+					return;
+				}
+
+				// 命中不到(比如项链卡在孔上,或插头正好盖住插座)时,退回坐标就近判定,
+				// 保证"验电这个动作不该被一条项链或一个插头挡住"
+				const svg = $("#svgSocketModal");
+				const pt = svg.createSVGPoint();
+				pt.x = e.clientX;
+				pt.y = e.clientY;
+				const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+				const HOLES = [
+					{ hole: "PE", x: 220, y: 104, socketType: "strip" },
+					{ hole: "N", x: 200, y: 142, socketType: "strip" },
+					{ hole: "L", x: 240, y: 142, socketType: "strip" },
+					{ hole: "PE", x: 31, y: 205, socketType: "wall" },
+					{ hole: "N", x: 26, y: 215.75, socketType: "wall" },
+					{ hole: "L", x: 36, y: 215.75, socketType: "wall" },
+				];
+				let nearest = null,
+					bestDist = Infinity;
+				HOLES.forEach((h) => {
+					const d = Math.hypot(p.x - h.x, p.y - h.y);
+					if (d < bestDist) {
+						bestDist = d;
+						nearest = h;
+					}
+				});
+				if (!nearest || bestDist > 24) return; // 离所有孔都太远,不算测到任何一个
+				testSocketHole(nearest.hole, nearest.socketType);
+			});
 
 			/* 桌角插排的墙插头:场景内和弹窗大图内各有一份图形,共用同一个 stripWallPlugged 状态,
    任一处插拔都会同步更新另一处的显示,避免"小窗拔了场景里还插着"的不同步问题 */
@@ -1926,6 +2118,7 @@ const SVG_FIT_MAP = [
 					() => heaterPlugged,
 					(v) => {
 						heaterPlugged = v;
+						if (v) reevaluateRCD(); // 插上热水器,原本"看不见"的泄漏电流又能被漏保测到了
 					},
 				);
 			})();
@@ -2016,6 +2209,7 @@ const SVG_FIT_MAP = [
 							$("#groundFoundRing").setAttribute("opacity", "1");
 							reveal("clue_wire_reconnect");
 							checkRepairComplete();
+							reevaluateRCD(); // 真接地一旦恢复,原本"假性合闸"的漏保应该立刻跳闸
 						}
 					} else {
 						setPos(originX, originY);

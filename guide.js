@@ -134,7 +134,7 @@
 				position: absolute;
 				left: 60px;
 				top: 12px;
-				z-index: 16;
+				z-index: 96;
 				width: 130px;
 				height: 40px;
 				padding: 0 10px;
@@ -288,6 +288,74 @@
 	   1. GameUI —— 血条 / 死亡画面 / 重生画面
 	   ========================================================================== */
 	const GameUI = (window.GameUI = window.GameUI || {});
+
+	/* ==========================================================================
+	   -1. 音效组件(GameUI.Sound / GameUI.playTripSound 等)
+	   两种声音来源:
+	     - 播放音频文件(如 tiaozha.mp3、dead.mp3):路径相对当前页面,文件需要和
+	       页面放在同一目录下;文件缺失或浏览器还没允许自动播放时静默忽略,不影响游戏本身。
+	     - 用 Web Audio API 现场合成的"嘀"声:不依赖任何音频文件。
+	   ========================================================================== */
+	GameUI.Sound = (function () {
+		let audioCtx = null;
+		function getCtx() {
+			const AC = window.AudioContext || window.webkitAudioContext;
+			if (!AC) return null;
+			if (!audioCtx) audioCtx = new AC();
+			if (audioCtx.state === "suspended") audioCtx.resume(); // 浏览器要求先有一次用户交互
+			return audioCtx;
+		}
+
+		// 播放一个音频文件,src 是相对页面的路径,比如 "tiaozha.mp3"
+		function playFile(src, volume) {
+			try {
+				const audio = new Audio(src);
+				audio.volume = volume == null ? 1 : volume;
+				const p = audio.play();
+				if (p && typeof p.catch === "function") p.catch(() => {}); // 文件缺失/自动播放被拦截等,静默忽略
+			} catch (e) {}
+		}
+
+		// 现场合成一声短促的"嘀"
+		function beepOnce(delay) {
+			const ctx = getCtx();
+			if (!ctx) return;
+			try {
+				const osc = ctx.createOscillator();
+				const gain = ctx.createGain();
+				osc.type = "square";
+				osc.frequency.value = 1800;
+				osc.connect(gain);
+				gain.connect(ctx.destination);
+				const startAt = ctx.currentTime + (delay || 0);
+				const dur = 0.11;
+				gain.gain.setValueAtTime(0.0001, startAt);
+				gain.gain.exponentialRampToValueAtTime(0.3, startAt + 0.01);
+				gain.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+				osc.start(startAt);
+				osc.stop(startAt + dur + 0.02);
+			} catch (e) {}
+		}
+		// 连续几声"嘀嘀"
+		function beeps(count, gap) {
+			const n = count || 2;
+			const g = gap == null ? 0.16 : gap;
+			for (let i = 0; i < n; i++) beepOnce(i * g);
+		}
+
+		return { playFile, beeps };
+	})();
+
+	// 三个具体场景直接调用的音效
+	GameUI.playTripSound = function () {
+		GameUI.Sound.playFile("tiaozha.mp3");
+	}; // 跳闸
+	GameUI.playDangerBeep = function () {
+		GameUI.Sound.beeps(2, 0.16);
+	}; // 验出强电,嘀嘀两声
+	GameUI.playDeathSound = function () {
+		GameUI.Sound.playFile("dead.mp3");
+	}; // 触电死亡
 	let hudCfg = null;
 	let hudInited = false;
 
@@ -391,6 +459,7 @@
 		if (GameUI.hp <= 0) GameUI.gameOver();
 	};
 	GameUI.gameOver = function () {
+		GameUI.playDeathSound();
 		GameUI.openModal("gameOverModal");
 		if (hudCfg && typeof hudCfg.onGameOver === "function") hudCfg.onGameOver();
 	};
@@ -454,7 +523,7 @@
 				top: 12px;
 				right: 12px;
 				width: 110px;
-				z-index: 15;
+				z-index: 96;
 				background: var(--paper, #fff);
 				border: 3px solid var(--ink, #14171a);
 				border-radius: 8px;
@@ -1899,9 +1968,9 @@
 				right: 136px;
 				width: 34px;
 				height: 34px;
-				z-index: 16;
+				z-index: 96;
 				background: var(--paper, #fff);
-				border: 3px solid var(--ink, #14171a);
+				border: 2px solid var(--brass, #1a56c4);
 				border-radius: 50%;
 				display: flex;
 				align-items: center;
