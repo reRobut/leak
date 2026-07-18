@@ -103,10 +103,7 @@
 					opacity: 0.2;
 				}
 			}
-			#mainbreakerKnob,
-			#rcdKnob {
-				transition: cx 0.22s ease;
-			}
+			/* #mainbreakerKnob / #rcdKnob 的过渡动画已由 guide.js 里 .breaker-knob 类统一提供 */
 
 			/* ---------- NAV ARROWS ---------- */
 			.nav-arrow {
@@ -145,127 +142,7 @@
 				height: 18px;
 			}
 
-			/* ---------- METER WIDGET (验电笔,唯一工具) ---------- */
-			.meter {
-				position: absolute;
-				top: 12px;
-				right: 12px;
-				width: 110px;
-				z-index: 15;
-				background: var(--paper);
-				border: 3px solid var(--ink);
-				border-radius: 8px;
-				padding: 8px 9px 9px;
-				box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
-			}
-			.meter .mhead {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 6px;
-				padding: 0 2px;
-			}
-			.meter .mhead span {
-				font-size: 9px;
-				letter-spacing: 1.3px;
-				color: var(--ink-dim);
-				text-transform: uppercase;
-				font-family: "Courier New", monospace;
-			}
-			.meter .status-dot {
-				width: 13px;
-				height: 13px;
-				border-radius: 50%;
-				background: var(--ink-dim);
-				border: 2px solid var(--ink);
-				flex-shrink: 0;
-			}
-			.meter .status-dot.safe {
-				background: #35c96a;
-				border-color: #1d7a41;
-				box-shadow: 0 0 5px rgba(53, 201, 106, 0.7);
-			}
-			.meter .status-dot.caution {
-				background: #f0c419;
-				border-color: #a5820c;
-				box-shadow: 0 0 5px rgba(240, 196, 25, 0.7);
-			}
-			.meter .status-dot.danger {
-				background: var(--danger);
-				border-color: #7a1414;
-				box-shadow: 0 0 6px rgba(211, 47, 47, 0.85);
-			}
-
-			.toolbody {
-				min-height: 64px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-			.pen-shape {
-				position: relative;
-				width: 20px;
-				height: 60px;
-			}
-			.pen-body {
-				position: absolute;
-				left: 3px;
-				top: 0;
-				width: 14px;
-				height: 44px;
-				border-radius: 4px 4px 2px 2px;
-				background: var(--brass);
-				border: 1px solid var(--brass-dark);
-			}
-			.pen-clip {
-				position: absolute;
-				left: 1px;
-				top: 6px;
-				width: 4px;
-				height: 16px;
-				background: var(--ink);
-				border-radius: 1px;
-			}
-			.pen-tip {
-				position: absolute;
-				left: 6px;
-				top: 44px;
-				width: 0;
-				height: 0;
-				border-left: 4px solid transparent;
-				border-right: 4px solid transparent;
-				border-top: 14px solid var(--ink-dim);
-				transition: 0.2s;
-			}
-			.pen-tip.lvl1 {
-				border-top-color: var(--danger-light);
-				filter: drop-shadow(0 0 5px rgba(216, 144, 140, 0.9));
-			}
-			.pen-tip.lvl2 {
-				border-top-color: var(--danger);
-				filter: drop-shadow(0 0 5px rgba(211, 47, 47, 0.9));
-			}
-			.pen-win {
-				position: absolute;
-				left: 5px;
-				top: 12px;
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
-				background: #c7cdd3;
-				border: 1px solid var(--ink-dim);
-				transition: 0.2s;
-			}
-			.pen-win.lvl1 {
-				background: var(--danger-light);
-				box-shadow: 0 0 8px 2px rgba(216, 144, 140, 0.9);
-				animation: blink 0.8s infinite;
-			}
-			.pen-win.lvl2 {
-				background: var(--danger);
-				box-shadow: 0 0 8px 2px rgba(211, 47, 47, 0.9);
-				animation: blink 0.45s infinite;
-			}
+			/* ---------- METER WIDGET (验电笔,唯一工具)：已移入 guide.js 的 GameUI.initMeter() ---------- */
 
 			/* ---------- (caption bar removed) ---------- */
 
@@ -341,36 +218,7 @@
 				border: 1px solid var(--ink);
 			}
 
-			/* ---------- HP BAR (top-left, next to notebook) ---------- */
-			.hp-bar {
-				position: absolute;
-				left: 60px;
-				top: 12px;
-				z-index: 16;
-				width: 130px;
-				height: 40px;
-				padding: 0 10px;
-				background: var(--paper);
-				border: 2px solid var(--brass);
-				border-radius: 6px;
-				display: flex;
-				align-items: center;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-			}
-			.hp-track {
-				width: 100%;
-				height: 12px;
-				border-radius: 6px;
-				overflow: hidden;
-				background: var(--ink);
-				border: 1px solid #000;
-			}
-			.hp-fill {
-				height: 100%;
-				width: 100%;
-				background: var(--danger);
-				transition: width 0.4s ease;
-			}
+			/* ---------- HP BAR：已移入 guide.js 的 GameUI 组件（GameUI.initHUD） ---------- */
 			.clue-item {
 				padding: 9px 11px;
 				margin: 8px 0;
@@ -436,97 +284,7 @@
 				margin-bottom: 2px;
 			}
 
-			/* ---------- MODAL ---------- */
-			.modal-bg {
-				position: fixed;
-				inset: 0;
-				background: rgba(0, 0, 0, 0.78);
-				backdrop-filter: blur(2px);
-				display: none;
-				align-items: center;
-				justify-content: center;
-				z-index: 90;
-				padding: 24px;
-			}
-			.modal-bg.show {
-				display: flex;
-			}
-			.modal {
-				width: min(620px, 100%);
-				max-height: 86vh;
-				overflow-y: auto;
-				background: var(--paper);
-				border: 5px solid var(--ink);
-				border-radius: 6px;
-				padding: 24px 26px;
-				box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
-				position: relative;
-			}
-			.modal:before {
-				content: var(--modal-prefix, "🔍 特写");
-				position: absolute;
-				top: -14px;
-				left: 20px;
-				background: var(--brass);
-				color: #fff;
-				font-size: 11px;
-				padding: 3px 10px;
-				border-radius: 3px;
-				letter-spacing: 1px;
-				font-family: "Courier New", monospace;
-				border: 1px solid var(--brass-dark);
-			}
-			.modal.report:before {
-				content: var(--modal-report-prefix, "📁 结案报告");
-			}
-			.modal h3 {
-				margin: 0 0 4px;
-				font-size: 19px;
-				letter-spacing: 1px;
-				color: var(--ink);
-				font-family: Georgia, serif;
-			}
-			.modal .sub {
-				color: var(--ink-dim);
-				font-size: 11px;
-				margin-bottom: 14px;
-				font-family: "Courier New", monospace;
-			}
-			.modal p {
-				line-height: 1.8;
-				font-size: 13.5px;
-				color: var(--ink);
-				margin: 0 0 12px;
-			}
-			.modal .section-t {
-				color: var(--brass);
-				font-size: 11.5px;
-				letter-spacing: 2px;
-				margin: 18px 0 8px;
-				text-transform: uppercase;
-				font-family: "Courier New", monospace;
-			}
-			.modal ul {
-				margin: 0;
-				padding-left: 18px;
-				line-height: 1.85;
-				font-size: 13px;
-			}
-			.modal-close {
-				margin-top: 12px;
-				padding: 9px 18px;
-				border-radius: 20px;
-				border: 2px solid var(--ink);
-				background: var(--paper);
-				color: var(--ink);
-				cursor: pointer;
-				font-size: 12.5px;
-				letter-spacing: 1px;
-				font-family: Georgia, serif;
-			}
-			.modal-close:hover {
-				filter: brightness(0.95);
-			}
+			/* ---------- MODAL：基础 .modal-bg / .modal / .modal-close 已移入 guide.js（GameUI 核心样式） ---------- */
 
 			.necklace-btn {
 				padding: 8px 16px;
@@ -593,195 +351,12 @@
 				filter: drop-shadow(0 0 6px rgba(77, 130, 214, 0.9));
 			}
 
-			/* ---------- GAME OVER ---------- */
-			.modal.gameover {
-				text-align: center;
-				background: var(--ink);
-				border-color: var(--danger);
-			}
-			.modal.gameover:before {
-				content: none;
-			}
-			.gameover-img {
-				display: block;
-				max-width: 220px;
-				max-height: 220px;
-				width: auto;
-				height: auto;
-				margin: 0 auto 14px;
-				border-radius: 6px;
-				filter: drop-shadow(0 0 14px rgba(211, 47, 47, 0.55));
-			}
-			.modal.gameover h3 {
-				color: var(--danger-light);
-				font-size: 26px;
-				letter-spacing: 2px;
-				margin-bottom: 6px;
-			}
-			.modal.gameover .sub {
-				color: #fff;
-				font-size: 14px;
-				margin-bottom: 22px;
-				font-family: Georgia, serif;
-				letter-spacing: 1px;
-			}
-			.reborn-btn {
-				background: var(--paper);
-				color: var(--ink);
-				border-color: var(--paper);
-				font-weight: 700;
-				padding: 11px 26px;
-			}
+			/* ---------- GAME OVER / REBORN：已移入 guide.js 的 GameUI 组件（GameUI.initHUD） ---------- */
 
-			/* ---------- REBORN ---------- */
-			.modal.reborn-modal {
-				text-align: center;
-				background: var(--brass);
-				border-color: var(--brass-dark);
-			}
-			.modal.reborn-modal:before {
-				content: none;
-			}
-			.modal.reborn-modal h3 {
-				color: #fff;
-				font-size: 24px;
-				letter-spacing: 2px;
-				margin-bottom: 6px;
-			}
-			.modal.reborn-modal .sub {
-				color: #dce9ff;
-				font-size: 11px;
-				margin-bottom: 16px;
-				font-family: "Courier New", monospace;
-				letter-spacing: 2px;
-			}
-			.modal.reborn-modal p {
-				text-align: center;
-				color: #fff;
-			}
+			/* ---------- REPAIR COMPLETE：已移入 guide.js 的 GameUI 核心样式 ---------- */
 
-			/* ---------- REPAIR COMPLETE ---------- */
-			.modal.repair-modal {
-				text-align: center;
-				background: var(--brass);
-				border-color: var(--brass-dark);
-				width: min(640px, 100%);
-			}
-			.modal.repair-modal:before {
-				content: none;
-			}
-			.modal.repair-modal h3 {
-				color: #fff;
-				font-size: 26px;
-				letter-spacing: 2px;
-				margin-bottom: 6px;
-			}
-			.modal.repair-modal .sub {
-				color: #dce9ff;
-				font-size: 11px;
-				margin-bottom: 18px;
-				font-family: "Courier New", monospace;
-				letter-spacing: 2px;
-			}
-			.repair-analysis {
-				text-align: left;
-				background: rgba(0, 0, 0, 0.18);
-				border: 1px solid rgba(255, 255, 255, 0.25);
-				border-radius: 6px;
-				padding: 16px 18px;
-				margin-bottom: 22px;
-			}
-			.repair-analysis p {
-				color: #fff;
-				font-size: 13.5px;
-				line-height: 1.85;
-				margin: 0 0 12px;
-			}
-			.repair-analysis p:last-child {
-				margin-bottom: 0;
-			}
-			.repair-btns {
-				display: flex;
-				gap: 12px;
-				justify-content: center;
-			}
-			.repair-btn {
-				background: var(--paper);
-				color: var(--ink);
-				border-color: var(--paper);
-				font-weight: 700;
-				padding: 11px 20px;
-				margin-top: 0;
-			}
+			/* ---------- ESC MENU：语言选择/继续游戏/放弃本关，已移入 guide.js 的 GameUI.initMenu() ---------- */
 
-			/* ---------- ESC MENU (language picker + give up) ---------- */
-			.menu-modal {
-				width: min(480px, 100%);
-			}
-			.menu-modal:before {
-				content: none;
-			}
-			.notebook-modal:before {
-				content: none;
-			}
-			.lang-pick-grid {
-				display: grid;
-				grid-template-columns: repeat(2, 1fr);
-				gap: 8px;
-				margin-bottom: 6px;
-			}
-			.lang-pick-btn {
-				display: flex;
-				flex-direction: column;
-				align-items: flex-start;
-				gap: 1px;
-				padding: 9px 11px;
-				border: 2px solid var(--ink);
-				border-radius: 8px;
-				background: var(--paper-dark);
-				color: var(--ink);
-				cursor: pointer;
-				font-family: Georgia, serif;
-				font-weight: 700;
-				font-size: 12.5px;
-				transition:
-					transform 0.1s ease,
-					background 0.15s ease;
-			}
-			.lang-pick-btn:hover {
-				background: #e2e7ee;
-			}
-			.lang-pick-btn.active {
-				background: var(--brass);
-				color: #fff;
-				border-color: var(--brass-dark);
-			}
-			.lang-pick-btn small {
-				font-weight: 500;
-				opacity: 0.75;
-				font-size: 0.82em;
-				font-family: "Courier New", monospace;
-			}
-			.menu-actions {
-				display: flex;
-				flex-direction: column;
-				gap: 10px;
-				margin-top: 18px;
-			}
-			.menu-actions .modal-close {
-				width: 100%;
-				margin-top: 0;
-				padding: 11px 18px;
-			}
-			.giveup-btn {
-				background: var(--danger);
-				border-color: var(--danger);
-				color: #fff;
-				font-weight: 700;
-			}
-			.giveup-btn:hover {
-				filter: brightness(1.08);
-			}
 
 			::-webkit-scrollbar {
 				width: 8px;
@@ -800,35 +375,8 @@
 					<rect x="0" y="0" width="900" height="560" fill="#f7f7f4" />
 					<rect x="0" y="440" width="900" height="120" fill="#e4e2da" />
 
-					<!-- closed cabinet -->
-					<g id="cabinetClosed" class="hotspot" data-action="open-panel">
-						<rect x="300" y="80" width="300" height="380" rx="6" class="glow-target" fill="#5c6b60" stroke="#232f2a" stroke-width="3" />
-						<rect x="320" y="100" width="260" height="340" rx="4" fill="#3c4a42" stroke="#232f2a" />
-						<text x="450" y="280" text-anchor="middle" fill="#c9d4cf" font-size="34" font-weight="bold" font-family="Georgia,serif" letter-spacing="4" data-i18n="sceneLabel_s1">配电箱</text>
-						<text x="450" y="55" text-anchor="middle" class="lbl" font-size="13" data-i18n="sceneHint_s1">检查配电箱</text>
-					</g>
-
-					<!-- opened cabinet contents: 简化为两个真正的拨动开关 -->
-					<g id="cabinetOpen" style="display: none">
-						<rect x="220" y="55" width="460" height="430" rx="6" fill="#465850" stroke="#232f2a" stroke-width="3" />
-						<text x="250" y="85" fill="#d9c79e" font-size="12" font-family="Courier New,monospace" data-i18n="cabinetHeader">主配电箱 · 户内总控</text>
-
-						<g class="hotspot" data-id="mainbreaker" data-touch="true" data-test="true">
-							<rect x="270" y="130" width="360" height="150" rx="8" fill="transparent" class="hit" />
-							<text x="450" y="165" text-anchor="middle" fill="#e8e6de" font-size="22" font-weight="bold" font-family="Georgia,serif" data-i18n="mainBreakerLabel">总闸</text>
-							<rect id="mainbreakerTrack" x="380" y="188" width="140" height="56" rx="28" class="glow-target" fill="#8a3a3a" stroke="#232f2a" stroke-width="2" />
-							<circle id="mainbreakerKnob" cx="410" cy="216" r="22" fill="#fff" stroke="#232f2a" stroke-width="2" />
-							<text x="450" y="270" text-anchor="middle" class="lbl" data-i18n="mainBreakerLabel">总闸</text>
-						</g>
-
-						<g class="hotspot" data-id="rcd" data-touch="true" data-test="true">
-							<rect x="270" y="295" width="360" height="150" rx="8" fill="transparent" class="hit" />
-							<text x="450" y="330" text-anchor="middle" fill="#e8e6de" font-size="22" font-weight="bold" font-family="Georgia,serif" data-i18n="rcdLabel">漏电保护</text>
-							<rect id="rcdTrack" x="380" y="353" width="140" height="56" rx="28" class="glow-target" fill="#8a3a3a" stroke="#232f2a" stroke-width="2" />
-							<circle id="rcdKnob" cx="410" cy="381" r="22" fill="#fff" stroke="#232f2a" stroke-width="2" />
-							<text x="450" y="435" text-anchor="middle" class="lbl" data-i18n="rcdLbl">漏电保护器</text>
-						</g>
-					</g>
+					<!-- 配电箱(柜门 + 总闸/漏保开关) 由 guide.js 的 GameUI.buildCabinetSVG()/breakerSwitchSVG() 动态注入 -->
+					<g id="cabinetSlot"></g>
 				</svg>
 			</div>
 
@@ -1216,22 +764,10 @@
 				<svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
 			</div>
 
-			<div class="meter" id="meter">
-				<div class="mhead"><span data-i18n="meterHead">右键验电</span><span class="status-dot" id="mstatus" title="待机"></span></div>
-				<div class="toolbody">
-					<div class="pen-shape">
-						<div class="pen-body"></div>
-						<div class="pen-clip"></div>
-						<div class="pen-win" id="penWin"></div>
-						<div class="pen-tip" id="penTip"></div>
-					</div>
-				</div>
-			</div>
+			<!-- 验电笔由 guide.js 的 GameUI.initMeter() 动态注入到本容器内 -->
 
 			<div class="notebook-btn" id="notebookBtn" data-i18n-title="notebookTitle" title="线索笔记本">📓<span class="notebook-badge" id="notebookBadge" style="display: none">0</span></div>
-			<div class="hp-bar" data-i18n-title="hpTitle" title="生命值">
-				<div class="hp-track"><div class="hp-fill" id="hpFill"></div></div>
-			</div>
+			<!-- 血条由 guide.js 的 GameUI.initHUD() 动态注入到本容器内 -->
 
 			<div class="casefile" id="casefileBtn" data-i18n-title="casefileTitle" title="结案报告">📁</div>
 
@@ -1323,25 +859,7 @@
 			</div>
 		</div>
 
-		<!-- game over modal -->
-		<div class="modal-bg" id="gameOverModal">
-			<div class="modal gameover">
-				<img class="gameover-img" src="dead.png" alt="" onerror="this.style.display='none'" />
-				<h3 data-i18n="gameOverTitle">⚡ 你被电死了。</h3>
-				<div class="sub" data-i18n="gameOverSub">下辈子注意点。</div>
-				<button class="modal-close reborn-btn" id="rebornBtn" data-i18n="rebornBtnText">开启下一世</button>
-			</div>
-		</div>
-
-		<!-- reborn modal -->
-		<div class="modal-bg" id="rebornModal">
-			<div class="modal reborn-modal">
-				<h3 data-i18n="rebornTitle">我重生了！</h3>
-				<div class="sub" data-i18n="rebornSub">NEW LIFE</div>
-				<p data-i18n="rebornP">上一世,我在工作中因为粗心不小心被电死。这一世,我要成为电工王！</p>
-				<button class="modal-close reborn-btn" data-i18n="rebornStartBtn" onclick="closeModal('rebornModal')">这一世,开始</button>
-			</div>
-		</div>
+		<!-- 死亡结算弹窗(#gameOverModal) 与重生欢迎弹窗(#rebornModal) 均由 guide.js 的 GameUI.initHUD() 动态注入 -->
 
 		<!-- repair complete modal -->
 		<div class="modal-bg" id="repairModal">
@@ -1359,25 +877,16 @@
 			</div>
 		</div>
 
-		<!-- ESC menu: language picker + give up level -->
-		<div class="modal-bg" id="menuModal">
-			<div class="modal menu-modal">
-				<h3 data-i18n="menuTitle">游戏菜单</h3>
-				<div class="section-t" data-i18n="menuLangTitle">选择语言</div>
-				<div class="lang-pick-grid" id="langPickGrid"></div>
-				<div class="menu-actions">
-					<button class="modal-close" id="resumeBtn" data-i18n="resumeBtn">继续游戏</button>
-					<button class="modal-close giveup-btn" id="giveUpBtn" data-i18n="giveUpBtn">放弃本关，返回主页</button>
-				</div>
-			</div>
-		</div>
+		<!-- ESC 菜单(语言选择 / 继续游戏 / 放弃本关) 由 guide.js 的 GameUI.initMenu() 动态注入 -->
+
+		<!-- 共用组件（血条 / 死亡画面 / 重生画面 / 帮助弹窗）：必须先于下方主脚本加载，因为主脚本会调用 GameUI.initHUD() -->
+		<script src="guide.js"></script>
 
 		<script>
 			/* ========================= DATA ========================= */
 const I18N = {
 "zh-CN": {
-sceneLabel_s1: `配电箱`, sceneHint_s1: `检查配电箱`, cabinetHeader: `主配电箱 · 户内总控`,
-mainBreakerLabel: `总闸`, rcdLabel: `漏电保护`, rcdLbl: `漏电保护器`,
+cabinetHeader: `主配电箱 · 户内总控`,
 kettleLbl: `烧水壶`, heaterLbl: `燃气热水器`, laptopLbl: `笔记本电脑`, stripLbl: `桌角插排`,
 sceneLabel_s3: `电缆井`, sceneHint_s3: `检查电缆井`,
 navLeftTitle: `上一个场景`, navRightTitle: `下一个场景`,
@@ -1426,8 +935,7 @@ clue_wire_reconnect: {t:`认出了客户家的那根地线`, d:`把客户家的�
 }
 },
 "en": {
-sceneLabel_s1: `ELECTRICAL PANEL`, sceneHint_s1: `Inspect the electrical panel`, cabinetHeader: `MAIN PANEL · IN-HOME CONTROL`,
-mainBreakerLabel: `MAIN`, rcdLabel: `RCD`, rcdLbl: `RCD (Earth Leakage Breaker)`,
+cabinetHeader: `MAIN PANEL · IN-HOME CONTROL`,
 kettleLbl: `Kettle`, heaterLbl: `Gas Water Heater`, laptopLbl: `Laptop`, stripLbl: `Power Strip`,
 sceneLabel_s3: `CABLE SHAFT`, sceneHint_s3: `Inspect the cable shaft`,
 navLeftTitle: `Previous scene`, navRightTitle: `Next scene`,
@@ -1476,8 +984,7 @@ clue_wire_reconnect: {t:`Identified the customer's earth wire`, d:`After resetti
 }
 },
 "zh-TW": {
-sceneLabel_s1: `配電箱`, sceneHint_s1: `檢查配電箱`, cabinetHeader: `主配電箱 · 戶內總控`,
-mainBreakerLabel: `總開關`, rcdLabel: `漏電保護`, rcdLbl: `漏電保護器`,
+cabinetHeader: `主配電箱 · 戶內總控`,
 kettleLbl: `電熱水壺`, heaterLbl: `瓦斯熱水器`, laptopLbl: `筆記型電腦`, stripLbl: `桌角延長線`,
 sceneLabel_s3: `電纜井`, sceneHint_s3: `檢查電纜井`,
 navLeftTitle: `上一個場景`, navRightTitle: `下一個場景`,
@@ -1526,8 +1033,7 @@ clue_wire_reconnect: {t:`認出了客戶家的那根接地線`, d:`把客戶家�
 }
 },
 "de": {
-sceneLabel_s1: `SICHERUNGSKASTEN`, sceneHint_s1: `Sicherungskasten untersuchen`, cabinetHeader: `HAUPTVERTEILER · WOHNUNGSSTEUERUNG`,
-mainBreakerLabel: `HAUPTSCHALTER`, rcdLabel: `FI-SCHALTER`, rcdLbl: `FI-Schutzschalter`,
+cabinetHeader: `HAUPTVERTEILER · WOHNUNGSSTEUERUNG`,
 kettleLbl: `Wasserkocher`, heaterLbl: `Gas-Warmwasserbereiter`, laptopLbl: `Laptop`, stripLbl: `Steckdosenleiste`,
 sceneLabel_s3: `KABELSCHACHT`, sceneHint_s3: `Kabelschacht untersuchen`,
 navLeftTitle: `Vorherige Szene`, navRightTitle: `Nächste Szene`,
@@ -1576,8 +1082,7 @@ clue_wire_reconnect: {t:`Die Erdungsleitung des Kunden identifiziert`, d:`Nachde
 }
 },
 "fr": {
-sceneLabel_s1: `TABLEAU ÉLECTRIQUE`, sceneHint_s1: `Inspecter le tableau électrique`, cabinetHeader: `TABLEAU PRINCIPAL · COMMANDE DU LOGEMENT`,
-mainBreakerLabel: `DISJONCTEUR PRINCIPAL`, rcdLabel: `DIFFÉRENTIEL`, rcdLbl: `Disjoncteur différentiel`,
+cabinetHeader: `TABLEAU PRINCIPAL · COMMANDE DU LOGEMENT`,
 kettleLbl: `Bouilloire`, heaterLbl: `Chauffe-eau à gaz`, laptopLbl: `Ordinateur portable`, stripLbl: `Multiprise`,
 sceneLabel_s3: `GAINE TECHNIQUE`, sceneHint_s3: `Inspecter la gaine technique`,
 navLeftTitle: `Scène précédente`, navRightTitle: `Scène suivante`,
@@ -1626,8 +1131,7 @@ clue_wire_reconnect: {t:`Le fil de terre du client identifié`, d:`Après avoir 
 }
 },
 "ru": {
-sceneLabel_s1: `ЭЛЕКТРОЩИТ`, sceneHint_s1: `Осмотреть электрощит`, cabinetHeader: `ГЛАВНЫЙ ЩИТ · ДОМОВОЕ УПРАВЛЕНИЕ`,
-mainBreakerLabel: `ГЛАВНЫЙ РУБИЛЬНИК`, rcdLabel: `УЗО`, rcdLbl: `Устройство защитного отключения`,
+cabinetHeader: `ГЛАВНЫЙ ЩИТ · ДОМОВОЕ УПРАВЛЕНИЕ`,
 kettleLbl: `Чайник`, heaterLbl: `Газовый водонагреватель`, laptopLbl: `Ноутбук`, stripLbl: `Удлинитель`,
 sceneLabel_s3: `КАБЕЛЬНАЯ ШАХТА`, sceneHint_s3: `Осмотреть кабельную шахту`,
 navLeftTitle: `Предыдущая сцена`, navRightTitle: `Следующая сцена`,
@@ -1676,8 +1180,7 @@ clue_wire_reconnect: {t:`Заземляющий провод клиента оп
 }
 },
 "ja": {
-sceneLabel_s1: `分電盤`, sceneHint_s1: `分電盤を調べる`, cabinetHeader: `主分電盤・住戸内総合制御`,
-mainBreakerLabel: `主幹ブレーカー`, rcdLabel: `漏電遮断器`, rcdLbl: `漏電遮断器(ブレーカー)`,
+cabinetHeader: `主分電盤・住戸内総合制御`,
 kettleLbl: `電気ケトル`, heaterLbl: `ガス給湯器`, laptopLbl: `ノートパソコン`, stripLbl: `電源タップ`,
 sceneLabel_s3: `ケーブルシャフト`, sceneHint_s3: `ケーブルシャフトを調べる`,
 navLeftTitle: `前のシーン`, navRightTitle: `次のシーン`,
@@ -1726,8 +1229,7 @@ clue_wire_reconnect: {t:`お客様宅のアース線を特定した`, d:`お客�
 }
 },
 "pt-BR": {
-sceneLabel_s1: `QUADRO DE DISTRIBUIÇÃO`, sceneHint_s1: `Inspecionar o quadro de distribuição`, cabinetHeader: `QUADRO PRINCIPAL · CONTROLE DA RESIDÊNCIA`,
-mainBreakerLabel: `DISJUNTOR GERAL`, rcdLabel: `DR`, rcdLbl: `Disjuntor diferencial residual (DR)`,
+cabinetHeader: `QUADRO PRINCIPAL · CONTROLE DA RESIDÊNCIA`,
 kettleLbl: `Chaleira elétrica`, heaterLbl: `Aquecedor de água a gás`, laptopLbl: `Notebook`, stripLbl: `Filtro de linha`,
 sceneLabel_s3: `POÇO DE CABOS`, sceneHint_s3: `Inspecionar o poço de cabos`,
 navLeftTitle: `Cena anterior`, navRightTitle: `Próxima cena`,
@@ -1776,8 +1278,7 @@ clue_wire_reconnect: {t:`Identificada a fiação terra do cliente`, d:`Depois de
 }
 },
 "es-LA": {
-sceneLabel_s1: `TABLERO ELÉCTRICO`, sceneHint_s1: `Inspeccionar el tablero eléctrico`, cabinetHeader: `TABLERO PRINCIPAL · CONTROL DEL HOGAR`,
-mainBreakerLabel: `INTERRUPTOR PRINCIPAL`, rcdLabel: `DIFERENCIAL`, rcdLbl: `Interruptor diferencial`,
+cabinetHeader: `TABLERO PRINCIPAL · CONTROL DEL HOGAR`,
 kettleLbl: `Hervidor eléctrico`, heaterLbl: `Calentador de agua a gas`, laptopLbl: `Laptop`, stripLbl: `Regleta de enchufes`,
 sceneLabel_s3: `DUCTO DE CABLES`, sceneHint_s3: `Inspeccionar el ducto de cables`,
 navLeftTitle: `Escena anterior`, navRightTitle: `Escena siguiente`,
@@ -1826,8 +1327,7 @@ clue_wire_reconnect: {t:`Identificado el cable de tierra del cliente`, d:`Tras r
 }
 },
 "ko": {
-sceneLabel_s1: `배전함`, sceneHint_s1: `배전함 조사하기`, cabinetHeader: `주 배전함 · 세대 총괄 제어`,
-mainBreakerLabel: `메인 차단기`, rcdLabel: `누전 차단기`, rcdLbl: `누전 차단기(ELB)`,
+cabinetHeader: `주 배전함 · 세대 총괄 제어`,
 kettleLbl: `전기 주전자`, heaterLbl: `가스 온수기`, laptopLbl: `노트북`, stripLbl: `멀티탭`,
 sceneLabel_s3: `케이블 덕트`, sceneHint_s3: `케이블 덕트 조사하기`,
 navLeftTitle: `이전 장면`, navRightTitle: `다음 장면`,
@@ -1877,48 +1377,11 @@ clue_wire_reconnect: {t:`고객 집의 접지선을 찾아냈다`, d:`고객 집
 },
 };
 
-/* ========================= I18N SUPPORT ========================= */
-const LANG_META = [
-	{ code: "en", native: "English" },
-	{ code: "zh-CN", native: "简体中文" },
-	{ code: "zh-TW", native: "繁體中文" },
-	{ code: "de", native: "Deutsch" },
-	{ code: "fr", native: "Français" },
-	{ code: "ru", native: "Русский" },
-	{ code: "ja", native: "日本語" },
-	{ code: "pt-BR", native: "Português (Brasil)" },
-	{ code: "es-LA", native: "Español (Latinoamérica)" },
-	{ code: "ko", native: "한국어" },
-];
-const LANG_STORAGE_KEY = "leak_lang"; // 与 index.html 共用同一个 key,实现语言继承
+/* ========================= I18N SUPPORT（通用机制已迁移到 guide.js 的 GameUI，这里只保留本关的文案字典与联动） ========================= */
+const LANG_STORAGE_KEY = "leak_lang"; // 所有关卡统一用这个 key,才能真正"继承"语言选择
 const CLUE_IDS = Object.keys(I18N["zh-CN"].clues);
 
-function detectInitialLang() {
-	// 1) URL 参数(index.html 跳转关卡时会携带,最可靠,不受 file:// 存储隔离影响)
-	try {
-		const urlLang = new URLSearchParams(location.search).get("lang");
-		if (urlLang && I18N[urlLang]) return urlLang;
-	} catch (e) {}
-	// 2) 之前保存过的语言选择(与首页共用 localStorage key)
-	try {
-		const saved = localStorage.getItem(LANG_STORAGE_KEY);
-		if (saved && I18N[saved]) return saved;
-	} catch (e) {}
-	// 3) 浏览器语言
-	const nav = (navigator.language || "en").toLowerCase();
-	if (nav.startsWith("zh-tw") || nav.startsWith("zh-hk")) return "zh-TW";
-	if (nav.startsWith("zh")) return "zh-CN";
-	if (nav.startsWith("de")) return "de";
-	if (nav.startsWith("fr")) return "fr";
-	if (nav.startsWith("ru")) return "ru";
-	if (nav.startsWith("ja")) return "ja";
-	if (nav.startsWith("pt")) return "pt-BR";
-	if (nav.startsWith("es")) return "es-LA";
-	if (nav.startsWith("ko")) return "ko";
-	return "en";
-}
-
-let currentLang = detectInitialLang();
+let currentLang = GameUI.detectInitialLang(I18N, LANG_STORAGE_KEY);
 let lastPenLevel = null; // 记录当前验电笔档位,切换语言时用于刷新显示文字
 
 function getClue(id) {
@@ -1936,43 +1399,16 @@ function getClueDesc(id) {
 function applyLang(code) {
 	if (!I18N[code]) code = "zh-CN";
 	currentLang = code;
-	try {
-		localStorage.setItem(LANG_STORAGE_KEY, code);
-	} catch (e) {}
-	// 同步地址栏的 ?lang= 参数,这样死亡后 location.reload() 重生时才能读到刚切换的语言,
-	// 而不是又倒退回进入本关时 index.html 带过来的那个旧语言
-	try {
-		const url = new URL(location.href);
-		url.searchParams.set("lang", code);
-		history.replaceState(null, "", url);
-	} catch (e) {}
+	GameUI.saveLang(code, LANG_STORAGE_KEY);
+	GameUI.syncLangUrl(code); // 同步 ?lang=,死亡后 reload 或分享链接时语言不会被冲掉
 	const L = I18N[code];
 	document.documentElement.lang = code;
 
-	$all("[data-i18n]").forEach((el) => {
-		const k = el.getAttribute("data-i18n");
-		if (L[k] !== undefined) el.textContent = L[k];
-	});
-	$all("[data-i18n-html]").forEach((el) => {
-		const k = el.getAttribute("data-i18n-html");
-		if (L[k] !== undefined) el.innerHTML = L[k];
-	});
-	$all("[data-i18n-title]").forEach((el) => {
-		const k = el.getAttribute("data-i18n-title");
-		if (L[k] !== undefined) el.title = L[k];
-	});
-
-	// CSS 伪元素前缀("🔍 特写" / "📁 结案报告")随语言切换
-	$all(".modal").forEach((m) => m.style.setProperty("--modal-prefix", `"${L.zoomPrefix}"`));
-	$all(".modal.report").forEach((m) => m.style.setProperty("--modal-report-prefix", `"${L.reportPrefix}"`));
+	GameUI.applyDataI18n(L, code);
 
 	// 验电笔当前档位随语言刷新(圆点提示文字通过 title 显示)
 	if (lastPenLevel === null) {
-		const mstatus = $("#mstatus");
-		if (mstatus) {
-			mstatus.title = L.meterStandby;
-			mstatus.className = "status-dot";
-		}
+		GameUI.resetMeterStandby(L.meterStandby);
 	} else {
 		usePen(lastPenLevel);
 	}
@@ -1981,56 +1417,21 @@ function applyLang(code) {
 	const cluesModal = $("#cluesModal");
 	if (cluesModal && cluesModal.classList.contains("show")) renderNotebook();
 
-	// 语言选择弹窗高亮当前选中项
-	$all(".lang-pick-btn").forEach((el) => el.classList.toggle("active", el.dataset.code === code));
-
 	// 部分语言(如德语)单词很长,场景大标题等 SVG 文字需要自适应收窄,避免溢出容器
-	fitAllSvgTexts();
+	GameUI.fitAllSvgTexts(SVG_FIT_MAP);
 }
 
 /* 场景里几处较大的 SVG 文字标签,不同语言长度差异很大(比如德语常明显更长),
-   用 textLength + lengthAdjust 让文字在超过容器宽度时自动压缩字距/字宽,而不是溢出。
+   用 textLength + lengthAdjust 让文字在超过容器宽度时自动压缩字距/字宽,而不是溢出(算法在 GameUI.fitSvgText 里)。
    只有隐藏(display:none)的场景里,SVG 文字无法测量真实宽度,所以每次切换场景时也要重新调用一次。 */
 const SVG_FIT_MAP = [
-	{ selector: '[data-i18n="sceneLabel_s1"]', maxWidth: 260 },
+	{ selector: '[data-i18n="cabinetLabel"]', maxWidth: 260 },
 	{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 360 },
 	{ selector: '[data-i18n="cabinetHeader"]', maxWidth: 420 },
 	{ selector: '[data-i18n="mainBreakerLabel"]', maxWidth: 330 },
 	{ selector: '[data-i18n="rcdLabel"]', maxWidth: 330 },
 ];
-function fitSvgText(el, maxWidth) {
-	el.removeAttribute("textLength");
-	el.removeAttribute("lengthAdjust");
-	let len = 0;
-	try {
-		len = el.getComputedTextLength();
-	} catch (e) {
-		return; // 元素当前不可见(所在场景未激活)时测不出宽度,交给场景切换时的调用来补上
-	}
-	if (len > maxWidth) {
-		el.setAttribute("textLength", maxWidth);
-		el.setAttribute("lengthAdjust", "spacingAndGlyphs");
-	}
-}
-function fitAllSvgTexts() {
-	SVG_FIT_MAP.forEach(({ selector, maxWidth }) => {
-		$all(selector).forEach((el) => fitSvgText(el, maxWidth));
-	});
-}
 
-function buildLangPicker() {
-	const grid = $("#langPickGrid");
-	if (!grid) return;
-	grid.innerHTML = "";
-	LANG_META.forEach(({ code, native }) => {
-		const btn = document.createElement("div");
-		btn.className = "lang-pick-btn";
-		btn.dataset.code = code;
-		btn.textContent = native;
-		btn.addEventListener("click", () => applyLang(code));
-		grid.appendChild(btn);
-	});
-}
 			const CORE_IDS = ["clue_rcd_tripped", "clue_ground_live", "clue_heater_scorched", "clue_heater_live", "clue_necklace", "clue_ground_cut", "clue_no_continuity"];
 
 			let discovered = new Set();
@@ -2054,41 +1455,12 @@ function buildLangPicker() {
 				return powerOn() && faultActive() && stripWallPlugged;
 			}
 
-			/* ========================= HP / 触电系统 ========================= */
-			let hp = 100;
-			function updateHP() {
-				$("#hpFill").style.width = Math.max(0, hp) + "%";
-			}
+			/* ========================= HP / 触电系统（血条 + 死亡画面 + 重生画面，统一由 guide.js 的 GameUI 组件提供） ========================= */
+			GameUI.initHUD({ deadImage: "dead.png" });
+			GameUI.initMeter();
 			function shock(level) {
-				if (level >= 2) {
-					hp = 0;
-				} else if (level === 1) {
-					hp = Math.max(0, hp - 50);
-				}
-				updateHP();
-				if (hp <= 0) {
-					gameOver();
-				}
+				GameUI.shock(level);
 			}
-			function gameOver() {
-				openModal("gameOverModal");
-			}
-			$("#rebornBtn").addEventListener("click", () => {
-				try {
-					sessionStorage.setItem("reborn", "1");
-				} catch (e) {}
-				location.reload();
-			});
-			window.addEventListener("load", () => {
-				let reborn = false;
-				try {
-					reborn = sessionStorage.getItem("reborn") === "1";
-					sessionStorage.removeItem("reborn");
-				} catch (e) {}
-				if (reborn) {
-					setTimeout(() => openModal("rebornModal"), 400);
-				}
-			});
 
 			const SCENES = ["s1", "s2", "s3"];
 			let sceneIndex = 1; // 默认停在厨房(s2)
@@ -2174,14 +1546,11 @@ function buildLangPicker() {
 			}
 			$("#nextLevelBtn").addEventListener("click", () => {
 				closeModal("repairModal");
-				$("#toastText").textContent = I18N[currentLang].nextLevelToast;
-				const el = $("#toast");
-				el.classList.add("show");
-				setTimeout(() => el.classList.remove("show"), 2600);
+				location.href = `2.html?lang=${encodeURIComponent(currentLang)}`;
 			});
 			$("#levelMapBtn").addEventListener("click", () => {
 				closeModal("repairModal");
-				showScene(1); // 目前还没有关卡地图,先带你回到厨房
+				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
 			});
 			function openModal(id) {
 				$("#" + id).classList.add("show");
@@ -2197,20 +1566,12 @@ function buildLangPicker() {
 				lastPenLevel = level;
 				const L = I18N[currentLang];
 				const statusText = level === 0 ? L.penNone : level === 1 ? L.penLow : L.penDanger;
-				const statusClass = level === 0 ? "safe" : level === 1 ? "caution" : "danger";
-				$("#mstatus").title = statusText;
-				$("#mstatus").className = "status-dot " + statusClass;
-
-				const winClass = level === 0 ? "" : level === 1 ? "lvl1" : "lvl2";
-				$("#penWin").className = "pen-win " + winClass;
-				$("#penTip").className = "pen-tip " + winClass;
+				GameUI.usePen(level, statusText);
 			}
 
 			function resetTool() {
-				usePen(0);
 				lastPenLevel = null;
-				$("#mstatus").title = I18N[currentLang].meterStandby;
-				$("#mstatus").className = "status-dot";
+				GameUI.resetMeterStandby(I18N[currentLang].meterStandby);
 			}
 
 			/* ========================= CAPTION (已移除,函数保留为空操作,避免逐处删除调用点) ========================= */
@@ -2225,18 +1586,40 @@ function buildLangPicker() {
 				$("#scene-" + SCENES[sceneIndex]).classList.add("active");
 				resetTool();
 				setCaption(DEFAULT_CAPTION[SCENES[sceneIndex]]);
-				fitAllSvgTexts(); // 该场景刚变为可见,现在才能正确测出文字宽度
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP); // 该场景刚变为可见,现在才能正确测出文字宽度
 			}
 			$("#navLeft").addEventListener("click", () => showScene(sceneIndex - 1));
 			$("#navRight").addEventListener("click", () => showScene(sceneIndex + 1));
 
 			/* ========================= SCENE 1 LOGIC ========================= */
-			$("#cabinetClosed").addEventListener("click", () => {
+			$("#cabinetSlot").innerHTML = GameUI.buildCabinetSVG({
+				bigLabelFontSize: 34,
+				headerKey: "cabinetHeader",
+				headerDefault: "主配电箱 · 户内总控",
+				switchesHTML:
+					GameUI.breakerSwitchSVG({
+						id: "mainbreaker",
+						y: 130,
+						bigLabelKey: "mainBreakerLabel",
+						bigLabelDefault: "总闸",
+						smallLabelKey: "mainBreakerLabel",
+						smallLabelDefault: "总闸",
+						initialOn: mainSwitchOn,
+					}) +
+					GameUI.breakerSwitchSVG({
+						id: "rcd",
+						y: 295,
+						bigLabelKey: "rcdLabel",
+						bigLabelDefault: "漏电保护",
+						smallLabelKey: "rcdLbl",
+						smallLabelDefault: "漏电保护器",
+						initialOn: rcdOn,
+					}),
+			});
+			GameUI.wireCabinetToggle(() => {
 				panelOpen = true;
-				$("#cabinetClosed").style.display = "none";
-				$("#cabinetOpen").style.display = "block";
 				setCaption("柜门打开了。里面是总开关、漏电保护器,以及两排接线端子。逐个检查看看。");
-				fitAllSvgTexts(); // 总闸/漏电保护标签刚变为可见,现在才能正确测出文字宽度
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP); // 总闸/漏电保护标签刚变为可见,现在才能正确测出文字宽度
 			});
 			$("#wellClosed").addEventListener("click", () => {
 				$("#wellClosed").style.display = "none";
@@ -2244,10 +1627,8 @@ function buildLangPicker() {
 			});
 
 			function updateRCDVisual() {
-				$("#mainbreakerTrack").setAttribute("fill", mainSwitchOn ? "#5f8f5a" : "#8a3a3a");
-				$("#mainbreakerKnob").setAttribute("cx", mainSwitchOn ? 490 : 410);
-				$("#rcdTrack").setAttribute("fill", rcdOn ? "#5f8f5a" : "#8a3a3a");
-				$("#rcdKnob").setAttribute("cx", rcdOn ? 490 : 410);
+				GameUI.setBreakerSwitch("mainbreaker", mainSwitchOn);
+				GameUI.setBreakerSwitch("rcd", rcdOn);
 			}
 			updateRCDVisual(); // 页面加载时先同步一次(默认总闸开着、漏保跳闸)
 
@@ -2683,32 +2064,15 @@ function buildLangPicker() {
 				if (scene === "s3") s3Test(id);
 			});
 
-			/* ========================= ESC MENU: 语言切换 + 放弃本关 ========================= */
-			$("#resumeBtn").addEventListener("click", () => closeModal("menuModal"));
-			$("#giveUpBtn").addEventListener("click", () => {
-				const L = I18N[currentLang];
-				if (confirm(L.giveUpConfirm)) {
-					location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
-				}
-			});
-			$("#menuModal").addEventListener("click", (e) => {
-				if (e.target.id === "menuModal") closeModal("menuModal");
-			});
-			document.addEventListener("keydown", (e) => {
-				if (e.key !== "Escape" && e.key !== "Esc") return;
-				// 死亡结算弹窗只能通过"开启下一世"关闭,ESC 不应绕过
-				if ($("#gameOverModal").classList.contains("show")) return;
-				// 若已有其他弹窗(线索本/结案报告/放大图等)打开,先关闭它,而不是叠加打开菜单
-				const openOthers = $all(".modal-bg.show").filter((el) => el.id !== "menuModal");
-				if (openOthers.length > 0) {
-					openOthers.forEach((el) => el.classList.remove("show"));
-					return;
-				}
-				$("#menuModal").classList.toggle("show");
+			/* ========================= ESC MENU: 语言切换 + 放弃本关（通用机制已迁移到 guide.js 的 GameUI.initMenu） ========================= */
+			GameUI.initMenu({
+				mapUrl: "index.html",
+				getCurrentLang: () => currentLang,
+				getGiveUpConfirmText: () => I18N[currentLang].giveUpConfirm,
+				onLangSelect: applyLang,
 			});
 
 			/* ========================= 初始化语言 ========================= */
-			buildLangPicker();
 			applyLang(currentLang);
 		</script>
 	</body>
