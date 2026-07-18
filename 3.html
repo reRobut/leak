@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Electrical Leak - Level 3</title>
+		<style>
+			:root {
+				--paper: #ffffff;
+				--paper-dark: #eef1f6;
+				--ink: #14171a;
+				--ink-dim: #5b6068;
+				--brass: #1a56c4;
+				--brass-light: #4d82d6;
+				--brass-dark: #0f3480;
+				--danger: #d32f2f;
+				--danger-light: #e8908c;
+				--safe: #1a56c4;
+				--crt: #4d82d6;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				margin: 0;
+				background: #000000;
+				color: var(--ink);
+				font-family: Georgia, "Songti SC", serif;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+			}
+
+			/* ---------- FIXED GAME WINDOW ---------- */
+			.game-window {
+				position: relative;
+				width: min(96vw, 960px);
+				aspect-ratio: 900 / 560;
+				border: 4px solid #000;
+				border-radius: 3px;
+				box-shadow:
+					0 0 0 1px var(--brass-dark),
+					0 20px 60px rgba(0, 0, 0, 0.7);
+				overflow: hidden;
+				cursor: default;
+			}
+
+			.scene {
+				position: absolute;
+				inset: 0;
+				display: none;
+			}
+			.scene.active {
+				display: block;
+				animation: fadein 0.35s ease;
+			}
+			@keyframes fadein {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+			.scene svg {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+
+			.hotspot {
+				cursor: pointer;
+			}
+			.hotspot .hit {
+				fill: transparent;
+			}
+			.lbl {
+				opacity: 0;
+				transition: 0.15s;
+				font-size: 12px;
+				fill: #14171a;
+				font-family: "Courier New", monospace;
+				paint-order: stroke;
+				stroke: #fff;
+				stroke-width: 3px;
+				stroke-linejoin: round;
+			}
+
+			/* ---------- NAV ARROWS ---------- */
+			.nav-arrow {
+				position: absolute;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 44px;
+				height: 44px;
+				border-radius: 50%;
+				z-index: 20;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				transition: 0.15s;
+				opacity: 0.9;
+			}
+			.nav-arrow:hover {
+				opacity: 1;
+				transform: translateY(-50%) scale(1.08);
+			}
+			.nav-arrow:active {
+				transform: translateY(-50%) scale(0.95);
+			}
+			.nav-arrow.left {
+				left: 12px;
+			}
+			.nav-arrow.right {
+				right: 12px;
+			}
+			.nav-arrow svg {
+				width: 18px;
+				height: 18px;
+			}
+
+			/* ---------- METER WIDGET / HP BAR / GAME OVER / REBORN / MODAL 核心样式：均由 guide.js 的 GameUI 提供 ---------- */
+
+			/* ---------- CASE FILE ICON (appears once solved) ---------- */
+			.casefile {
+				position: absolute;
+				left: 12px;
+				bottom: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				font-size: 20px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+				animation: pulse 1.8s infinite;
+			}
+			.casefile.show {
+				display: flex;
+			}
+			@keyframes pulse {
+				0%,
+				100% {
+					box-shadow: 0 0 8px rgba(26, 86, 196, 0.3);
+				}
+				50% {
+					box-shadow: 0 0 18px rgba(26, 86, 196, 0.75);
+				}
+			}
+
+			/* ---------- NOTEBOOK (top-left, always visible) ---------- */
+			.notebook-btn {
+				position: absolute;
+				left: 12px;
+				top: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 19px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+			}
+			.notebook-btn:hover {
+				filter: brightness(1.08);
+			}
+			.notebook-badge {
+				position: absolute;
+				top: -6px;
+				right: -6px;
+				min-width: 16px;
+				height: 16px;
+				padding: 0 3px;
+				border-radius: 8px;
+				background: var(--danger);
+				color: #fff;
+				font-size: 10px;
+				font-weight: 700;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: "Courier New", monospace;
+				border: 1px solid var(--ink);
+			}
+
+			.clue-item {
+				padding: 9px 11px;
+				margin: 8px 0;
+				border-radius: 4px;
+				font-size: 12.5px;
+				line-height: 1.6;
+				border: 1px dashed var(--brass);
+				background: var(--paper-dark);
+				color: var(--ink);
+			}
+			.clue-item.locked {
+				opacity: 0.42;
+			}
+			.clue-item.locked .t {
+				color: var(--ink-dim);
+			}
+			.clue-item .t {
+				font-weight: 700;
+				color: var(--brass);
+				margin-bottom: 3px;
+			}
+			.clue-item .t:before {
+				content: "● ";
+			}
+			.clue-item.locked .t:before {
+				content: "○ ";
+			}
+			.clue-item .d {
+			}
+
+			/* ---------- TOAST ---------- */
+			.toast {
+				position: absolute;
+				top: 14px;
+				left: 50%;
+				z-index: 97;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				padding: 9px 16px;
+				border-radius: 4px;
+				font-size: 12px;
+				max-width: min(78%, 320px);
+				color: var(--ink);
+				font-family: "Courier New", monospace;
+				text-align: center;
+				opacity: 0;
+				transform: translate(-50%, -14px);
+				transition:
+					transform 0.3s ease,
+					opacity 0.3s ease;
+				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+				pointer-events: none;
+			}
+			.toast.show {
+				opacity: 1;
+				transform: translate(-50%, 0);
+			}
+			.toast b {
+				color: var(--brass);
+				display: block;
+				font-size: 10px;
+				letter-spacing: 1px;
+				margin-bottom: 2px;
+			}
+
+			::-webkit-scrollbar {
+				width: 8px;
+			}
+			::-webkit-scrollbar-thumb {
+				background: var(--brass);
+				border-radius: 4px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="game-window" id="gameWindow">
+			<!-- ================= SCENE 1: 室内配电箱 ================= -->
+			<div class="scene active" id="scene-s1">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+					<rect x="0" y="0" width="900" height="560" fill="#f7f7f4" />
+					<rect x="0" y="440" width="900" height="120" fill="#e4e2da" />
+
+					<!-- 配电箱(柜门 + 总闸/漏保开关) 由 guide.js 的 GameUI.buildCabinetSVG()/breakerSwitchSVG() 动态注入 -->
+					<g id="cabinetSlot"></g>
+				</svg>
+			</div>
+
+			<!-- ================= SCENE 2: 厨房 · 抽油烟机 ================= -->
+			<div class="scene" id="scene-s2">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg2">
+					<rect x="0" y="0" width="900" height="560" fill="#f7f7f4" />
+					<rect x="40" y="40" width="820" height="480" fill="none" stroke="#d8d5cc" stroke-width="1" />
+					<rect x="0" y="440" width="900" height="120" fill="#e4e2da" />
+
+					<!-- 抽油烟机(上方,金属外壳由地线网络"倒灌"带电) -->
+					<g transform="translate(350,50) scale(0.6)">
+						<g class="hotspot" data-id="hood" data-touch="true" data-test="true">
+							<rect class="hit" x="0" y="0" width="434.678" height="112.849" fill="transparent" />
+							<rect x="149.42" y="0" fill="#40596B" width="201.665" height="29.257" />
+							<polygon fill="#ACB3BA" points="434.678,76.278 66.873,76.278 149.42,29.257 352.131,29.257" class="glow-target" />
+							<rect x="66.873" y="76.278" fill="#CDD6E0" width="366.759" height="36.571" />
+							<circle fill="#F2F2F2" cx="327.053" cy="94.041" r="8.359" />
+							<circle fill="#FF7058" cx="361.535" cy="94.041" r="8.359" />
+							<circle fill="#F2F2F2" cx="396.016" cy="94.041" r="8.359" />
+						</g>
+					</g>
+
+					<!-- 炉灶与橱柜(下方,一直安全,不接地),比抽油烟机整体下移150px -->
+					<g transform="translate(350,170) scale(0.6)">
+						<g class="hotspot" data-id="cabinet" data-touch="true" data-test="true">
+							<rect class="hit" x="60" y="115" width="385" height="390" fill="transparent" />
+							<rect x="66.873" y="221.518" fill="#40596B" width="366.759" height="65.829" />
+							<rect x="83.592" y="237.181" fill="#CDD6E0" width="335.412" height="34.482" />
+							<rect x="66.873" y="286.302" fill="#F2F2F2" width="366.759" height="195.396" />
+							<path fill="#54C0EB" d="M289.437,301.975H82.547V460.8c0,3.135,2.09,5.224,5.224,5.224h201.665V301.975L289.437,301.975z" />
+							<path fill="#54C0EB" d="M305.11,301.975v164.049h107.624c3.135,0,5.224-2.09,5.224-5.224V301.975H305.11z" />
+							<circle fill="#F2F2F2" cx="149.42" cy="253.91" r="9.404" />
+							<circle fill="#F2F2F2" cx="187.037" cy="253.91" r="9.404" />
+							<rect x="125.388" y="319.739" fill="#F2F2F2" width="122.253" height="13.584" />
+							<rect x="316.123" y="356.874" fill="#F2F2F2" width="13.584" height="54.335" />
+							<rect x="110.759" y="482.743" fill="#ACB3BA" width="57.469" height="18.808" />
+							<rect x="333.322" y="482.743" fill="#ACB3BA" width="57.469" height="18.808" />
+						</g>
+					</g>
+				</svg>
+			</div>
+
+			<!-- ================= SCENE 3: 老电表间 ================= -->
+			<div class="scene" id="scene-s3">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg3">
+					<rect x="0" y="0" width="900" height="560" fill="#1c1c16" />
+
+					<defs>
+						<mask id="doorPeekMask" maskUnits="userSpaceOnUse" x="470" y="55" width="330" height="440">
+							<rect x="470" y="55" width="330" height="440" fill="#fff" />
+							<rect x="516" y="255" width="40" height="40" fill="#000" />
+							<rect x="582" y="255" width="40" height="40" fill="#000" />
+							<rect x="648" y="255" width="40" height="40" fill="#000" />
+							<rect x="714" y="255" width="40" height="40" fill="#000" />
+						</mask>
+					</defs>
+
+					<!-- 电表间内部的接线,一直都在这个位置(右侧);关着门时只能透过4扇小窗看到一点点。
+					     每根线都是单一颜色、从箱体最上面通到最下面,中间平滑收拢成一个接头(近似 y=x² / y=-x² 的弧线,
+					     贴近接头处趋于水平切线,远离接头处趋于竖直)。4个接头高度错开。
+					     第1根(红,离箱门最近)的接头贴到了箱门上,是短接的源头,其位置与门内侧那片黑色打火痕迹
+					     以箱体左边缘(x=470)为对称轴大致镜像;其余3根都是正常的小幅收拢,接头是扁椭圆的胶带(裹住一截线)。 -->
+					<g id="roomWires">
+						<rect x="470" y="55" width="330" height="440" rx="6" fill="#8a8f94" stroke="#4a4f53" stroke-width="3" />
+
+						<g class="hotspot" data-id="wire1" data-touch="true" data-test="true">
+							<rect class="hit" x="500" y="55" width="90" height="440" fill="transparent" />
+							<path d="M575,55 L575,230 C575,330 542,330 520,330 C542,330 575,330 575,430 L575,495" fill="none" stroke="#b23a2e" stroke-width="7" stroke-linecap="round" />
+							<!-- 破皮碰壳:胶带没包住,露出裸铜截面(黑色绝缘圈 + 银白色小实心圆,内切在黑色椭圆左侧) -->
+							<g id="spliceBadExposed">
+								<ellipse cx="520" cy="330" rx="14" ry="6" fill="#141414" />
+								<circle cx="509.2" cy="330" r="3.2" fill="#d7dade" />
+							</g>
+							<!-- 修好之后:套上了绿色绝缘套,和左下角那个一模一样 -->
+							<g id="spliceBadFixedTape" style="display: none">
+								<rect x="504" y="321" width="32" height="18" rx="9" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2.5" />
+								<rect x="511" y="326" width="18" height="8" rx="4" fill="#ffffff" opacity="0.3" />
+							</g>
+						</g>
+
+						<g class="hotspot" data-id="wire2" data-touch="true" data-test="true">
+							<rect class="hit" x="545" y="55" width="80" height="440" fill="transparent" />
+							<path d="M610,55 L610,90 C610,190 580,190 560,190 C580,190 610,190 610,290 L610,495" fill="none" stroke="#2f6fb0" stroke-width="7" stroke-linecap="round" />
+							<ellipse cx="560" cy="190" rx="14" ry="6" fill="#141414" />
+						</g>
+
+						<g class="hotspot" data-id="wire3" data-touch="true" data-test="true">
+							<rect class="hit" x="625" y="55" width="80" height="440" fill="transparent" />
+							<path d="M690,55 L690,150 C690,250 660,250 640,250 C660,250 690,250 690,350 L690,495" fill="none" stroke="#b23a2e" stroke-width="7" stroke-linecap="round" />
+							<ellipse cx="640" cy="250" rx="14" ry="6" fill="#141414" />
+						</g>
+
+						<g class="hotspot" data-id="wire4" data-touch="true" data-test="true">
+							<rect class="hit" x="705" y="55" width="80" height="440" fill="transparent" />
+							<path d="M770,55 L770,120 C770,220 740,220 720,220 C740,220 770,220 770,320 L770,495" fill="none" stroke="#2f6fb0" stroke-width="7" stroke-linecap="round" />
+							<ellipse cx="720" cy="220" rx="14" ry="6" fill="#141414" />
+						</g>
+					</g>
+
+					<!-- 未开门:口。就是电表间本身这扇门,靠右放置,给开门之后门板转到左边留出空间。四扇小窗,能透光看到一点里面的线 -->
+					<g id="meterRoomHatch" class="hotspot" data-id="meterRoomHatch" data-touch="true" data-test="true">
+						<rect class="hit" x="465" y="50" width="340" height="450" fill="transparent" />
+						<rect x="465" y="50" width="340" height="450" rx="6" class="glow-target" fill="#3a4a44" stroke="#1c241f" stroke-width="3" />
+						<rect x="470" y="55" width="330" height="440" rx="4" fill="#3a4a44" stroke="#1c241f" stroke-width="1" mask="url(#doorPeekMask)" />
+						<rect x="516" y="255" width="40" height="40" fill="#8a9aa4" fill-opacity="0.45" stroke="#5a6a74" stroke-width="1.5" />
+						<rect x="582" y="255" width="40" height="40" fill="#8a9aa4" fill-opacity="0.45" stroke="#5a6a74" stroke-width="1.5" />
+						<rect x="648" y="255" width="40" height="40" fill="#8a9aa4" fill-opacity="0.45" stroke="#5a6a74" stroke-width="1.5" />
+						<rect x="714" y="255" width="40" height="40" fill="#8a9aa4" fill-opacity="0.45" stroke="#5a6a74" stroke-width="1.5" />
+						<text x="635" y="55" text-anchor="middle" class="lbl" font-size="13" data-i18n="sceneHint_s3">检查老电表间</text>
+						<text x="635" y="200" text-anchor="middle" fill="#c9d4cf" font-size="26" font-weight="bold" font-family="Georgia,serif" letter-spacing="2" data-i18n="sceneLabel_s3">老电表间</text>
+					</g>
+
+					<!-- 开门后:口口。门以电表间左边缘为对称轴,镜像展开到左边,是完全同样大小的一扇门,内侧带黑色打火印记 -->
+					<g class="hotspot" data-id="doorPanel" data-touch="true" data-test="true" style="display: none" id="doorPanel">
+						<rect class="hit" x="140" y="55" width="330" height="440" fill="transparent" />
+						<rect x="140" y="55" width="330" height="440" rx="6" fill="#8a8f94" stroke="#4a4f53" stroke-width="3" class="glow-target" />
+						<rect x="186" y="255" width="40" height="40" rx="2" fill="#c9ccd0" fill-opacity="0.4" stroke="#6a6f73" stroke-width="1.5" />
+						<rect x="252" y="255" width="40" height="40" rx="2" fill="#c9ccd0" fill-opacity="0.4" stroke="#6a6f73" stroke-width="1.5" />
+						<rect x="318" y="255" width="40" height="40" rx="2" fill="#c9ccd0" fill-opacity="0.4" stroke="#6a6f73" stroke-width="1.5" />
+						<rect x="384" y="255" width="40" height="40" rx="2" fill="#c9ccd0" fill-opacity="0.4" stroke="#6a6f73" stroke-width="1.5" />
+						<!-- 黑色打火印记,压在靠右(挨着门缝、也就是曾经贴着裸铜线那侧)的位置 -->
+						<path d="M405 320 q6 -14 16 -8 q10 6 4 16 q10 -2 12 8 q2 10 -10 12 q-14 4 -18 -8 q-10 0 -4 -20 z" fill="#141414" />
+						<circle cx="447" cy="350" r="3.5" fill="#141414" />
+						<circle cx="397" cy="360" r="2.5" fill="#141414" />
+						<text x="305" y="490" text-anchor="middle" class="lbl" data-i18n="doorPanelLbl">箱门内部</text>
+					</g>
+
+					<!-- 绿色绝缘套:开门之后出现在左下角,拖到第1根线(裸露处)上即可完成维修 -->
+					<g id="insulationSleeve" style="display: none; cursor: grab" transform="translate(80,470)">
+						<rect class="hit" x="-22" y="-16" width="44" height="32" fill="transparent" />
+						<rect x="-16" y="-9" width="32" height="18" rx="9" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2.5" />
+						<rect x="-9" y="-4" width="18" height="8" rx="4" fill="#ffffff" opacity="0.3" />
+						<text
+							x="0"
+							y="34"
+							text-anchor="middle"
+							data-i18n="insulationSleeveLbl"
+							font-family="'Courier New',monospace"
+							font-size="16"
+							font-weight="bold"
+							fill="#5fd88a"
+							paint-order="stroke"
+							stroke="#0f2a1a"
+							stroke-width="4"
+							stroke-linejoin="round">
+							绝缘套,拖到裸线上
+						</text>
+					</g>
+				</svg>
+			</div>
+
+			<!-- ================= SHARED CHROME (inside game window) ================= -->
+			<div class="nav-arrow left" id="navLeft" data-i18n-title="navLeftTitle" title="上一个场景">
+				<svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</div>
+			<div class="nav-arrow right" id="navRight" data-i18n-title="navRightTitle" title="下一个场景">
+				<svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</div>
+
+			<!-- 验电笔由 guide.js 的 GameUI.initMeter() 动态注入到本容器内 -->
+
+			<div class="notebook-btn" id="notebookBtn" data-i18n-title="notebookTitle" title="线索笔记本">📓<span class="notebook-badge" id="notebookBadge" style="display: none">0</span></div>
+			<!-- 血条由 guide.js 的 GameUI.initHUD() 动态注入到本容器内 -->
+
+			<div class="casefile" id="casefileBtn" data-i18n-title="casefileTitle" title="结案报告">📁</div>
+
+			<div class="toast" id="toast"><b data-i18n="toastNewClue">发现新线索</b><span id="toastText"></span></div>
+		</div>
+
+		<!-- clue notebook modal -->
+		<div class="modal-bg" id="cluesModal">
+			<div class="modal notebook-modal">
+				<h3 data-i18n="notebookTitle">线索笔记本</h3>
+				<div class="sub" id="cluesProgress">已发现 0 / 5 条线索</div>
+				<div id="cluesList"></div>
+				<button class="modal-close" data-i18n="closeNotebookBtn" onclick="closeModal('cluesModal')">合上笔记本</button>
+			</div>
+		</div>
+
+		<!-- final report modal -->
+		<div class="modal-bg" id="reportModal">
+			<div class="modal report">
+				<h3 data-i18n="casefileTitle">结案报告</h3>
+				<div class="sub" data-i18n="reportCaseFile">CASE FILE · 09 · 漏电检查</div>
+
+				<p data-i18n-html="report_p1">这里是全楼的<b>老电表间</b>——早年的电表就装在这几扇窗子后面,后来改造,电表被挪到了别处,几乎没人会再打开检查。客户家的火线绝缘皮破损,火线搭在了箱门上,造成一片焦黑的<b>打火痕迹</b>。</p>
+				<p data-i18n-html="report_p2">由于全楼<b>接地电阻</b>本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的<b>上游</b>——不管住户怎么在家里拉闸都没用。</p>
+
+				<div class="section-t" data-i18n="reportSuggestTitle">整改建议</div>
+				<ul>
+					<li data-i18n="reportLi1">先隔着窗验电确认箱门是否带电,再动手打开箱门,避免带电抢修引发新的触电事故。</li>
+					<li data-i18n="reportLi2">将破损的火线接头重新做好绝缘包扎(或直接更换接头、加装绝缘热缩管),确保裸露铜芯不再接触箱体金属外壳。</li>
+					<li data-i18n="reportLi3">检测并整改全楼接地电阻,使其达到安全标准,避免类似漏电电流找不到正常回大地的通道。</li>
+					<li data-i18n="reportLi4">排查其余几扇电表窗内的线路,确认是否存在同样的隐患,一并处理。</li>
+				</ul>
+
+				<button class="modal-close" data-i18n="closeReportBtn" onclick="closeModal('reportModal')">合上卷宗</button>
+			</div>
+		</div>
+
+		<!-- 死亡结算弹窗 / 重生欢迎弹窗 均由 guide.js 的 GameUI.initHUD() 动态注入 -->
+
+		<!-- repair complete modal -->
+		<div class="modal-bg" id="repairModal">
+			<div class="modal repair-modal">
+				<h3 data-i18n="repairTitle">✔ 维修完成</h3>
+				<div class="sub" data-i18n="repairSub">REPAIR COMPLETE</div>
+				<div class="repair-analysis">
+					<p data-i18n="repairP1">这里是全楼的老电表间——早年的电表就装在这几扇窗子后面,后来改造,电表被挪到了别处,几乎没人会再打开检查。客户家的火线绝缘皮破损,火线搭在了箱门上,造成一片焦黑的打火痕迹。</p>
+					<p data-i18n="repairP2">由于全楼接地电阻本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的上游——不管住户怎么在家里拉闸都没用。真正的解法在老电表间:先隔窗验电确认无误,打开箱门后危险随即解除,再用绝缘套把这处破损的火线重新包好。</p>
+				</div>
+				<div class="repair-btns">
+					<button class="modal-close repair-btn" id="nextLevelBtn" data-i18n="nextLevelBtn">下一关</button>
+					<button class="modal-close repair-btn" id="levelMapBtn" data-i18n="levelMapBtn">返回关卡地图</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ESC 菜单(语言选择 / 继续游戏 / 放弃本关) 由 guide.js 的 GameUI.initMenu() 动态注入 -->
+
+		<!-- 共用组件（血条 / 死亡画面 / 重生画面 / 帮助弹窗）：必须先于下方主脚本加载，因为主脚本会调用 GameUI.initHUD() -->
+		<script src="guide.js"></script>
+
+		<script>
+			/* ========================= DATA ========================= */
+			const I18N = {
+				"zh-CN": {
+					cabinetHeader: `室内配电箱 · 户内总控`,
+					mainBreakerLabel: `总闸`, rcdLabel: `漏电保护`, rcdLbl: `漏电保护器`,
+					hoodLbl: `抽油烟机`,
+					sceneLabel_s3: `老电表间`, sceneHint_s3: `检查老电表间`,
+					doorPanelLbl: `箱门内部`, wirePanelLbl: `接线`, insulationSleeveLbl: `绝缘套,拖到裸线上`,
+					navLeftTitle: `上一个场景`, navRightTitle: `下一个场景`,
+					meterHead: `右键验电`, meterStandby: `待机`,
+					notebookTitle: `线索笔记本`, hpTitle: `生命值`, casefileTitle: `结案报告`,
+					toastNewClue: `发现新线索`, closeNotebookBtn: `合上笔记本`, undiscoveredClue: `尚未发现的线索`,
+					reportCaseFile: `CASE FILE · 09 · 漏电检查`,
+					report_p1: `这里是全楼的<b>老电表间</b>——早年的电表就装在这几扇窗子后面,后来改造,电表被挪到了别处,几乎没人会再打开检查。客户家的火线绝缘皮破损,火线搭在了箱门上,造成一片焦黑的<b>打火痕迹</b>。`,
+					report_p2: `由于全楼<b>接地电阻</b>本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的<b>上游</b>——不管住户怎么在家里拉闸都没用。`,
+					reportSuggestTitle: `整改建议`,
+					reportLi1: `先隔着窗验电确认箱门是否带电,再动手打开箱门,避免带电抢修引发新的触电事故。`,
+					reportLi2: `将破损的火线接头重新做好绝缘包扎(或直接更换接头、加装绝缘热缩管),确保裸露铜芯不再接触箱体金属外壳。`,
+					reportLi3: `检测并整改全楼接地电阻,使其达到安全标准,避免类似漏电电流找不到正常回大地的通道。`,
+					reportLi4: `排查其余几扇电表窗内的线路,确认是否存在同样的隐患,一并处理。`,
+					closeReportBtn: `合上卷宗`,
+					gameOverTitle: `⚡ 你被电死了。`, gameOverSub: `下辈子注意点。`, rebornBtnText: `开启下一世`,
+					rebornTitle: `我重生了！`, rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因为粗心不小心被电死。这一世,我要成为电工王！`,
+					rebornStartBtn: `这一世,开始`,
+					repairTitle: `✔ 维修完成`, repairSub: `维修完成`,
+					repairP1: `这里是全楼的老电表间——早年的电表就装在这几扇窗子后面,后来改造,电表被挪到了别处,几乎没人会再打开检查。客户家的火线绝缘皮破损,火线搭在了箱门上,造成一片焦黑的打火痕迹。`,
+					repairP2: `由于全楼接地电阻本就偏高,这股漏电流顺着接地网络"倒灌"进了各家插座的地线插孔,家里所有接了地线的电器外壳都悄悄带上了接近220V的电压。这一切都发生在总闸的上游——不管住户怎么在家里拉闸都没用。真正的解法在老电表间:先隔窗验电确认无误,打开箱门后危险随即解除,再用绝缘套把这处破损的火线重新包好。`,
+					nextLevelBtn: `下一关`, levelMapBtn: `返回关卡地图`, nextLevelToast: `下一关制作中,敬请期待!`,
+					penNone: `无电`, penLow: `有微弱电压`, penDanger: `危险`,
+					zoomPrefix: `🔍 特写`, reportPrefix: `📁 结案报告`,
+					cluesProgress: `已发现 {d} / {t} 条线索`,
+					menuTitle: `游戏菜单`, menuLangTitle: `选择语言`, resumeBtn: `继续游戏`,
+					giveUpBtn: `放弃本关，返回主页`,
+					giveUpConfirm: `确定要放弃本关并返回主页吗？当前进度不会保存。`,
+					clues: {
+						clue_meter_relocated: {t:`电表窗内如今只剩电线`, d:`打开老电表间里的电表窗,里面早已没有电表,只剩几根电线从中穿过——这里以前是全楼四户人家的电表就装在这里,后来电力增容改造,电表被整体挪到了别处,也几乎没人会再打开这几扇窗检查了。`},
+						clue_hood_live: {t:`抽油烟机金属外壳带电`, d:`验电笔碰到抽油烟机的金属机身,灯光一下冲到危险档——凡是接了地线的电器外壳,现在都顶着接近220V的电压。`},
+							clue_window_live: {t:`一扇电表窗验出了危险电压`, d:`还没打开窗子,先隔着玻璃拿验电笔碰一下,指示灯直接冲到危险档——幸好先测了一下,不然伸手直接开窗、摸进去就是一次触电。`},
+						clue_splice_found: {t:`箱门上的黑色打火痕迹`, d:`打开这扇电表窗,左边的箱门上有一片焦黑的打火痕迹,右边的电线里有一根裸露的铜芯正搭在箱门上——反复放电烧出的痕迹,这就是漏电的真正源头。`},
+						clue_other_splices_ok: {t:`其余电表窗干干净净`, d:`打开其余几扇电表窗,箱门都是干净的金属面,没有任何打火痕迹,电线也都好好地待在自己的位置上——排除了它们的嫌疑。`},
+					}
+				},
+				"en": {
+					cabinetHeader: `INDOOR PANEL · IN-HOME CONTROL`,
+					mainBreakerLabel: `Main Breaker`, rcdLabel: `RCD`, rcdLbl: `Residual-Current Device`,
+					hoodLbl: `Range Hood`,
+					sceneLabel_s3: `Old Meter Room`, sceneHint_s3: `Inspect the old meter room`,
+					doorPanelLbl: `Inside of the door`, wirePanelLbl: `Wiring`, insulationSleeveLbl: `Insulation sleeve, drag onto the bare wire`,
+					navLeftTitle: `Previous scene`, navRightTitle: `Next scene`,
+					meterHead: `Right-click to test`, meterStandby: `Standby`,
+					notebookTitle: `Clue Notebook`, hpTitle: `Health`, casefileTitle: `Case File`,
+					toastNewClue: `New clue found`, closeNotebookBtn: `Close notebook`, undiscoveredClue: `Undiscovered clue`,
+					reportCaseFile: `CASE FILE · 09 · Electrical Leak Inspection`,
+					report_p1: `This is the building's <b>old meter room</b> — the meters used to sit behind these windows. After a later renovation they were moved elsewhere, and almost no one opens this room to check on it anymore. The customer's live wire had damaged insulation and came to rest against the cabinet door, leaving a patch of scorched black <b>arc marks</b>.`,
+					report_p2: `Because the building's <b>grounding resistance</b> was already too high, this leakage current flowed back through the earth network into every household's outlet earth pins, quietly putting every earthed appliance casing at close to 220V. All of this happened <b>upstream</b> of the main breaker — no matter how a resident flipped their own switches at home, it made no difference.`,
+					reportSuggestTitle: `RECOMMENDED ACTIONS`,
+					reportLi1: `Test through the window first to confirm whether the door is live, then open it — never work on a live panel by touch alone.`,
+					reportLi2: `Properly re-insulate the damaged live wire (or replace the joint / fit heat-shrink tubing) so the bare core can no longer touch the metal cabinet.`,
+					reportLi3: `Inspect and correct the building's grounding resistance so it meets the safety standard, so leakage current never again finds no path to true earth.`,
+					reportLi4: `Check the wiring behind the other meter windows for the same problem and fix it while you're there.`,
+					closeReportBtn: `Close file`,
+					gameOverTitle: `⚡ You were electrocuted.`, gameOverSub: `Be more careful next time.`, rebornBtnText: `Begin next life`,
+					rebornTitle: `I've been reborn!`, rebornSub: `NEW LIFE`,
+					rebornP: `In my last life, I carelessly got myself electrocuted at work. This time, I'm going to become a master electrician!`,
+					rebornStartBtn: `Begin this life`,
+					repairTitle: `✔ Repair Complete`, repairSub: `REPAIR COMPLETE`,
+					repairP1: `This is the building's old meter room — the meters used to sit behind these windows. After a later renovation they were moved elsewhere, and almost no one opens this room to check anymore. The customer's live wire had damaged insulation and came to rest against the cabinet door, leaving a patch of scorched black arc marks.`,
+					repairP2: `Because the building's grounding resistance was already too high, this leakage current flowed back through the earth network into every household's outlet earth pins, quietly putting every earthed appliance casing at close to 220V. All of this happened upstream of the main breaker — no matter how a resident flipped switches at home, it made no difference. The real fix is here in the old meter room: test through the window first, open the door once confirmed safe, then re-insulate the damaged wire with an insulation sleeve.`,
+					nextLevelBtn: `Next Level`, levelMapBtn: `Back to Level Map`, nextLevelToast: `The next level is in progress, stay tuned!`,
+					penNone: `No voltage`, penLow: `Slight voltage`, penDanger: `Danger`,
+					zoomPrefix: `🔍 Close-up`, reportPrefix: `📁 Case File`,
+					cluesProgress: `{d} / {t} clues found`,
+					menuTitle: `Menu`, menuLangTitle: `Select Language`, resumeBtn: `Resume`,
+					giveUpBtn: `Abandon level and return home`,
+					giveUpConfirm: `Abandon this level and return to the home screen? Current progress in this level will not be saved.`,
+					clues: {
+						clue_meter_relocated: {t:`Only wires left behind the meter windows`, d:`Opening the meter windows in the old meter room, there's no meter left inside at all — just a few wires threading through. Four households' meters used to sit right here; after a later renovation they were moved elsewhere, and almost no one opens these windows to check anymore.`},
+						clue_hood_live: {t:`The range hood's metal casing is live`, d:`Touching the tester to the hood's metal body sends the indicator straight to the danger level — every earthed appliance casing is now carrying close to 220V.`},
+						clue_window_live: {t:`One meter window tests dangerous`, d:`Before even opening the window, testing it through the glass sends the indicator straight to the danger level — good thing it was tested first, or reaching straight in to open it would have meant a shock.`},
+						clue_splice_found: {t:`Black arc marks on the cabinet door`, d:`Opening this meter window, the door on the left carries a patch of scorched black arc marks, and among the wires on the right a bare copper core rests against the door — burned in by repeated arcing, and the true source of the leak.`},
+						clue_other_splices_ok: {t:`The other meter windows are clean`, d:`Opening the remaining meter windows, the doors are all clean bare metal with no arc marks, and the wires all sit properly in place — clearing them of suspicion.`},
+					}
+				},
+				"es": {
+					cabinetHeader: `PANEL INTERIOR · CONTROL DE LA VIVIENDA`,
+					mainBreakerLabel: `Interruptor principal`, rcdLabel: `Diferencial`, rcdLbl: `Interruptor diferencial`,
+					hoodLbl: `Campana extractora`,
+					sceneLabel_s3: `Antiguo cuarto de medidores`, sceneHint_s3: `Revisar el antiguo cuarto de medidores`,
+					doorPanelLbl: `Interior de la puerta`, wirePanelLbl: `Cableado`, insulationSleeveLbl: `Funda aislante, arrástrala sobre el cable pelado`,
+					navLeftTitle: `Escena anterior`, navRightTitle: `Escena siguiente`,
+					meterHead: `Clic derecho para probar`, meterStandby: `En espera`,
+					notebookTitle: `Cuaderno de pistas`, hpTitle: `Salud`, casefileTitle: `Expediente`,
+					toastNewClue: `Nueva pista encontrada`, closeNotebookBtn: `Cerrar cuaderno`, undiscoveredClue: `Pista sin descubrir`,
+					reportCaseFile: `EXPEDIENTE · 09 · Inspección de fuga eléctrica`,
+					report_p1: `Este es el <b>antiguo cuarto de medidores</b> de todo el edificio: los medidores solían estar detrás de estas ventanas. Tras una reforma posterior los trasladaron a otro sitio, y casi nadie vuelve a abrir esta sala para revisarla. El cable de fase de la vivienda del cliente tenía el aislamiento dañado y quedó apoyado contra la puerta del gabinete, dejando una mancha de <b>marcas de arco</b> ennegrecidas.`,
+					report_p2: `Como la <b>resistencia de puesta a tierra</b> de todo el edificio ya era demasiado alta, esta corriente de fuga refluyó por la red de tierra hacia los pines de tierra de los enchufes de cada vivienda, dejando con tensión —cerca de 220V— la carcasa de cualquier aparato conectado a tierra. Todo esto ocurrió <b>antes</b> del interruptor principal: por más que un vecino manipulara sus propios interruptores en casa, no cambiaba nada.`,
+					reportSuggestTitle: `RECOMENDACIONES`,
+					reportLi1: `Probar primero a través de la ventana para confirmar si la puerta tiene corriente, y solo entonces abrirla; nunca trabajar a mano sobre un panel que pueda estar con tensión.`,
+					reportLi2: `Volver a aislar correctamente el cable de fase dañado (o sustituir el empalme / colocar un tubo termorretráctil), para que el núcleo desnudo no vuelva a tocar la carcasa metálica.`,
+					reportLi3: `Revisar y corregir la resistencia de puesta a tierra del edificio hasta que cumpla la norma de seguridad, evitando que una fuga vuelva a quedarse sin salida hacia tierra.`,
+					reportLi4: `Revisar el cableado detrás de las demás ventanas de medidor por si tienen el mismo problema, y solucionarlo de una vez.`,
+					closeReportBtn: `Cerrar expediente`,
+					gameOverTitle: `⚡ Has muerto electrocutado.`, gameOverSub: `Ten más cuidado en la próxima vida.`, rebornBtnText: `Comenzar la próxima vida`,
+					rebornTitle: `¡He renacido!`, rebornSub: `NUEVA VIDA`,
+					rebornP: `En mi vida anterior, me electrocuté por descuido en el trabajo. ¡Esta vez, voy a convertirme en un maestro electricista!`,
+					rebornStartBtn: `Comenzar esta vida`,
+					repairTitle: `✔ Reparación completa`, repairSub: `REPARACIÓN COMPLETA`,
+					repairP1: `Este es el antiguo cuarto de medidores de todo el edificio: los medidores solían estar detrás de estas ventanas. Tras una reforma posterior los trasladaron a otro sitio, y casi nadie vuelve a abrir esta sala para revisarla. El cable de fase de la vivienda del cliente tenía el aislamiento dañado y quedó apoyado contra la puerta del gabinete, dejando una mancha de marcas de arco ennegrecidas.`,
+					repairP2: `Como la resistencia de puesta a tierra del edificio ya era demasiado alta, esta corriente de fuga refluyó por la red de tierra hacia los pines de tierra de los enchufes de cada vivienda, dejando con tensión —cerca de 220V— la carcasa de cualquier aparato conectado a tierra. Todo esto ocurrió antes del interruptor principal: por más que un vecino manipulara sus propios interruptores en casa, no cambiaba nada. La solución real está aquí, en el antiguo cuarto de medidores: probar primero a través de la ventana, abrir la puerta una vez confirmado que es seguro, y volver a aislar el cable dañado con una funda aislante.`,
+					nextLevelBtn: `Siguiente nivel`, levelMapBtn: `Volver al mapa de niveles`, nextLevelToast: `¡El siguiente nivel está en construcción, mantente atento!`,
+					penNone: `Sin corriente`, penLow: `Voltaje leve`, penDanger: `Peligro`,
+					zoomPrefix: `🔍 Primer plano`, reportPrefix: `📁 Expediente`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menú`, menuLangTitle: `Seleccionar idioma`, resumeBtn: `Reanudar`,
+					giveUpBtn: `Abandonar nivel y volver al inicio`,
+					giveUpConfirm: `¿Abandonar este nivel y volver a la pantalla de inicio? El progreso actual en este nivel no se guardará.`,
+					clues: {
+						clue_meter_relocated: {t:`Detrás de las ventanas solo quedan cables`, d:`Al abrir las ventanas de medidor en el antiguo cuarto de medidores, ya no hay ningún medidor dentro, solo unos cables que las atraviesan. Aquí estaban los medidores de las cuatro viviendas; tras una reforma posterior los trasladaron a otro sitio, y casi nadie vuelve a abrir estas ventanas para revisar.`},
+						clue_hood_live: {t:`La carcasa de la campana extractora tiene corriente`, d:`Al tocar la carcasa metálica de la campana con el probador, el indicador salta directo al nivel de peligro: cualquier carcasa de aparato conectada a tierra tiene ahora cerca de 220V.`},
+						clue_window_live: {t:`Una ventana de medidor da lectura peligrosa`, d:`Antes de abrir la ventana, al probarla a través del cristal el indicador salta directo al nivel de peligro; menos mal que se probó antes, porque meter la mano directamente para abrirla habría significado una descarga.`},
+						clue_splice_found: {t:`Marcas negras de arco en la puerta`, d:`Al abrir esta ventana de medidor, la puerta de la izquierda tiene una mancha de marcas de arco ennegrecidas, y entre los cables de la derecha hay un núcleo de cobre desnudo apoyado contra la puerta —marcas dejadas por arcos repetidos, el verdadero origen de la fuga.`},
+						clue_other_splices_ok: {t:`Las demás ventanas de medidor están limpias`, d:`Al abrir las demás ventanas de medidor, las puertas son de metal limpio sin ninguna marca de arco, y los cables están bien colocados en su sitio: quedan descartadas.`},
+					}
+				},
+				"ko": {
+					cabinetHeader: `실내 배전함 · 세대 총괄 제어`,
+					mainBreakerLabel: `총개폐기`, rcdLabel: `누전차단기`, rcdLbl: `누전 차단기`,
+					hoodLbl: `레인지 후드`,
+					sceneLabel_s3: `옛 전기계량기실`, sceneHint_s3: `옛 전기계량기실 조사하기`,
+					doorPanelLbl: `문 안쪽`, wirePanelLbl: `배선`, insulationSleeveLbl: `절연 슬리브, 드래그해서 노출된 전선에 씌우세요`,
+					navLeftTitle: `이전 장면`, navRightTitle: `다음 장면`,
+					meterHead: `우클릭으로 검전`, meterStandby: `대기 중`,
+					notebookTitle: `단서 수첩`, hpTitle: `체력`, casefileTitle: `사건 보고서`,
+					toastNewClue: `새로운 단서 발견`, closeNotebookBtn: `수첩 닫기`, undiscoveredClue: `아직 발견하지 못한 단서`,
+					reportCaseFile: `사건 파일 · 09 · 누전 조사`,
+					report_p1: `이곳은 건물 전체의 <b>옛 전기계량기실</b>이다——예전에는 계량기가 바로 이 창문들 뒤에 설치되어 있었다. 이후 개조 공사를 거치며 계량기는 다른 곳으로 옮겨졌고, 이제는 이 방을 열어 점검하는 사람이 거의 없다. 고객 집으로 들어가는 활선의 절연피복이 손상되어 활선이 배전함 문에 닿아 있었고, 그 결과 새까맣게 그을린 <b>아크 흔적</b>이 남았다.`,
+					report_p2: `건물 전체의 <b>접지 저항</b>이 원래부터 심하게 높았기 때문에, 이 누설 전류는 접지망을 타고 각 세대 콘센트의 접지 구멍으로 역류해 들어갔고, 집안에서 접지된 모든 전자제품 외함이 은밀히 220V에 가까운 전압을 띠게 되었다. 이 모든 일은 총개폐기의 <b>상류</b>에서 벌어진 것이라, 세대마다 아무리 집 안의 개폐기를 껐다 켰다 해봐야 아무 소용이 없었다.`,
+					reportSuggestTitle: `개선 권고 사항`,
+					reportLi1: `먼저 창 너머로 검전하여 문에 전기가 흐르는지 확인한 뒤에 문을 열 것——통전 상태에서 맨손으로 작업해 새로운 감전 사고를 일으키지 않도록 한다.`,
+					reportLi2: `손상된 활선 접속부를 다시 제대로 절연 처리한다(또는 접속부를 교체하거나 절연 열수축 튜브를 장착한다), 노출된 구리 심선이 다시는 금속 외함에 닿지 않도록 한다.`,
+					reportLi3: `건물 전체의 접지 저항을 점검·개선하여 안전 기준에 맞도록 하고, 유사한 누설 전류가 다시 대지로 빠져나갈 통로를 찾지 못하는 일이 없도록 한다.`,
+					reportLi4: `나머지 계량기 창 안쪽의 배선도 같은 문제가 있는지 점검하여 함께 처리한다.`,
+					closeReportBtn: `서류 닫기`,
+					gameOverTitle: `⚡ 감전사했습니다.`, gameOverSub: `다음 생에는 조심하세요.`, rebornBtnText: `다음 생 시작하기`,
+					rebornTitle: `다시 태어났다!`, rebornSub: `새로운 삶`,
+					rebornP: `전생에는 일하다 부주의로 감전사하고 말았다. 이번 생에는 전기 기술의 달인이 되겠다!`,
+					rebornStartBtn: `이번 생 시작하기`,
+					repairTitle: `✔ 수리 완료`, repairSub: `수리 완료`,
+					repairP1: `이곳은 건물 전체의 옛 전기계량기실이다——예전에는 계량기가 바로 이 창문들 뒤에 설치되어 있었다. 이후 개조 공사를 거치며 계량기는 다른 곳으로 옮겨졌고, 이제는 이 방을 열어 점검하는 사람이 거의 없다. 고객 집으로 들어가는 활선의 절연피복이 손상되어 활선이 배전함 문에 닿아 있었고, 그 결과 새까맣게 그을린 아크 흔적이 남았다.`,
+					repairP2: `건물 전체의 접지 저항이 원래부터 심하게 높았기 때문에, 이 누설 전류는 접지망을 타고 각 세대 콘센트의 접지 구멍으로 역류해 들어갔고, 집안에서 접지된 모든 전자제품 외함이 은밀히 220V에 가까운 전압을 띠게 되었다. 이 모든 일은 총개폐기의 상류에서 벌어진 것이라, 세대마다 아무리 집 안의 개폐기를 껐다 켰다 해봐야 아무 소용이 없었다. 진짜 해법은 이 옛 전기계량기실에 있다: 먼저 창 너머로 검전하고, 안전이 확인되면 문을 연 뒤, 절연 슬리브로 손상된 전선을 다시 감싸는 것이다.`,
+					nextLevelBtn: `다음 레벨`, levelMapBtn: `레벨 맵으로 돌아가기`, nextLevelToast: `다음 레벨은 제작 중입니다, 기대해 주세요!`,
+					penNone: `무전압`, penLow: `약한 전압 감지`, penDanger: `위험`,
+					zoomPrefix: `🔍 클로즈업`, reportPrefix: `📁 사건 보고서`,
+					cluesProgress: `{d} / {t}개 단서 발견`,
+					menuTitle: `메뉴`, menuLangTitle: `언어 선택`, resumeBtn: `게임 계속하기`,
+					giveUpBtn: `레벨 포기하고 홈으로`,
+					giveUpConfirm: `이 레벨을 포기하고 홈 화면으로 돌아가시겠습니까? 현재 레벨의 진행 상황은 저장되지 않습니다.`,
+					clues: {
+						clue_meter_relocated: {t:`계량기 창 안에는 이제 전선만 남았다`, d:`옛 전기계량기실의 계량기 창을 열어보면 안에는 이미 계량기가 없고 전선 몇 가닥만 지나가고 있다——원래 이곳에는 네 세대의 계량기가 설치되어 있었으나, 이후 개조 공사로 계량기가 모두 다른 곳으로 옮겨졌고 이제는 이 창들을 열어 점검하는 사람도 거의 없다.`},
+						clue_hood_live: {t:`레인지 후드의 금속 외함에 전기가 흐른다`, d:`검전기를 레인지 후드의 금속 몸체에 대자 지시등이 곧바로 위험 단계까지 치솟는다——접지된 전자제품 외함은 이제 모두 220V에 가까운 전압을 띠고 있다.`},
+						clue_window_live: {t:`계량기 창 하나에서 위험 전압이 측정됐다`, d:`창을 열기 전에 유리 너머로 먼저 검전기를 대보니 지시등이 곧바로 위험 단계까지 치솟는다——먼저 측정해 보길 잘했다, 그렇지 않고 바로 손을 뻗어 창을 열었다면 감전되었을 것이다.`},
+						clue_splice_found: {t:`배전함 문의 검은 아크 흔적`, d:`이 계량기 창을 열어보면 왼쪽 문에 새까맣게 그을린 아크 흔적이 있고, 오른쪽 전선 속에는 노출된 구리 심선 하나가 문에 맞닿아 있다——반복된 방전으로 생긴 흔적이며, 이것이 바로 누전의 진짜 근원이다.`},
+						clue_other_splices_ok: {t:`나머지 계량기 창은 깨끗하다`, d:`나머지 계량기 창들을 열어보면 문은 모두 깨끗한 금속면이고 아크 흔적이 전혀 없으며, 전선도 모두 제자리에 잘 있다——혐의를 벗었다.`},
+					}
+				},
+				"zh-TW": {
+					cabinetHeader: `室內配電箱 · 戶內總控`,
+					mainBreakerLabel: `總開關`, rcdLabel: `漏電保護`, rcdLbl: `漏電保護器`,
+					hoodLbl: `抽油煙機`,
+					sceneLabel_s3: `老電表間`, sceneHint_s3: `檢查老電表間`,
+					doorPanelLbl: `箱門內部`, wirePanelLbl: `接線`, insulationSleeveLbl: `絕緣套,拖到裸線上`,
+					navLeftTitle: `上一個場景`, navRightTitle: `下一個場景`,
+					meterHead: `右鍵驗電`, meterStandby: `待機`,
+					notebookTitle: `線索筆記本`, hpTitle: `生命值`, casefileTitle: `結案報告`,
+					toastNewClue: `發現新線索`, closeNotebookBtn: `合上筆記本`, undiscoveredClue: `尚未發現的線索`,
+					reportCaseFile: `CASE FILE · 09 · 漏電檢查`,
+					report_p1: `這裡是全樓的<b>老電表間</b>——早年的電表就裝在這幾扇窗子後面,後來改造,電表被挪到了別處,幾乎沒人會再打開檢查。客戶家的火線絕緣皮破損,火線搭在了箱門上,造成一片焦黑的<b>打火痕跡</b>。`,
+					report_p2: `由於全樓<b>接地電阻</b>本就偏高,這股漏電流順著接地網路"倒灌"進了各家插座的地線插孔,家裡所有接了地線的電器外殼都悄悄帶上了接近220V的電壓。這一切都發生在總開關的<b>上游</b>——不管住戶怎麼在家裡拉閘都沒用。`,
+					reportSuggestTitle: `整改建議`,
+					reportLi1: `先隔著窗驗電確認箱門是否帶電,再動手打開箱門,避免帶電搶修引發新的觸電事故。`,
+					reportLi2: `將破損的火線接頭重新做好絕緣包紮(或直接更換接頭、加裝絕緣熱縮管),確保裸露銅芯不再接觸箱體金屬外殼。`,
+					reportLi3: `檢測並整改全樓接地電阻,使其達到安全標準,避免類似漏電電流找不到正常回大地的通道。`,
+					reportLi4: `排查其餘幾扇電表窗內的線路,確認是否存在同樣的隱患,一併處理。`,
+					closeReportBtn: `合上卷宗`,
+					gameOverTitle: `⚡ 你被電死了。`, gameOverSub: `下輩子注意點。`, rebornBtnText: `開啟下一世`,
+					rebornTitle: `我重生了!`, rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因為粗心不小心被電死。這一世,我要成為電工王!`,
+					rebornStartBtn: `這一世,開始`,
+					repairTitle: `✔ 維修完成`, repairSub: `維修完成`,
+					repairP1: `這裡是全樓的老電表間——早年的電表就裝在這幾扇窗子後面,後來改造,電表被挪到了別處,幾乎沒人會再打開檢查。客戶家的火線絕緣皮破損,火線搭在了箱門上,造成一片焦黑的打火痕跡。`,
+					repairP2: `由於全樓接地電阻本就偏高,這股漏電流順著接地網路"倒灌"進了各家插座的地線插孔,家裡所有接了地線的電器外殼都悄悄帶上了接近220V的電壓。這一切都發生在總開關的上游——不管住戶怎麼在家裡拉閘都沒用。真正的解法在老電表間:先隔窗驗電確認無誤,打開箱門後危險隨即解除,再用絕緣套把這處破損的火線重新包好。`,
+					nextLevelBtn: `下一關`, levelMapBtn: `返回關卡地圖`, nextLevelToast: `下一關製作中,敬請期待!`,
+					penNone: `無電`, penLow: `有微弱電壓`, penDanger: `危險`,
+					zoomPrefix: `🔍 特寫`, reportPrefix: `📁 結案報告`,
+					cluesProgress: `已發現 {d} / {t} 條線索`,
+					menuTitle: `遊戲選單`, menuLangTitle: `選擇語言`, resumeBtn: `繼續遊戲`,
+					giveUpBtn: `放棄本關,返回主頁`,
+					giveUpConfirm: `確定要放棄本關並返回主頁嗎?目前進度不會保存。`,
+					clues: {
+						clue_meter_relocated: {t:`電表窗內如今只剩電線`, d:`打開老電表間裡的電表窗,裡面早已沒有電表,只剩幾根電線從中穿過——這裡以前是全樓四戶人家的電表所在,後來改造,電表被整體挪到了別處,也幾乎沒人會再打開這幾扇窗檢查了。`},
+						clue_hood_live: {t:`抽油煙機金屬外殼帶電`, d:`驗電筆碰到抽油煙機的金屬機身,燈光一下衝到危險檔——凡是接了地線的電器外殼,現在都頂著接近220V的電壓。`},
+						clue_window_live: {t:`一扇電表窗驗出了危險電壓`, d:`還沒打開窗子,先隔著玻璃拿驗電筆碰一下,指示燈直接衝到危險檔——幸好先測了一下,不然伸手直接開窗、摸進去就是一次觸電。`},
+						clue_splice_found: {t:`箱門上的黑色打火痕跡`, d:`打開這扇電表窗,左邊的箱門上有一片焦黑的打火痕跡,右邊的電線裡有一根裸露的銅芯正搭在箱門上——反覆放電燒出的痕跡,這就是漏電的真正源頭。`},
+						clue_other_splices_ok: {t:`其餘電表窗乾乾淨淨`, d:`打開其餘幾扇電表窗,箱門都是乾淨的金屬面,沒有任何打火痕跡,電線也都好好地待在自己的位置上——排除了它們的嫌疑。`},
+					}
+				},
+				"de": {
+					cabinetHeader: `INNENVERTEILER · WOHNUNGSSTEUERUNG`,
+					mainBreakerLabel: `Hauptschalter`, rcdLabel: `FI-Schutzschalter`, rcdLbl: `Fehlerstrom-Schutzschalter`,
+					hoodLbl: `Dunstabzugshaube`,
+					sceneLabel_s3: `Alter Zählerraum`, sceneHint_s3: `Alten Zählerraum untersuchen`,
+					doorPanelLbl: `Innenseite der Tür`, wirePanelLbl: `Verkabelung`, insulationSleeveLbl: `Isolierhülse, auf das blanke Kabel ziehen`,
+					navLeftTitle: `Vorherige Szene`, navRightTitle: `Nächste Szene`,
+					meterHead: `Rechtsklick zum Prüfen`, meterStandby: `Bereit`,
+					notebookTitle: `Hinweisheft`, hpTitle: `Gesundheit`, casefileTitle: `Fallakte`,
+					toastNewClue: `Neuer Hinweis gefunden`, closeNotebookBtn: `Heft schließen`, undiscoveredClue: `Unentdeckter Hinweis`,
+					reportCaseFile: `FALLAKTE · 09 · Untersuchung eines Stromfehlers`,
+					report_p1: `Dies ist der <b>alte Zählerraum</b> des ganzen Gebäudes — früher standen die Stromzähler genau hinter diesen Fenstern. Nach einem späteren Umbau wurden sie andernorts untergebracht, und heute öffnet kaum noch jemand diesen Raum zur Kontrolle. Die Isolierung des Außenleiters in der Wohnung des Kunden war beschädigt, sodass der Leiter an der Schranktür auflag und dort verkohlte, schwarze <b>Brandspuren</b> hinterließ.`,
+					report_p2: `Da der <b>Erdungswiderstand</b> des ganzen Gebäudes ohnehin schon zu hoch war, floss dieser Fehlerstrom über das Erdungsnetz zurück in die Schutzkontakte sämtlicher Steckdosen — jedes geerdete Gerätegehäuse stand plötzlich unbemerkt unter einer Spannung von fast 220V. All das geschah <b>vor</b> dem Hauptschalter — egal wie die Bewohner zu Hause ihre eigenen Schalter betätigten, es änderte nichts.`,
+					reportSuggestTitle: `EMPFOHLENE MASSNAHMEN`,
+					reportLi1: `Zuerst durch das Fenster prüfen, ob die Tür unter Spannung steht, und erst danach öffnen — niemals ein möglicherweise stromführendes Feld mit bloßer Hand bearbeiten.`,
+					reportLi2: `Den beschädigten Außenleiter ordentlich neu isolieren (oder die Verbindung ersetzen bzw. einen Schrumpfschlauch anbringen), damit der blanke Kern das Metallgehäuse nicht mehr berührt.`,
+					reportLi3: `Den Erdungswiderstand des Gebäudes prüfen und so korrigieren, dass er den Sicherheitsnormen entspricht, damit ein Fehlerstrom nie wieder ohne Weg zur echten Erde bleibt.`,
+					reportLi4: `Die Verkabelung hinter den übrigen Zählerfenstern auf dasselbe Problem prüfen und gleich mit beheben.`,
+					closeReportBtn: `Akte schließen`,
+					gameOverTitle: `⚡ Du wurdest tödlich vom Strom getroffen.`, gameOverSub: `Sei im nächsten Leben vorsichtiger.`, rebornBtnText: `Nächstes Leben beginnen`,
+					rebornTitle: `Ich wurde wiedergeboren!`, rebornSub: `NEUES LEBEN`,
+					rebornP: `In meinem letzten Leben wurde ich aus Unachtsamkeit bei der Arbeit vom Strom getötet. Dieses Mal werde ich ein Meister-Elektriker!`,
+					rebornStartBtn: `Dieses Leben beginnen`,
+					repairTitle: `✔ Reparatur abgeschlossen`, repairSub: `REPARATUR ABGESCHLOSSEN`,
+					repairP1: `Dies ist der alte Zählerraum des ganzen Gebäudes — früher standen die Stromzähler genau hinter diesen Fenstern. Nach einem späteren Umbau wurden sie andernorts untergebracht, und heute öffnet kaum noch jemand diesen Raum zur Kontrolle. Die Isolierung des Außenleiters in der Wohnung des Kunden war beschädigt, sodass der Leiter an der Schranktür auflag und dort verkohlte, schwarze Brandspuren hinterließ.`,
+					repairP2: `Da der Erdungswiderstand des Gebäudes ohnehin schon zu hoch war, floss dieser Fehlerstrom über das Erdungsnetz zurück in die Schutzkontakte sämtlicher Steckdosen und setzte jedes geerdete Gerätegehäuse unbemerkt unter fast 220V. All das geschah vor dem Hauptschalter — egal wie die Bewohner zu Hause ihre Schalter betätigten, es änderte nichts. Die wirkliche Lösung liegt hier im alten Zählerraum: zuerst durch das Fenster prüfen, nach Bestätigung der Sicherheit die Tür öffnen, und den beschädigten Leiter dann mit einer Isolierhülse neu isolieren.`,
+					nextLevelBtn: `Nächstes Level`, levelMapBtn: `Zurück zur Levelkarte`, nextLevelToast: `Das nächste Level ist in Arbeit, bleib dran!`,
+					penNone: `Keine Spannung`, penLow: `Leichte Spannung`, penDanger: `Gefahr`,
+					zoomPrefix: `🔍 Nahaufnahme`, reportPrefix: `📁 Fallakte`,
+					cluesProgress: `{d} / {t} Hinweise gefunden`,
+					menuTitle: `Menü`, menuLangTitle: `Sprache wählen`, resumeBtn: `Fortsetzen`,
+					giveUpBtn: `Level aufgeben und zur Startseite`,
+					giveUpConfirm: `Dieses Level aufgeben und zum Startbildschirm zurückkehren? Der aktuelle Fortschritt in diesem Level wird nicht gespeichert.`,
+					clues: {
+						clue_meter_relocated: {t:`Hinter den Zählerfenstern sind nur noch Kabel`, d:`Öffnet man die Zählerfenster im alten Zählerraum, ist dort längst kein Zähler mehr — nur ein paar hindurchgeführte Kabel. Hier standen einst die Zähler von vier Haushalten; nach einem späteren Umbau wurden sie andernorts untergebracht, und kaum noch jemand öffnet diese Fenster zur Kontrolle.`},
+						clue_hood_live: {t:`Das Metallgehäuse der Dunstabzugshaube steht unter Spannung`, d:`Berührt man das Metallgehäuse der Haube mit dem Prüfer, schlägt die Anzeige sofort in den Gefahrenbereich aus — jedes geerdete Gerätegehäuse führt jetzt fast 220V.`},
+						clue_window_live: {t:`Ein Zählerfenster zeigt gefährliche Spannung`, d:`Noch bevor das Fenster geöffnet wird, schlägt die Anzeige beim Prüfen durch das Glas sofort in den Gefahrenbereich aus — gut, dass vorher geprüft wurde, sonst hätte das direkte Hineingreifen zum Öffnen einen Stromschlag bedeutet.`},
+						clue_splice_found: {t:`Schwarze Brandspuren an der Schranktür`, d:`Öffnet man dieses Zählerfenster, trägt die Tür links eine Fläche verkohlter, schwarzer Brandspuren, und rechts liegt zwischen den Kabeln ein blanker Kupferkern an der Tür an — eingebrannt durch wiederholte Lichtbögen, die eigentliche Quelle des Fehlerstroms.`},
+						clue_other_splices_ok: {t:`Die übrigen Zählerfenster sind sauber`, d:`Öffnet man die übrigen Zählerfenster, sind die Türen alle sauberes, blankes Metall ohne jede Brandspur, und die Kabel liegen ordentlich an ihrem Platz — sie sind entlastet.`},
+					}
+				},
+				"fr": {
+					cabinetHeader: `TABLEAU INTÉRIEUR · CONTRÔLE DU LOGEMENT`,
+					mainBreakerLabel: `Disjoncteur principal`, rcdLabel: `Différentiel`, rcdLbl: `Disjoncteur différentiel`,
+					hoodLbl: `Hotte aspirante`,
+					sceneLabel_s3: `Ancien local des compteurs`, sceneHint_s3: `Inspecter l'ancien local des compteurs`,
+					doorPanelLbl: `Intérieur de la porte`, wirePanelLbl: `Câblage`, insulationSleeveLbl: `Gaine isolante, glissez-la sur le fil dénudé`,
+					navLeftTitle: `Scène précédente`, navRightTitle: `Scène suivante`,
+					meterHead: `Clic droit pour tester`, meterStandby: `En veille`,
+					notebookTitle: `Carnet d'indices`, hpTitle: `Santé`, casefileTitle: `Dossier`,
+					toastNewClue: `Nouvel indice trouvé`, closeNotebookBtn: `Fermer le carnet`, undiscoveredClue: `Indice non découvert`,
+					reportCaseFile: `DOSSIER · 09 · Enquête sur une fuite électrique`,
+					report_p1: `Voici l'<b>ancien local des compteurs</b> de tout l'immeuble — autrefois, les compteurs se trouvaient juste derrière ces fenêtres. Après une rénovation ultérieure, ils ont été déplacés ailleurs, et presque plus personne n'ouvre cette pièce pour la vérifier. Le fil de phase du logement du client avait son isolant endommagé et reposait contre la porte de l'armoire, laissant une tache de <b>traces d'arc</b> noircies.`,
+					report_p2: `La <b>résistance de terre</b> de tout l'immeuble étant déjà trop élevée, ce courant de fuite est remonté par le réseau de terre jusqu'aux broches de terre des prises de chaque logement, mettant discrètement sous tension —près de 220V— le boîtier de tout appareil correctement mis à la terre. Tout cela s'est produit <b>en amont</b> du disjoncteur principal — quoi que fasse un résident avec ses propres interrupteurs chez lui, cela ne changeait rien.`,
+					reportSuggestTitle: `RECOMMANDATIONS`,
+					reportLi1: `Tester d'abord à travers la fenêtre pour vérifier si la porte est sous tension, puis seulement l'ouvrir — ne jamais intervenir à mains nues sur un tableau potentiellement sous tension.`,
+					reportLi2: `Réisoler correctement le fil de phase endommagé (ou remplacer le raccord / poser une gaine thermorétractable), afin que l'âme dénudée ne touche plus le boîtier métallique.`,
+					reportLi3: `Contrôler et corriger la résistance de terre de l'immeuble pour qu'elle respecte la norme de sécurité, afin qu'un courant de fuite ne se retrouve plus jamais sans chemin vers la terre.`,
+					reportLi4: `Vérifier le câblage derrière les autres fenêtres de compteur pour le même problème, et le corriger dans la foulée.`,
+					closeReportBtn: `Fermer le dossier`,
+					gameOverTitle: `⚡ Vous avez été électrocuté.`, gameOverSub: `Soyez plus prudent la prochaine vie.`, rebornBtnText: `Commencer la vie suivante`,
+					rebornTitle: `Je suis réincarné !`, rebornSub: `NOUVELLE VIE`,
+					rebornP: `Dans ma vie précédente, je me suis électrocuté par négligence au travail. Cette fois, je vais devenir un maître électricien !`,
+					rebornStartBtn: `Commencer cette vie`,
+					repairTitle: `✔ Réparation terminée`, repairSub: `RÉPARATION TERMINÉE`,
+					repairP1: `Voici l'ancien local des compteurs de tout l'immeuble — autrefois, les compteurs se trouvaient juste derrière ces fenêtres. Après une rénovation ultérieure, ils ont été déplacés ailleurs, et presque plus personne n'ouvre cette pièce pour la vérifier. Le fil de phase du logement du client avait son isolant endommagé et reposait contre la porte de l'armoire, laissant une tache de traces d'arc noircies.`,
+					repairP2: `La résistance de terre de l'immeuble étant déjà trop élevée, ce courant de fuite est remonté par le réseau de terre jusqu'aux broches de terre des prises de chaque logement, mettant discrètement sous tension —près de 220V— le boîtier de tout appareil mis à la terre. Tout cela s'est produit en amont du disjoncteur principal — quoi que fasse un résident avec ses interrupteurs chez lui, cela ne changeait rien. La vraie solution se trouve ici, dans l'ancien local des compteurs : tester d'abord à travers la fenêtre, ouvrir la porte une fois la sécurité confirmée, puis réisoler le fil endommagé avec une gaine isolante.`,
+					nextLevelBtn: `Niveau suivant`, levelMapBtn: `Retour à la carte des niveaux`, nextLevelToast: `Le niveau suivant est en préparation, restez à l'écoute !`,
+					penNone: `Pas de tension`, penLow: `Légère tension`, penDanger: `Danger`,
+					zoomPrefix: `🔍 Gros plan`, reportPrefix: `📁 Dossier`,
+					cluesProgress: `{d} / {t} indices trouvés`,
+					menuTitle: `Menu`, menuLangTitle: `Choisir la langue`, resumeBtn: `Reprendre`,
+					giveUpBtn: `Abandonner le niveau et revenir à l'accueil`,
+					giveUpConfirm: `Abandonner ce niveau et revenir à l'écran d'accueil ? La progression actuelle de ce niveau ne sera pas sauvegardée.`,
+					clues: {
+						clue_meter_relocated: {t:`Il ne reste que des fils derrière les fenêtres de compteur`, d:`En ouvrant les fenêtres de compteur dans l'ancien local, il n'y a plus aucun compteur à l'intérieur, juste quelques fils qui passent au travers. Les compteurs de quatre logements se trouvaient autrefois ici ; après une rénovation ultérieure, ils ont été déplacés ailleurs, et presque plus personne n'ouvre ces fenêtres pour vérifier.`},
+						clue_hood_live: {t:`Le boîtier métallique de la hotte est sous tension`, d:`En touchant le corps métallique de la hotte avec le testeur, l'indicateur passe directement au niveau danger — tout boîtier d'appareil mis à la terre porte désormais près de 220V.`},
+						clue_window_live: {t:`Une fenêtre de compteur indique une tension dangereuse`, d:`Avant même d'ouvrir la fenêtre, la tester à travers la vitre fait passer l'indicateur directement au niveau danger — heureusement testé avant, sinon tendre la main directement pour l'ouvrir aurait causé une électrocution.`},
+						clue_splice_found: {t:`Traces noires d'arc sur la porte de l'armoire`, d:`En ouvrant cette fenêtre de compteur, la porte de gauche porte une tache de traces d'arc noircies, et parmi les fils à droite, une âme de cuivre dénudée repose contre la porte — marques laissées par des arcs répétés, la véritable source de la fuite.`},
+						clue_other_splices_ok: {t:`Les autres fenêtres de compteur sont propres`, d:`En ouvrant les autres fenêtres de compteur, les portes sont toutes en métal propre, sans aucune trace d'arc, et les fils sont bien à leur place — elles sont hors de cause.`},
+					}
+				},
+				"ru": {
+					cabinetHeader: `ВНУТРЕННИЙ ЩИТ · УПРАВЛЕНИЕ КВАРТИРОЙ`,
+					mainBreakerLabel: `Главный автомат`, rcdLabel: `УЗО`, rcdLbl: `Устройство защитного отключения`,
+					hoodLbl: `Вытяжка`,
+					sceneLabel_s3: `Старая комната счётчиков`, sceneHint_s3: `Осмотреть старую комнату счётчиков`,
+					doorPanelLbl: `Внутренняя сторона дверцы`, wirePanelLbl: `Проводка`, insulationSleeveLbl: `Изоляционная муфта, перетащите на оголённый провод`,
+					navLeftTitle: `Предыдущая сцена`, navRightTitle: `Следующая сцена`,
+					meterHead: `ПКМ для проверки`, meterStandby: `Ожидание`,
+					notebookTitle: `Блокнот улик`, hpTitle: `Здоровье`, casefileTitle: `Дело`,
+					toastNewClue: `Найдена новая улика`, closeNotebookBtn: `Закрыть блокнот`, undiscoveredClue: `Ещё не найденная улика`,
+					reportCaseFile: `ДЕЛО · 09 · Расследование утечки тока`,
+					report_p1: `Это <b>старая комната счётчиков</b> всего дома — раньше счётчики стояли прямо за этими окошками. После позднейшей реконструкции их перенесли в другое место, и теперь эту комнату почти никто не открывает для проверки. Изоляция фазного провода в квартире клиента была повреждена, провод лёг на дверцу щита, оставив пятно почерневших <b>следов дуги</b>.`,
+					report_p2: `Поскольку <b>сопротивление заземления</b> всего дома и так было слишком высоким, этот ток утечки пошёл по сети заземления обратно в заземляющие контакты розеток каждой квартиры, незаметно подняв корпус любого заземлённого прибора почти до 220В. Всё это происходило <b>до</b> главного автомата — как бы жильцы ни щёлкали своими собственными выключателями дома, это ничего не меняло.`,
+					reportSuggestTitle: `РЕКОМЕНДАЦИИ`,
+					reportLi1: `Сначала проверить через окошко, есть ли напряжение на дверце, и только потом открывать — никогда не работать голыми руками с потенциально находящимся под напряжением щитом.`,
+					reportLi2: `Заново качественно заизолировать повреждённый фазный провод (или заменить соединение / надеть термоусадочную трубку), чтобы оголённая жила больше не касалась металлического корпуса.`,
+					reportLi3: `Проверить и привести сопротивление заземления дома в соответствие с нормой безопасности, чтобы ток утечки больше никогда не оставался без пути в настоящую землю.`,
+					reportLi4: `Проверить проводку за остальными окошками счётчиков на ту же проблему и устранить заодно.`,
+					closeReportBtn: `Закрыть дело`,
+					gameOverTitle: `⚡ Вас убило током.`, gameOverSub: `В следующей жизни будь осторожнее.`, rebornBtnText: `Начать следующую жизнь`,
+					rebornTitle: `Я переродился!`, rebornSub: `НОВАЯ ЖИЗНЬ`,
+					rebornP: `В прошлой жизни я по неосторожности погиб от удара током на работе. В этот раз я стану мастером-электриком!`,
+					rebornStartBtn: `Начать эту жизнь`,
+					repairTitle: `✔ Ремонт завершён`, repairSub: `РЕМОНТ ЗАВЕРШЁН`,
+					repairP1: `Это старая комната счётчиков всего дома — раньше счётчики стояли прямо за этими окошками. После позднейшей реконструкции их перенесли в другое место, и теперь эту комнату почти никто не открывает для проверки. Изоляция фазного провода в квартире клиента была повреждена, провод лёг на дверцу щита, оставив пятно почерневших следов дуги.`,
+					repairP2: `Поскольку сопротивление заземления дома и так было слишком высоким, этот ток утечки пошёл по сети заземления обратно в заземляющие контакты розеток каждой квартиры, незаметно подняв корпус любого заземлённого прибора почти до 220В. Всё это происходило до главного автомата — как бы жильцы ни щёлкали выключателями дома, это ничего не меняло. Настоящее решение здесь, в старой комнате счётчиков: сначала проверить через окошко, после подтверждения безопасности открыть дверцу, а затем заново заизолировать повреждённый провод изоляционной муфтой.`,
+					nextLevelBtn: `Следующий уровень`, levelMapBtn: `Назад к карте уровней`, nextLevelToast: `Следующий уровень в разработке, следите за обновлениями!`,
+					penNone: `Нет напряжения`, penLow: `Слабое напряжение`, penDanger: `Опасно`,
+					zoomPrefix: `🔍 Крупный план`, reportPrefix: `📁 Дело`,
+					cluesProgress: `Найдено улик: {d} / {t}`,
+					menuTitle: `Меню`, menuLangTitle: `Выбрать язык`, resumeBtn: `Продолжить`,
+					giveUpBtn: `Бросить уровень и вернуться домой`,
+					giveUpConfirm: `Бросить этот уровень и вернуться на главный экран? Текущий прогресс уровня не будет сохранён.`,
+					clues: {
+						clue_meter_relocated: {t:`За окошками счётчиков остались только провода`, d:`Открыв окошки счётчиков в старой комнате счётчиков, внутри давно нет никакого счётчика — только несколько проходящих проводов. Раньше здесь стояли счётчики четырёх квартир; после позднейшей реконструкции их перенесли в другое место, и теперь эти окошки почти никто не открывает для проверки.`},
+						clue_hood_live: {t:`Металлический корпус вытяжки под напряжением`, d:`Стоит коснуться тестером металлического корпуса вытяжки, индикатор сразу подскакивает до опасного уровня — корпус любого заземлённого прибора теперь несёт почти 220В.`},
+						clue_window_live: {t:`Одно окошко счётчика показало опасное напряжение`, d:`Ещё не открывая окошко, проверка через стекло сразу выводит индикатор на опасный уровень — хорошо, что проверили заранее, иначе прямая попытка открыть его рукой обернулась бы ударом тока.`},
+						clue_splice_found: {t:`Чёрные следы дуги на дверце щита`, d:`Открыв это окошко счётчика, видно: слева на дверце пятно почерневших следов дуги, а справа среди проводов оголённая медная жила прижата к дверце — след многократных разрядов, настоящий источник утечки.`},
+						clue_other_splices_ok: {t:`Остальные окошки счётчиков чистые`, d:`Открыв остальные окошки счётчиков, видно, что дверцы везде из чистого металла без единого следа дуги, а провода аккуратно лежат на своих местах — с них подозрение снято.`},
+					}
+				},
+				"ja": {
+					cabinetHeader: `屋内分電盤・住戸内総合制御`,
+					mainBreakerLabel: `主開閉器`, rcdLabel: `漏電遮断器`, rcdLbl: `漏電遮断器`,
+					hoodLbl: `レンジフード`,
+					sceneLabel_s3: `旧電気メーター室`, sceneHint_s3: `旧電気メーター室を調べる`,
+					doorPanelLbl: `扉の内側`, wirePanelLbl: `配線`, insulationSleeveLbl: `絶縁スリーブ、むき出しの電線までドラッグ`,
+					navLeftTitle: `前のシーン`, navRightTitle: `次のシーン`,
+					meterHead: `右クリックで検電`, meterStandby: `待機中`,
+					notebookTitle: `手がかりノート`, hpTitle: `体力`, casefileTitle: `事件報告書`,
+					toastNewClue: `新しい手がかりを発見`, closeNotebookBtn: `ノートを閉じる`, undiscoveredClue: `未発見の手がかり`,
+					reportCaseFile: `事件ファイル・09・漏電調査`,
+					report_p1: `ここは建物全体の<b>旧電気メーター室</b>だ——かつてメーターはこの窓の裏側に設置されていた。その後の改修でメーターは別の場所へ移され、今ではこの部屋を開けて点検する人はほとんどいない。お客様宅の電源線(ホット線)は絶縁被覆が破損し、電線が配電盤の扉に触れて、真っ黒に焦げた<b>アーク痕</b>を残していた。`,
+					report_p2: `建物全体の<b>接地抵抗</b>がもともと高すぎたため、この漏れ電流は接地網を伝って各戸コンセントの接地極へ"逆流"し、接地されたあらゆる電化製品の外装をひそかに220V近い電圧に帯電させていた。これらはすべて主開閉器の<b>上流側</b>で起きていたことであり、住人が自宅でどうブレーカーを操作しても意味がなかった。`,
+					reportSuggestTitle: `改善提案`,
+					reportLi1: `まず窓越しに検電して扉が帯電していないか確認してから開けること——通電状態のまま素手で作業して新たな感電事故を起こさないように。`,
+					reportLi2: `破損した電源線の接続部を改めてしっかり絶縁処理する(または接続部を交換する、絶縁熱収縮チューブを取り付ける)。むき出しの銅心が二度と金属外装に触れないようにする。`,
+					reportLi3: `建物全体の接地抵抗を点検・是正し、安全基準を満たすようにする。同様の漏れ電流が二度と大地への通り道を失わないようにする。`,
+					reportLi4: `残りのメーター窓の内部配線も同じ問題がないか点検し、まとめて処理する。`,
+					closeReportBtn: `ファイルを閉じる`,
+					gameOverTitle: `⚡ 感電死してしまった。`, gameOverSub: `来世は気をつけよう。`, rebornBtnText: `次の人生を始める`,
+					rebornTitle: `生まれ変わった!`, rebornSub: `新しい人生`,
+					rebornP: `前世では仕事中にうっかり感電死してしまった。今世は電気工事の達人になる!`,
+					rebornStartBtn: `今世を始める`,
+					repairTitle: `✔ 修理完了`, repairSub: `修理完了`,
+					repairP1: `ここは建物全体の旧電気メーター室だ——かつてメーターはこの窓の裏側に設置されていた。その後の改修でメーターは別の場所へ移され、今ではこの部屋を開けて点検する人はほとんどいない。お客様宅の電源線は絶縁被覆が破損し、電線が配電盤の扉に触れて、真っ黒に焦げたアーク痕を残していた。`,
+					repairP2: `建物全体の接地抵抗がもともと高すぎたため、この漏れ電流は接地網を伝って各戸コンセントの接地極へ逆流し、接地されたあらゆる電化製品の外装をひそかに220V近い電圧に帯電させていた。これらはすべて主開閉器の上流側で起きていたことであり、住人が自宅でどうブレーカーを操作しても意味がなかった。本当の解決策はこの旧電気メーター室にある——まず窓越しに検電し、安全を確認してから扉を開け、破損した電線を絶縁スリーブで巻き直す。`,
+					nextLevelBtn: `次のレベル`, levelMapBtn: `レベルマップに戻る`, nextLevelToast: `次のレベルは制作中です、お楽しみに!`,
+					penNone: `無電圧`, penLow: `微弱な電圧あり`, penDanger: `危険`,
+					zoomPrefix: `🔍 クローズアップ`, reportPrefix: `📁 事件報告書`,
+					cluesProgress: `{d} / {t} 件の手がかりを発見`,
+					menuTitle: `ゲームメニュー`, menuLangTitle: `言語を選択`, resumeBtn: `ゲームを再開`,
+					giveUpBtn: `このレベルを放棄してホームへ`,
+					giveUpConfirm: `このレベルを放棄してホーム画面に戻りますか?現在の進行状況は保存されません。`,
+					clues: {
+						clue_meter_relocated: {t:`メーター窓の中は電線だけになっている`, d:`旧電気メーター室のメーター窓を開けると、中にはもうメーターがなく、数本の電線が通っているだけだ——ここはもともと4世帯分のメーターが設置されていた場所で、その後の改修でメーターはすべて別の場所へ移され、今ではこれらの窓を開けて点検する人もほとんどいない。`},
+						clue_hood_live: {t:`レンジフードの金属外装が帯電している`, d:`検電器をレンジフードの金属本体に当てると、表示灯が一気に危険レベルまで振れる——接地された電化製品の外装は今やすべて220V近い電圧を帯びている。`},
+						clue_window_live: {t:`あるメーター窓から危険な電圧が検出された`, d:`窓を開ける前に、ガラス越しに検電器を当ててみると表示灯が一気に危険レベルまで振れる——先に測っておいてよかった、そうでなければそのまま手を伸ばして窓を開けていたら感電していただろう。`},
+						clue_splice_found: {t:`配電盤の扉に残る黒いアーク痕`, d:`このメーター窓を開けると、左側の扉には真っ黒に焦げたアーク痕があり、右側の電線の中には裸の銅心が一本、扉に触れている——繰り返しの放電で焼き付いた痕跡で、これが漏電の本当の原因だ。`},
+						clue_other_splices_ok: {t:`他のメーター窓はどれもきれいだ`, d:`残りのメーター窓を開けてみると、扉はどれもきれいな金属面でアーク痕はまったくなく、電線もきちんと所定の位置に収まっている——疑いは晴れた。`},
+					}
+				},
+				"pt-BR": {
+					cabinetHeader: `QUADRO INTERNO · CONTROLE DA RESIDÊNCIA`,
+					mainBreakerLabel: `Disjuntor geral`, rcdLabel: `DR`, rcdLbl: `Dispositivo Diferencial Residual`,
+					hoodLbl: `Coifa`,
+					sceneLabel_s3: `Antiga sala de medidores`, sceneHint_s3: `Inspecionar a antiga sala de medidores`,
+					doorPanelLbl: `Parte interna da porta`, wirePanelLbl: `Fiação`, insulationSleeveLbl: `Luva isolante, arraste até o fio exposto`,
+					navLeftTitle: `Cena anterior`, navRightTitle: `Próxima cena`,
+					meterHead: `Clique direito para testar`, meterStandby: `Em espera`,
+					notebookTitle: `Caderno de pistas`, hpTitle: `Vida`, casefileTitle: `Relatório do caso`,
+					toastNewClue: `Nova pista encontrada`, closeNotebookBtn: `Fechar caderno`, undiscoveredClue: `Pista não descoberta`,
+					reportCaseFile: `CASO · 09 · Investigação de fuga elétrica`,
+					report_p1: `Esta é a <b>antiga sala de medidores</b> do prédio inteiro — antigamente os medidores ficavam bem atrás dessas janelas. Após uma reforma posterior, foram transferidos para outro lugar, e quase ninguém mais abre esta sala para verificar. O fio fase da casa do cliente estava com o isolamento danificado e ficou encostado na porta do quadro, deixando uma mancha de <b>marcas de arco</b> enegrecidas.`,
+					report_p2: `Como a <b>resistência de aterramento</b> do prédio já era alta demais, essa corrente de fuga voltou pela rede de aterramento até os pinos terra das tomadas de cada residência, deixando discretamente energizada — a quase 220V — a carcaça de qualquer aparelho devidamente aterrado. Tudo isso aconteceu <b>a montante</b> do disjuntor geral — por mais que um morador mexesse nos próprios disjuntores em casa, não fazia diferença nenhuma.`,
+					reportSuggestTitle: `RECOMENDAÇÕES`,
+					reportLi1: `Testar primeiro através da janela para confirmar se a porta está energizada, e só então abri-la — nunca trabalhar com as mãos em um quadro que pode estar energizado.`,
+					reportLi2: `Reisolar corretamente o fio fase danificado (ou substituir a emenda / instalar um termocontrátil), garantindo que o núcleo exposto não volte a tocar a carcaça metálica.`,
+					reportLi3: `Verificar e corrigir a resistência de aterramento do prédio até atender ao padrão de segurança, evitando que uma corrente de fuga volte a ficar sem caminho até a terra real.`,
+					reportLi4: `Verificar a fiação atrás das demais janelas de medidor em busca do mesmo problema, e corrigir tudo de uma vez.`,
+					closeReportBtn: `Fechar relatório`,
+					gameOverTitle: `⚡ Você morreu eletrocutado.`, gameOverSub: `Tenha mais cuidado na próxima vida.`, rebornBtnText: `Começar a próxima vida`,
+					rebornTitle: `Eu renasci!`, rebornSub: `NOVA VIDA`,
+					rebornP: `Na minha vida passada, morri eletrocutado por descuido no trabalho. Desta vez, vou me tornar um mestre eletricista!`,
+					rebornStartBtn: `Começar esta vida`,
+					repairTitle: `✔ Reparo concluído`, repairSub: `REPARO CONCLUÍDO`,
+					repairP1: `Esta é a antiga sala de medidores do prédio inteiro — antigamente os medidores ficavam bem atrás dessas janelas. Após uma reforma posterior, foram transferidos para outro lugar, e quase ninguém mais abre esta sala para verificar. O fio fase da casa do cliente estava com o isolamento danificado e ficou encostado na porta do quadro, deixando uma mancha de marcas de arco enegrecidas.`,
+					repairP2: `Como a resistência de aterramento do prédio já era alta demais, essa corrente de fuga voltou pela rede de aterramento até os pinos terra das tomadas de cada residência, deixando discretamente energizada — a quase 220V — a carcaça de qualquer aparelho aterrado. Tudo isso aconteceu a montante do disjuntor geral — por mais que um morador mexesse nos disjuntores em casa, não fazia diferença. A solução real está aqui, na antiga sala de medidores: testar primeiro através da janela, abrir a porta assim que confirmada a segurança, e reisolar o fio danificado com uma luva isolante.`,
+					nextLevelBtn: `Próximo nível`, levelMapBtn: `Voltar ao mapa de níveis`, nextLevelToast: `O próximo nível está em produção, fique ligado!`,
+					penNone: `Sem tensão`, penLow: `Tensão leve`, penDanger: `Perigo`,
+					zoomPrefix: `🔍 Close`, reportPrefix: `📁 Relatório do caso`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menu`, menuLangTitle: `Selecionar idioma`, resumeBtn: `Continuar`,
+					giveUpBtn: `Abandonar nível e voltar ao início`,
+					giveUpConfirm: `Abandonar este nível e voltar à tela inicial? O progresso atual deste nível não será salvo.`,
+					clues: {
+						clue_meter_relocated: {t:`Só sobraram fios atrás das janelas de medidor`, d:`Ao abrir as janelas de medidor na antiga sala de medidores, não há mais nenhum medidor lá dentro, só alguns fios passando por elas. Aqui ficavam os medidores de quatro residências; após uma reforma posterior, foram transferidos para outro lugar, e quase ninguém mais abre essas janelas para verificar.`},
+						clue_hood_live: {t:`A carcaça metálica da coifa está energizada`, d:`Ao encostar o testador no corpo metálico da coifa, o indicador dispara direto para o nível de perigo — a carcaça de qualquer aparelho aterrado agora carrega quase 220V.`},
+						clue_window_live: {t:`Uma janela de medidor deu leitura perigosa`, d:`Antes mesmo de abrir a janela, testá-la através do vidro já faz o indicador disparar para o nível de perigo — ainda bem que foi testada antes, senão colocar a mão direto para abri-la teria causado um choque.`},
+						clue_splice_found: {t:`Marcas negras de arco na porta do quadro`, d:`Ao abrir esta janela de medidor, a porta à esquerda tem uma mancha de marcas de arco enegrecidas, e entre os fios à direita há um núcleo de cobre exposto encostado na porta — marcas deixadas por arcos repetidos, a verdadeira origem da fuga.`},
+						clue_other_splices_ok: {t:`As demais janelas de medidor estão limpas`, d:`Ao abrir as demais janelas de medidor, as portas são todas de metal limpo, sem nenhuma marca de arco, e os fios estão todos bem no lugar — ficam descartadas.`},
+					}
+				},
+			};
+
+			/* ========================= I18N SUPPORT（通用机制已迁移到 guide.js 的 GameUI，这里只保留本关的文案字典与联动） ========================= */
+			const LANG_STORAGE_KEY = "leak_lang"; // 所有关卡统一用这个 key,才能真正"继承"语言选择
+			const CLUE_IDS = Object.keys(I18N["zh-CN"].clues);
+
+			let currentLang = GameUI.detectInitialLang(I18N, LANG_STORAGE_KEY);
+			let lastPenLevel = null;
+
+			function getClue(id) {
+				return (I18N[currentLang] && I18N[currentLang].clues[id]) || I18N["zh-CN"].clues[id];
+			}
+			function getClueText(id) {
+				const c = getClue(id);
+				return c ? c.t : "";
+			}
+			function getClueDesc(id) {
+				const c = getClue(id);
+				return c ? c.d : "";
+			}
+
+			function applyLang(code) {
+				if (!I18N[code]) code = "zh-CN";
+				currentLang = code;
+				GameUI.saveLang(code, LANG_STORAGE_KEY);
+				GameUI.syncLangUrl(code);
+				const L = Object.assign({}, I18N["zh-CN"], I18N[code]);
+				document.documentElement.lang = code;
+
+				GameUI.applyDataI18n(L, code);
+
+				if (lastPenLevel === null) {
+					GameUI.resetMeterStandby(L.meterStandby);
+				} else {
+					usePen(lastPenLevel);
+				}
+
+				const cluesModal = $("#cluesModal");
+				if (cluesModal && cluesModal.classList.contains("show")) renderNotebook();
+
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+
+			const SVG_FIT_MAP = [
+				{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 360 },
+				{ selector: '[data-i18n="cabinetHeader"]', maxWidth: 420 },
+				{ selector: '[data-i18n="mainBreakerLabel"]', maxWidth: 330 },
+				{ selector: '[data-i18n="rcdLabel"]', maxWidth: 330 },
+			];
+
+			const CORE_IDS = CLUE_IDS.slice();
+
+			let discovered = new Set();
+			let reportShown = false;
+			let repairDone = false;
+
+			let mainSwitchOn = true; // 自家总闸:纯手动开关,和公共线路的故障毫无关系
+			let rcdOn = true; // 自家漏电保护器:同上,切换与否都救不了这次的漏电
+			let spliceFixed = false; // 破皮碰壳的接头是否已经重新包好
+			let meterRoomOpen = false; // 门有没有被打开过——门一开,裸线就再也碰不到箱门了
+
+			// 家里(以及箱门本身)是否还在漏电:只要门还没打开、接头也没修好,箱门贴着裸线,全屋地线网络就是带电的
+			function dangerActive() {
+				return !spliceFixed && !meterRoomOpen;
+			}
+
+			/* ========================= HP / 触电系统（血条 + 死亡画面 + 重生画面，统一由 guide.js 的 GameUI 组件提供） ========================= */
+			GameUI.initHUD({ deadImage: "dead.png" });
+			GameUI.initMeter();
+			function shock(level) {
+				GameUI.shock(level);
+			}
+
+			const SCENES = ["s1", "s2", "s3"];
+			let sceneIndex = 0;
+
+			/* ========================= HELPERS ========================= */
+			function $(s, r = document) {
+				return r.querySelector(s);
+			}
+			function $all(s, r = document) {
+				return [...r.querySelectorAll(s)];
+			}
+
+			function reveal(id) {
+				const existed = discovered.has(id);
+				discovered.add(id);
+				if (!existed) {
+					toast(id);
+					updateNotebookBadge();
+					checkAutoReport();
+				}
+			}
+			function toast(id) {
+				const t = getClueText(id);
+				if (!t) return;
+				$("#toastText").textContent = t;
+				const el = $("#toast");
+				el.classList.add("show");
+				clearTimeout(window.__toastTimer);
+				window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+			}
+			function updateNotebookBadge() {
+				const badge = $("#notebookBadge");
+				if (discovered.size > 0) {
+					badge.style.display = "flex";
+					badge.textContent = discovered.size;
+				}
+			}
+			function renderNotebook() {
+				const ids = CLUE_IDS;
+				const L = Object.assign({}, I18N["zh-CN"], I18N[currentLang]);
+				$("#cluesProgress").textContent = L.cluesProgress.replace("{d}", discovered.size).replace("{t}", ids.length);
+				const list = $("#cluesList");
+				list.innerHTML = "";
+				ids.forEach((id) => {
+					const found = discovered.has(id);
+					const div = document.createElement("div");
+					div.className = "clue-item " + (found ? "found" : "locked");
+					div.innerHTML = `<div class="t">${found ? getClueText(id) : L.undiscoveredClue}</div>` + (found ? `<div class="d">${getClueDesc(id)}</div>` : "");
+					list.appendChild(div);
+				});
+			}
+			$("#notebookBtn").addEventListener("click", () => {
+				renderNotebook();
+				openModal("cluesModal");
+			});
+			function checkAutoReport() {
+				if (reportShown) return;
+				const ok = CORE_IDS.every((id) => discovered.has(id));
+				if (ok) {
+					reportShown = true;
+					$("#casefileBtn").classList.add("show");
+					setTimeout(() => openModal("reportModal"), 900);
+				}
+			}
+			$("#casefileBtn").addEventListener("click", () => openModal("reportModal"));
+
+			function checkRepairComplete() {
+				if (repairDone) return;
+				if (spliceFixed) {
+					repairDone = true;
+					setTimeout(() => openModal("repairModal"), 500);
+				}
+			}
+			$("#nextLevelBtn").addEventListener("click", () => {
+				closeModal("repairModal");
+				location.href = `4.html?lang=${encodeURIComponent(currentLang)}`;
+			});
+			$("#levelMapBtn").addEventListener("click", () => {
+				closeModal("repairModal");
+				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
+			});
+			function openModal(id) {
+				$("#" + id).classList.add("show");
+			}
+			function closeModal(id) {
+				$("#" + id).classList.remove("show");
+			}
+
+			/* ========================= TOOL: 验电笔(唯一工具,右键验电) ========================= */
+			function usePen(level) {
+				lastPenLevel = level;
+				const L = Object.assign({}, I18N["zh-CN"], I18N[currentLang]);
+				const statusText = level === 0 ? L.penNone : level === 1 ? L.penLow : L.penDanger;
+				if (level === 2) GameUI.playDangerBeep();
+				GameUI.usePen(level, statusText);
+			}
+			function resetTool() {
+				lastPenLevel = null;
+				GameUI.resetMeterStandby(Object.assign({}, I18N["zh-CN"], I18N[currentLang]).meterStandby);
+			}
+
+			/* ========================= SCENE NAV (arrows) ========================= */
+			function showScene(idx) {
+				sceneIndex = (idx + SCENES.length) % SCENES.length;
+				$all(".scene").forEach((s) => s.classList.remove("active"));
+				$("#scene-" + SCENES[sceneIndex]).classList.add("active");
+				resetTool();
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+			$("#navLeft").addEventListener("click", () => showScene(sceneIndex - 1));
+			$("#navRight").addEventListener("click", () => showScene(sceneIndex + 1));
+
+			/* ========================= SCENE 1 LOGIC: 室内配电箱 ========================= */
+			$("#cabinetSlot").innerHTML = GameUI.buildCabinetSVG({
+				bigLabelFontSize: 34,
+				headerKey: "cabinetHeader",
+				headerDefault: "室内配电箱 · 户内总控",
+				switchesHTML:
+					GameUI.breakerSwitchSVG({
+						id: "mainbreaker",
+						y: 130,
+						bigLabelKey: "mainBreakerLabel",
+						bigLabelDefault: "总闸",
+						smallLabelKey: "mainBreakerLabel",
+						smallLabelDefault: "总闸",
+						initialOn: mainSwitchOn,
+					}) +
+					GameUI.breakerSwitchSVG({
+						id: "rcd",
+						y: 295,
+						bigLabelKey: "rcdLabel",
+						bigLabelDefault: "漏电保护",
+						smallLabelKey: "rcdLbl",
+						smallLabelDefault: "漏电保护器",
+						initialOn: rcdOn,
+					}),
+			});
+			GameUI.wireCabinetToggle(() => {
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			});
+
+			function updateBreakerVisual() {
+				GameUI.setBreakerSwitch("mainbreaker", mainSwitchOn);
+				GameUI.setBreakerSwitch("rcd", rcdOn);
+			}
+			updateBreakerVisual();
+
+			function s1Touch(id) {
+				if (id === "mainbreaker") {
+					mainSwitchOn = !mainSwitchOn;
+					updateBreakerVisual();
+				}
+				if (id === "rcd") {
+					rcdOn = !rcdOn;
+					updateBreakerVisual();
+				}
+			}
+
+			/* ========================= SCENE 2 LOGIC: 厨房 · 抽油烟机 ========================= */
+			function s2Touch(id) {
+				if (id === "hood") {
+					if (dangerActive()) shock(2);
+					return;
+				}
+				if (id === "cabinet") {
+					// 橱柜和炉灶不接地,不管故障在不在,摸了都没事
+					return;
+				}
+			}
+			function s2Test(id) {
+				if (id === "hood") {
+					const danger = dangerActive();
+					usePen(danger ? 2 : 0);
+					if (danger) {
+						reveal("clue_hood_live");
+					}
+					return;
+				}
+				if (id === "cabinet") {
+					usePen(0); // 橱柜和炉灶一直安全,验电永远无电
+				}
+			}
+
+			/* ========================= SCENE 3 LOGIC: 老电表间 ========================= */
+			function fixSplice() {
+				spliceFixed = true;
+				$("#spliceBadExposed").style.display = "none";
+				$("#spliceBadFixedTape").style.display = "";
+				checkRepairComplete();
+			}
+
+			function openMeterRoom() {
+				if (meterRoomOpen) return;
+				meterRoomOpen = true;
+				$("#meterRoomHatch").style.display = "none";
+				$("#doorPanel").style.display = "block";
+				$("#insulationSleeve").style.display = "block";
+				reveal("clue_meter_relocated");
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+
+			const BAD_WIRE = "wire1";
+			const WIRES = ["wire1", "wire2", "wire3", "wire4"];
+
+			function s3Touch(id) {
+				if (id === "meterRoomHatch") {
+					// 没验电就直接伸手开门:不知道箱门带不带电,直接触电
+					shock(2);
+					return;
+				}
+				if (id === "doorPanel") {
+					// 门已经打开了,裸线碰不到箱门,箱门本身不会再带电
+					reveal("clue_splice_found");
+					return;
+				}
+				if (id === BAD_WIRE && !spliceFixed) {
+					reveal("clue_splice_found");
+					if (dangerActive()) shock(2); // 万一没经过打开门这一步就摸到了这根裸线,依然会触电
+					// 光用手摸摸不好这处破皮的线头,得把绝缘套拖过来才行
+					return;
+				}
+				if (WIRES.includes(id)) {
+					reveal("clue_other_splices_ok");
+				}
+			}
+			function s3Test(id) {
+				if (id === "meterRoomHatch") {
+					usePen(dangerActive() ? 2 : 0);
+					if (dangerActive()) reveal("clue_window_live");
+					openMeterRoom(); // 验电笔是绝缘工具,隔着门测过之后再打开是安全的
+					return;
+				}
+				if (id === "doorPanel") {
+					// 门开了以后,箱门再也不会测出电压——它已经离开裸线了
+					usePen(0);
+					reveal("clue_splice_found");
+					return;
+				}
+				if (id === BAD_WIRE) {
+					usePen(spliceFixed || !dangerActive() ? 0 : 2);
+					if (!spliceFixed && dangerActive()) reveal("clue_splice_found");
+					return;
+				}
+				if (WIRES.includes(id)) {
+					usePen(0);
+					reveal("clue_other_splices_ok");
+				}
+			}
+
+			/* 绿色绝缘套:开门后出现在左下角,拖到第1根线的裸露处(520,330)松手即可完成维修,拖偏了就弹回原位 */
+			(function setupSleeveDrag() {
+				const svg = $("#svg3");
+				const sleeve = $("#insulationSleeve");
+				const originX = 80,
+					originY = 470;
+				const targetX = 520,
+					targetY = 330;
+				let dragging = false;
+
+				function svgPoint(evt) {
+					const pt = svg.createSVGPoint();
+					pt.x = evt.clientX;
+					pt.y = evt.clientY;
+					const ctm = svg.getScreenCTM().inverse();
+					return pt.matrixTransform(ctm);
+				}
+				function setPos(x, y) {
+					sleeve.setAttribute("transform", `translate(${x},${y})`);
+				}
+				sleeve.addEventListener("pointerdown", (e) => {
+					if (spliceFixed || sleeve.style.display === "none") return;
+					dragging = true;
+					sleeve.setPointerCapture(e.pointerId);
+					sleeve.style.cursor = "grabbing";
+					e.preventDefault();
+				});
+				sleeve.addEventListener("pointermove", (e) => {
+					if (!dragging) return;
+					const p = svgPoint(e);
+					if (!isFinite(p.x) || !isFinite(p.y)) return;
+					setPos(p.x, p.y);
+				});
+				function endDrag() {
+					if (!dragging) return;
+					dragging = false;
+					sleeve.style.cursor = "grab";
+					const m = /translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/.exec(sleeve.getAttribute("transform"));
+					const cx = m ? parseFloat(m[1]) : originX;
+					const cy = m ? parseFloat(m[2]) : originY;
+					const dist = Math.hypot(cx - targetX, cy - targetY);
+					if (dist < 32) {
+						setPos(targetX, targetY);
+						sleeve.style.display = "none";
+						fixSplice(); // 绝缘套盖住了裸露的线头,维修完成
+					} else {
+						setPos(originX, originY);
+					}
+				}
+				sleeve.addEventListener("pointerup", endDrag);
+				sleeve.addEventListener("pointercancel", endDrag);
+			})();
+
+			/* ========================= INPUT: LEFT CLICK = TOUCH, RIGHT CLICK = TESTER ========================= */
+			document.addEventListener("click", (e) => {
+				const hs = e.target.closest(".hotspot");
+				if (!hs) return;
+				const id = hs.dataset.id;
+				if (!id) return;
+				const scene = hs.closest(".scene").id.replace("scene-", "");
+				if (scene === "s1") s1Touch(id);
+				if (scene === "s2") s2Touch(id);
+				if (scene === "s3") s3Touch(id);
+			});
+
+			document.addEventListener("contextmenu", (e) => {
+				const target = e.target.closest('[data-test="true"]');
+				if (!target) {
+					if (e.target.closest(".game-window")) e.preventDefault();
+					return;
+				}
+				e.preventDefault();
+				const id = target.dataset.id;
+				const scene = target.closest(".scene").id.replace("scene-", "");
+				if (scene === "s2") s2Test(id);
+				if (scene === "s3") s3Test(id);
+			});
+
+			/* ========================= ESC MENU: 语言切换 + 放弃本关（通用机制已迁移到 guide.js 的 GameUI.initMenu） ========================= */
+			GameUI.initMenu({
+				mapUrl: "index.html",
+				getCurrentLang: () => currentLang,
+				getGiveUpConfirmText: () => Object.assign({}, I18N["zh-CN"], I18N[currentLang]).giveUpConfirm,
+				onLangSelect: applyLang,
+			});
+
+			/* ========================= 初始化语言 ========================= */
+			applyLang(currentLang);
+		</script>
+	</body>
+</html>
