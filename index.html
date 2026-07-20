@@ -359,6 +359,51 @@
         animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
       }
 
+      .chapters-wrap {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 3.2vh;
+      }
+
+      .chapter-block {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .chapter-header {
+        width: 100%;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+
+      .chapter-title {
+        color: var(--yellow);
+        font-weight: 800;
+        text-align: center;
+        text-shadow:
+          2px 2px 0 #000,
+          -2px 2px 0 #000,
+          2px -2px 0 #000,
+          -2px -2px 0 #000,
+          0 5px 0 rgba(0, 0, 0, 0.3);
+        font-size: clamp(1.05rem, 3.4vw, 1.35rem);
+      }
+
+      .chapter-divider {
+        width: 90%;
+        max-width: 480px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.12);
+        margin: 0.4vh 0 1.6vh;
+      }
+
       .back-btn {
         position: absolute;
         top: 24px;
@@ -419,12 +464,12 @@
       }
 
       .level-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: clamp(16px, 3vw, 28px);
         max-width: 620px;
         width: 100%;
-        justify-items: center;
       }
 
       .level-circle {
@@ -511,11 +556,6 @@
         }
       }
 
-      @media (max-width: 420px) {
-        .level-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
     </style>
   </head>
   <body>
@@ -599,9 +639,8 @@
 
       <div class="level-panel">
         <h1 class="page-title" id="levelsPageTitle"></h1>
-        <div class="progress-text" id="progressText"></div>
 
-        <div class="level-grid" id="levelGrid"></div>
+        <div class="chapters-wrap" id="chaptersContainer"></div>
       </div>
     </div>
 
@@ -628,6 +667,11 @@
           font: "'Luckiest Guy', cursive",
           back: "BACK",
           progress: (p, t) => `Cleared ${p} / ${t}`,
+          chapters: [
+            "Chapter 1: Household Electricity",
+            "Chapter 2: Commercial Three-Phase",
+            "Chapter 3: Static Electricity",
+          ],
         },
         "zh-CN": {
           name: "Simplified Chinese",
@@ -641,6 +685,7 @@
           script: "cjk",
           back: "返回",
           progress: (p, t) => `已通关 ${p} / ${t} 关`,
+          chapters: ["第一章：家用电", "第二章：商用三相电", "第三章：静电"],
         },
         "zh-TW": {
           name: "Traditional Chinese",
@@ -654,6 +699,7 @@
           script: "cjk",
           back: "返回",
           progress: (p, t) => `已過關 ${p} / ${t} 關`,
+          chapters: ["第一章：家用電", "第二章：商用三相電", "第三章：靜電"],
         },
         de: {
           name: "German",
@@ -666,6 +712,11 @@
           font: "'Luckiest Guy', cursive",
           back: "ZURÜCK",
           progress: (p, t) => `${p} / ${t} geschafft`,
+          chapters: [
+            "Kapitel 1: Haushaltsstrom",
+            "Kapitel 2: Gewerblicher Drehstrom",
+            "Kapitel 3: Statische Elektrizität",
+          ],
         },
         fr: {
           name: "French",
@@ -678,6 +729,11 @@
           font: "'Luckiest Guy', cursive",
           back: "RETOUR",
           progress: (p, t) => `${p} / ${t} terminés`,
+          chapters: [
+            "Chapitre 1 : Électricité domestique",
+            "Chapitre 2 : Triphasé industriel",
+            "Chapitre 3 : Électricité statique",
+          ],
         },
         ru: {
           name: "Russian",
@@ -690,6 +746,11 @@
           font: "'Ruslan Display', cursive",
           back: "НАЗАД",
           progress: (p, t) => `Пройдено ${p} / ${t}`,
+          chapters: [
+            "Глава 1: Бытовое электричество",
+            "Глава 2: Промышленный трёхфазный ток",
+            "Глава 3: Статическое электричество",
+          ],
         },
         ja: {
           name: "Japanese",
@@ -704,6 +765,11 @@
           weight: "700",
           back: "もどる",
           progress: (p, t) => `クリア ${p} / ${t}`,
+          chapters: [
+            "第1章：家庭用電気",
+            "第2章：業務用三相電源",
+            "第3章：静電気",
+          ],
         },
         "pt-BR": {
           name: "Portuguese - Brazil",
@@ -716,6 +782,11 @@
           font: "'Luckiest Guy', cursive",
           back: "VOLTAR",
           progress: (p, t) => `${p} / ${t} concluídas`,
+          chapters: [
+            "Capítulo 1: Eletricidade Residencial",
+            "Capítulo 2: Trifásico Comercial",
+            "Capítulo 3: Eletricidade Estática",
+          ],
         },
         "es-LA": {
           name: "Spanish - Latin America",
@@ -726,6 +797,11 @@
           font: "'Luckiest Guy', cursive",
           back: "VOLVER",
           progress: (p, t) => `${p} / ${t} completados`,
+          chapters: [
+            "Capítulo 1: Electricidad Doméstica",
+            "Capítulo 2: Trifásica Comercial",
+            "Capítulo 3: Electricidad Estática",
+          ],
         },
         ko: {
           name: "Korean",
@@ -739,28 +815,62 @@
           script: "cjk",
           back: "뒤로",
           progress: (p, t) => `${p} / ${t} 클리어`,
+          chapters: ["1장: 가정용 전기", "2장: 상업용 삼상 전기", "3장: 정전기"],
         },
       };
 
-      // ================== 关卡进度 ==================
-      const TOTAL_LEVELS = 10;
-      const AVAILABLE_LEVELS = 3; // 当前实际制作完成并对外开放的关卡数量
-      const STORAGE_KEY = "leak_progress";
+      // ================== 章节 & 关卡进度 ==================
+      // prefix: 关卡文件名前缀（1.html / b1.html / s1.html）
+      // total: 章节总关卡数量   available: 已制作完成、对外开放的关卡数量
+      const CHAPTERS = [
+        { key: "ch1", prefix: "", total: 5, available: 3, storageKey: "leak_progress" },
+        { key: "ch2", prefix: "b", total: 2, available: 2, storageKey: "leak_progress_b" },
+        { key: "ch3", prefix: "s", total: 1, available: 1, storageKey: "leak_progress_s" },
+      ];
       const LANG_STORAGE_KEY = "leak_lang";
 
-      const DEFAULT_PROGRESS = 0;
+      function getCompletedLevels(chapter) {
+        const raw = localStorage.getItem(chapter.storageKey);
+        if (!raw) return new Set();
 
-      function getProgress() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw === null) return DEFAULT_PROGRESS;
+        // 新格式：JSON 数组，例如 "[1,3]" 表示第1、3关通关，第2关没通关
+        try {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            return new Set(
+              arr.filter((n) => Number.isInteger(n) && n >= 1 && n <= chapter.total),
+            );
+          }
+        } catch (e) {}
+
+        // 兼容旧格式（存的是"最高通关到第几关"的单个数字），迁移成 1..v 全部视为已通关
         const v = parseInt(raw, 10);
-        if (Number.isNaN(v)) return 0;
-        return Math.max(0, Math.min(TOTAL_LEVELS, v));
+        if (!Number.isNaN(v) && v > 0) {
+          const s = new Set();
+          for (let i = 1; i <= Math.min(v, chapter.total); i++) s.add(i);
+          return s;
+        }
+        return new Set();
       }
 
-      function markLevelComplete(n) {
-        const current = getProgress();
-        if (n > current) localStorage.setItem(STORAGE_KEY, String(n));
+      // 兼容两种调用方式：
+      //   markLevelComplete(n)              -> 默认记到第一章（家用电），与旧关卡页保持兼容
+      //   markLevelComplete("ch2", n)        -> 记到指定章节（"ch1" / "ch2" / "ch3"）
+      function markLevelComplete(a, b) {
+        let chapterKey = "ch1";
+        let n = a;
+        if (b !== undefined) {
+          chapterKey = a;
+          n = b;
+        }
+        const chapter = CHAPTERS.find((c) => c.key === chapterKey);
+        if (!chapter) return;
+        const set = getCompletedLevels(chapter);
+        set.add(n);
+        localStorage.setItem(
+          chapter.storageKey,
+          JSON.stringify([...set].sort((x, y) => x - y)),
+        );
       }
       window.markLevelComplete = markLevelComplete;
 
@@ -777,49 +887,73 @@
 
       function renderLevels() {
         const L = LANGS[currentLang];
-        const progress = getProgress();
 
         document.getElementById("labelBack").textContent = L.back;
-        const pageTitleEl = document.getElementById("levelsPageTitle");
-        pageTitleEl.textContent = L.level;
-        document.getElementById("progressText").textContent = L.progress(
-          progress,
-          AVAILABLE_LEVELS,
-        );
+        document.getElementById("levelsPageTitle").textContent = L.level;
 
-        const grid = document.getElementById("levelGrid");
-        grid.innerHTML = "";
+        const container = document.getElementById("chaptersContainer");
+        container.innerHTML = "";
 
-        for (let n = 1; n <= TOTAL_LEVELS; n++) {
-          const isLocked = n > AVAILABLE_LEVELS;
-          const isCompleted = n <= progress;
+        CHAPTERS.forEach((chapter, idx) => {
+          const completed = getCompletedLevels(chapter);
 
-          const el = document.createElement(isLocked ? "span" : "a");
-          el.className =
-            "level-circle " +
-            (isLocked
-              ? "is-locked"
-              : isCompleted
-                ? "is-completed"
-                : "is-unlocked");
+          const block = document.createElement("div");
+          block.className = "chapter-block";
 
-          if (!isLocked) {
-            el.href = `${n}.html?lang=${encodeURIComponent(currentLang)}`;
-            el.textContent = n;
+          const header = document.createElement("div");
+          header.className = "chapter-header";
 
-            if (isCompleted) {
-              const badge = document.createElement("span");
-              badge.className = "check-badge";
-              badge.innerHTML = checkIconSVG;
-              el.appendChild(badge);
+          const title = document.createElement("div");
+          title.className = "chapter-title";
+          title.textContent =
+            (L.chapters && L.chapters[idx]) || `Chapter ${idx + 1}`;
+          header.appendChild(title);
+
+          block.appendChild(header);
+
+          const grid = document.createElement("div");
+          grid.className = "level-grid";
+
+          for (let n = 1; n <= chapter.total; n++) {
+            const isLocked = n > chapter.available;
+            const isCompleted = completed.has(n);
+
+            const el = document.createElement(isLocked ? "span" : "a");
+            el.className =
+              "level-circle " +
+              (isLocked
+                ? "is-locked"
+                : isCompleted
+                  ? "is-completed"
+                  : "is-unlocked");
+
+            if (!isLocked) {
+              el.href = `${chapter.prefix}${n}.html?lang=${encodeURIComponent(currentLang)}`;
+              el.textContent = n;
+
+              if (isCompleted) {
+                const badge = document.createElement("span");
+                badge.className = "check-badge";
+                badge.innerHTML = checkIconSVG;
+                el.appendChild(badge);
+              }
+            } else {
+              el.setAttribute("aria-disabled", "true");
+              el.innerHTML = lockIconSVG;
             }
-          } else {
-            el.setAttribute("aria-disabled", "true");
-            el.innerHTML = lockIconSVG;
+
+            grid.appendChild(el);
           }
 
-          grid.appendChild(el);
-        }
+          block.appendChild(grid);
+          container.appendChild(block);
+
+          if (idx < CHAPTERS.length - 1) {
+            const divider = document.createElement("div");
+            divider.className = "chapter-divider";
+            container.appendChild(divider);
+          }
+        });
       }
 
       // ================== 画面切换 ==================

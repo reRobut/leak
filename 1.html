@@ -1577,11 +1577,39 @@ const SVG_FIT_MAP = [
 			}
 			$("#casefileBtn").addEventListener("click", () => openModal("reportModal"));
 
+			// 本关在“关卡地图”页对应的进度存储 key 与关卡编号
+			// 家用电章节（1~5.html）统一用 "leak_progress"；
+			// 商用三相电（b1/b2.html）用 "leak_progress_b"；静电（s1.html）用 "leak_progress_s"。
+			// 存储格式是 JSON 数组，例如 "[1,3]" 表示第1、3关通关，不代表第2关也通关。
+			const LEVEL_STORAGE_KEY = "leak_progress";
+			const LEVEL_NUMBER = 1;
+			function markThisLevelComplete() {
+				try {
+					let arr = [];
+					const raw = localStorage.getItem(LEVEL_STORAGE_KEY);
+					if (raw) {
+						try {
+							const parsed = JSON.parse(raw);
+							if (Array.isArray(parsed)) arr = parsed;
+						} catch (e) {
+							const v = parseInt(raw, 10);
+							if (!Number.isNaN(v) && v > 0) {
+								for (let i = 1; i <= v; i++) arr.push(i);
+							}
+						}
+					}
+					if (!arr.includes(LEVEL_NUMBER)) arr.push(LEVEL_NUMBER);
+					arr.sort((a, b) => a - b);
+					localStorage.setItem(LEVEL_STORAGE_KEY, JSON.stringify(arr));
+				} catch (e) {}
+			}
+
 			let repairDone = false;
 			function checkRepairComplete() {
 				if (repairDone) return;
 				if (groundFixed && necklacePulled) {
 					repairDone = true;
+					markThisLevelComplete(); // 走到这里说明关卡任务真的做完了，不管玩家接下来点“下一关”还是“返回地图”，都算通关
 					setTimeout(() => openModal("repairModal"), 500);
 				}
 			}

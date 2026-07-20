@@ -1079,7 +1079,38 @@
 					setTimeout(() => openModal("repairModal"), 500);
 				}
 			}
+			// 本关在“关卡地图”页对应的进度存储 key 与关卡编号
+			// 家用电章节（1~5.html）统一用 "leak_progress"；
+			// 商用三相电（b1/b2.html）用 "leak_progress_b"；静电（s1.html）用 "leak_progress_s"。
+			// 存储格式是 JSON 数组，例如 "[1,3]" 表示第1、3关通关，不代表第2关也通关。
+			const LEVEL_STORAGE_KEY = "leak_progress";
+			const LEVEL_NUMBER = 3;
+			function markThisLevelComplete() {
+				try {
+					let arr = [];
+					const raw = localStorage.getItem(LEVEL_STORAGE_KEY);
+					if (raw) {
+						try {
+							const parsed = JSON.parse(raw);
+							if (Array.isArray(parsed)) arr = parsed;
+						} catch (e) {
+							// 兼容旧的“最高关卡数”格式：迁移成 1..v 的数组
+							const v = parseInt(raw, 10);
+							if (!Number.isNaN(v) && v > 0) {
+								for (let i = 1; i <= v; i++) arr.push(i);
+							}
+						}
+					}
+					if (!arr.includes(LEVEL_NUMBER)) arr.push(LEVEL_NUMBER);
+					arr.sort((a, b) => a - b);
+					localStorage.setItem(LEVEL_STORAGE_KEY, JSON.stringify(arr));
+				} catch (e) {}
+			}
+
 			$("#levelMapBtn").addEventListener("click", () => {
+				// 走到这里说明 repairModal（维修完成通关面板）已经弹出，是真正通关，才记录进度；
+				// 中途从 ESC 菜单“放弃本关”走的是另一个按钮，不会调用这个函数，不会点亮关卡地图的蓝色。
+				markThisLevelComplete();
 				closeModal("repairModal");
 				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
 			});
