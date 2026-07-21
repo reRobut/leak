@@ -1,0 +1,1917 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Electrical Leak - Level B1</title>
+		<style>
+			:root {
+				--paper: #ffffff;
+				--paper-dark: #eef1f6;
+				--ink: #14171a;
+				--ink-dim: #5b6068;
+				--brass: #1a56c4;
+				--brass-light: #4d82d6;
+				--brass-dark: #0f3480;
+				--danger: #d32f2f;
+				--danger-light: #e8908c;
+				--safe: #1a56c4;
+				--crt: #4d82d6;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				margin: 0;
+				background: #000000;
+				color: var(--ink);
+				font-family: Georgia, "Songti SC", serif;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+			}
+
+			/* ---------- FIXED GAME WINDOW ---------- */
+			.game-window {
+				position: relative;
+				width: min(96vw, 960px);
+				aspect-ratio: 900 / 560;
+				border: 4px solid #000;
+				border-radius: 3px;
+				box-shadow:
+					0 0 0 1px var(--brass-dark),
+					0 20px 60px rgba(0, 0, 0, 0.7);
+				overflow: hidden;
+				cursor: default;
+			}
+
+			.scene {
+				position: absolute;
+				inset: 0;
+				display: none;
+			}
+			.scene.active {
+				display: block;
+				animation: fadein 0.35s ease;
+			}
+			@keyframes fadein {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+			.scene svg {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+
+			.hotspot {
+				cursor: pointer;
+			}
+			.hotspot .hit {
+				fill: transparent;
+			}
+			.lbl {
+				opacity: 0;
+				transition: 0.15s;
+				font-size: 12px;
+				fill: #14171a;
+				font-family: "Courier New", monospace;
+				paint-order: stroke;
+				stroke: #fff;
+				stroke-width: 3px;
+				stroke-linejoin: round;
+			}
+
+			/* ---------- NAV ARROWS ---------- */
+			.nav-arrow {
+				position: absolute;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 44px;
+				height: 44px;
+				border-radius: 50%;
+				z-index: 20;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				transition: 0.15s;
+				opacity: 0.9;
+			}
+			.nav-arrow:hover {
+				opacity: 1;
+				transform: translateY(-50%) scale(1.08);
+			}
+			.nav-arrow:active {
+				transform: translateY(-50%) scale(0.95);
+			}
+			.nav-arrow.left {
+				left: 12px;
+			}
+			.nav-arrow.right {
+				right: 12px;
+			}
+			.nav-arrow svg {
+				width: 18px;
+				height: 18px;
+			}
+
+			/* ---------- METER WIDGET / HP BAR / GAME OVER / REBORN / MODAL 核心样式：均由 guide.js 的 GameUI 提供 ---------- */
+
+			/* ---------- CASE FILE ICON (appears once solved) ---------- */
+			.casefile {
+				position: absolute;
+				left: 12px;
+				bottom: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				font-size: 20px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+				animation: pulse 1.8s infinite;
+			}
+			.casefile.show {
+				display: flex;
+			}
+			@keyframes pulse {
+				0%,
+				100% {
+					box-shadow: 0 0 8px rgba(26, 86, 196, 0.3);
+				}
+				50% {
+					box-shadow: 0 0 18px rgba(26, 86, 196, 0.75);
+				}
+			}
+
+			/* ---------- NOTEBOOK (top-left, always visible) ---------- */
+			.notebook-btn {
+				position: absolute;
+				left: 12px;
+				top: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 19px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+			}
+			.notebook-btn:hover {
+				filter: brightness(1.08);
+			}
+			.notebook-badge {
+				position: absolute;
+				top: -6px;
+				right: -6px;
+				min-width: 16px;
+				height: 16px;
+				padding: 0 3px;
+				border-radius: 8px;
+				background: var(--danger);
+				color: #fff;
+				font-size: 10px;
+				font-weight: 700;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: "Courier New", monospace;
+				border: 1px solid var(--ink);
+			}
+
+			.clue-item {
+				padding: 9px 11px;
+				margin: 8px 0;
+				border-radius: 4px;
+				font-size: 12.5px;
+				line-height: 1.6;
+				border: 1px dashed var(--brass);
+				background: var(--paper-dark);
+				color: var(--ink);
+			}
+			.clue-item.locked {
+				opacity: 0.42;
+			}
+			.clue-item.locked .t {
+				color: var(--ink-dim);
+			}
+			.clue-item .t {
+				font-weight: 700;
+				color: var(--brass);
+				margin-bottom: 3px;
+			}
+			.clue-item .t:before {
+				content: "● ";
+			}
+			.clue-item.locked .t:before {
+				content: "○ ";
+			}
+			.clue-item .d {
+			}
+
+			/* ---------- TOAST ---------- */
+			.toast {
+				position: absolute;
+				top: 14px;
+				left: 50%;
+				z-index: 97;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				padding: 9px 16px;
+				border-radius: 4px;
+				font-size: 12px;
+				max-width: min(78%, 320px);
+				color: var(--ink);
+				font-family: "Courier New", monospace;
+				text-align: center;
+				opacity: 0;
+				transform: translate(-50%, -14px);
+				transition:
+					transform 0.3s ease,
+					opacity 0.3s ease;
+				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+				pointer-events: none;
+			}
+			.toast.show {
+				opacity: 1;
+				transform: translate(-50%, 0);
+			}
+			.toast b {
+				color: var(--brass);
+				display: block;
+				font-size: 10px;
+				letter-spacing: 1px;
+				margin-bottom: 2px;
+			}
+
+			::-webkit-scrollbar {
+				width: 8px;
+			}
+			::-webkit-scrollbar-thumb {
+				background: var(--brass);
+				border-radius: 4px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="game-window" id="gameWindow">
+			<!-- ================= SCENE 1: 沿街总配电箱(需先排查出是哪家商铺漏电) ================= -->
+			<div class="scene active" id="scene-s1">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg1">
+					<!-- 裸露的墙面(砖缝)才带电:漏电时只有墙体本身导电,不含配电箱内部 -->
+					<g class="hotspot" data-id="wall" data-touch="true" data-test="true">
+						<rect class="hit" x="0" y="0" width="900" height="440" fill="transparent" />
+						<rect x="0" y="0" width="900" height="560" fill="#d8cdb0" />
+						<rect x="0" y="440" width="900" height="120" fill="#b7bcbe" />
+					</g>
+
+					<!-- 配电箱本体:金属外壳做了绝缘处理,内部不带电,可以放心触碰 -->
+					<g class="hotspot" data-id="cabinetBody" data-touch="true" data-test="true">
+						<rect class="hit" x="150" y="90" width="470" height="350" fill="transparent" />
+						<rect x="150" y="90" width="470" height="350" rx="8" class="glow-target" fill="#8a8f94" stroke="#4a4f53" stroke-width="4" />
+						<rect x="150" y="90" width="470" height="46" rx="8" fill="#5c6166" />
+						<text x="385" y="120" text-anchor="middle" fill="#eef1f6" font-size="19" font-weight="bold" font-family="Georgia,serif" letter-spacing="1" data-i18n="cabinetHeader_s1">三相动力电(三火一地)</text>
+					</g>
+
+					<!-- 4个分闸,竖直拨动式空气开关;沿街四家全是餐饮商户,3号铺"面包店"用了大功率烤箱,是真正漏电的那一家 -->
+					<g class="hotspot" data-id="branch1" data-touch="true" data-test="true">
+						<rect class="hit" x="185" y="160" width="90" height="230" fill="transparent" />
+						<g transform="translate(230,215)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobBranch1" cx="0" cy="-20" r="14" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						</g>
+						<text x="230" y="300" text-anchor="middle" fill="#2b2016" font-size="15" font-weight="bold" font-family="Georgia,serif" data-i18n="shopLabel1">1号铺</text>
+						<text x="230" y="327" text-anchor="middle" fill="#4a4038" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopSub1">拉面店</text>
+					</g>
+					<g class="hotspot" data-id="branch2" data-touch="true" data-test="true">
+						<rect class="hit" x="285" y="160" width="90" height="230" fill="transparent" />
+						<g transform="translate(330,215)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobBranch2" cx="0" cy="-20" r="14" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						</g>
+						<text x="330" y="300" text-anchor="middle" fill="#2b2016" font-size="15" font-weight="bold" font-family="Georgia,serif" data-i18n="shopLabel2">2号铺</text>
+						<text x="330" y="327" text-anchor="middle" fill="#4a4038" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopSub2">BBQ</text>
+					</g>
+					<g class="hotspot" data-id="branch3" data-touch="true" data-test="true">
+						<rect class="hit" x="385" y="160" width="90" height="230" fill="transparent" />
+						<g transform="translate(430,215)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobBranch3" cx="0" cy="-20" r="14" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						</g>
+						<text x="430" y="300" text-anchor="middle" fill="#2b2016" font-size="15" font-weight="bold" font-family="Georgia,serif" data-i18n="shopLabel3">3号铺</text>
+						<text x="430" y="327" text-anchor="middle" fill="#4a4038" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopSub3">面包店</text>
+					</g>
+					<g class="hotspot" data-id="branch4" data-touch="true" data-test="true">
+						<rect class="hit" x="485" y="160" width="90" height="230" fill="transparent" />
+						<g transform="translate(530,215)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobBranch4" cx="0" cy="-20" r="14" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						</g>
+						<text x="530" y="300" text-anchor="middle" fill="#2b2016" font-size="15" font-weight="bold" font-family="Georgia,serif" data-i18n="shopLabel4">4号铺</text>
+						<text x="530" y="327" text-anchor="middle" fill="#4a4038" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopSub4">薯条王</text>
+					</g>
+
+					<!-- 贴在墙上的纸条:一开始只是一张小纸片,右键先验电确认安全,随后自动弹出放大特写才能看清内容;左键直接伸手去揭=触电 -->
+					<g class="hotspot" data-id="note" data-touch="true" data-test="true">
+						<rect class="hit" x="698" y="148" width="74" height="60" fill="transparent" />
+						<path d="M700,150 L760,150 L770,160 L770,205 L700,205 Z" class="glow-target" fill="#f2ecc4" stroke="#c9bd7a" stroke-width="2" />
+						<path d="M760,150 L760,160 L770,160 Z" fill="#d8cd97" />
+						<circle cx="710" cy="158" r="3" fill="#b23a2e" />
+						<line x1="710" y1="172" x2="758" y2="172" stroke="#b7ab6e" stroke-width="2" />
+						<line x1="710" y1="184" x2="758" y2="184" stroke="#b7ab6e" stroke-width="2" />
+						<line x1="710" y1="196" x2="742" y2="196" stroke="#b7ab6e" stroke-width="2" />
+						<text x="735" y="222" text-anchor="middle" class="lbl" font-size="12" data-i18n="noteHint">右键验电,查看纸条</text>
+					</g>
+
+					<text x="450" y="60" text-anchor="middle" fill="#2b2016" font-size="24" font-weight="bold" font-family="Georgia,serif" letter-spacing="2" data-i18n="sceneLabel_s1">沿街总配电箱</text>
+					<text x="450" y="82" text-anchor="middle" class="lbl" font-size="13" data-i18n="sceneHint_s1">先测出是哪一家商铺漏电</text>
+				</svg>
+			</div>
+
+			<!-- ================= SCENE 2: 面包店总闸(自家配电箱,漏电保护器已损坏) ================= -->
+			<div class="scene" id="scene-s2">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg2">
+					<rect x="0" y="0" width="900" height="560" fill="#f7f7f4" />
+					<rect x="40" y="40" width="820" height="480" fill="none" stroke="#d8d5cc" stroke-width="1" />
+					<rect x="0" y="440" width="900" height="120" fill="#e4e2da" />
+
+					<g class="hotspot" data-id="shopShell" data-touch="true" data-test="true">
+						<rect class="hit" x="300" y="90" width="300" height="360" fill="transparent" />
+						<rect x="300" y="90" width="300" height="360" rx="8" class="glow-target" fill="#8a8f94" stroke="#4a4f53" stroke-width="4" />
+						<rect x="300" y="90" width="300" height="42" rx="8" fill="#5c6166" />
+						<text x="450" y="118" text-anchor="middle" fill="#eef1f6" font-size="16" font-weight="bold" font-family="Georgia,serif" data-i18n="cabinetHeader_s2">户内配电箱</text>
+					</g>
+
+					<!-- 总闸:自家的,竖直拨动开关,纯手动,和这次漏电无关 -->
+					<g class="hotspot" data-id="shopMain" data-touch="true" data-test="true">
+						<rect class="hit" x="405" y="150" width="90" height="110" fill="transparent" />
+						<g transform="translate(450,205)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobShopMain" cx="0" cy="-20" r="14" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						</g>
+						<text x="450" y="272" text-anchor="middle" fill="#2b2016" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopMainLabel">总闸</text>
+					</g>
+
+					<!-- 漏保:竖直拨动开关,已损坏,拨杆卡在下位不动,测试钮按下也不跳闸,需要更换 -->
+					<g class="hotspot" data-id="shopRcd" data-touch="true" data-test="true">
+						<rect class="hit" x="405" y="290" width="90" height="120" fill="transparent" />
+						<g transform="translate(450,335)" class="glow-target">
+							<rect x="-19" y="-37" width="38" height="74" rx="19" fill="#2b2f33" stroke="#1c1f22" stroke-width="2" />
+							<circle id="knobShopRcd" cx="0" cy="20" r="14" fill="#5c6166" stroke="#3a3f44" stroke-width="2" />
+						</g>
+						<g id="rcdBrokenMark">
+							<circle cx="472" cy="300" r="10" fill="#d32f2f" stroke="#7a1414" stroke-width="1.5" />
+							<text x="472" y="305" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">!</text>
+						</g>
+						<text x="450" y="412" text-anchor="middle" fill="#2b2016" font-size="14" font-weight="bold" font-family="Georgia,serif" data-i18n="shopRcdLabel">漏电保护器</text>
+						<text id="rcdStatusText" x="450" y="430" text-anchor="middle" fill="#b23a2e" font-size="12" font-family="'Courier New',monospace" data-i18n="rcdStatusBroken">状态:已损坏</text>
+					</g>
+
+					<!-- 更换漏保:配件箱里的备用漏保,点一下即可完成更换(需先测出它已损坏) -->
+					<g class="hotspot" data-id="replaceRcd" data-touch="true" data-test="true">
+						<rect class="hit" x="650" y="290" width="150" height="140" fill="transparent" />
+						<rect x="665" y="305" width="120" height="80" rx="6" class="glow-target" fill="#e4e2da" stroke="#9a9a92" stroke-width="2" />
+						<rect x="695" y="325" width="60" height="40" rx="3" fill="#3f8a5c" stroke="#1f5c38" stroke-width="2" />
+						<text x="725" y="350" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">+</text>
+						<text x="725" y="405" text-anchor="middle" fill="#2b2016" font-size="13" font-weight="bold" font-family="Georgia,serif" data-i18n="replaceRcdLabel">更换漏保</text>
+					</g>
+
+					<text x="450" y="60" text-anchor="middle" fill="#2b2016" font-size="24" font-weight="bold" font-family="Georgia,serif" letter-spacing="2" data-i18n="sceneLabel_s2">面包店总闸</text>
+					<text x="450" y="82" text-anchor="middle" class="lbl" font-size="13" data-i18n="sceneHint_s2">检查自家配电箱</text>
+				</svg>
+			</div>
+
+			<!-- ================= SCENE 3: 后厨 · 烤箱接线(老板把地线当零线接,这是漏电真正的源头) ================= -->
+			<div class="scene" id="scene-s3">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg3">
+					<rect x="0" y="0" width="900" height="560" fill="#f5f0e6" />
+					<rect x="0" y="440" width="900" height="120" fill="#dcd6c6" />
+
+					<!-- 烤箱(接地,漏电时外壳带电,是最容易被摸到的危险点);红蓝线从它左上角背后伸出来 -->
+					<g class="hotspot" data-id="ovenCase" data-touch="true" data-test="true">
+						<rect class="hit" x="420" y="290" width="260" height="260" fill="transparent" />
+						<g transform="translate(420,268) scale(0.508)" class="glow-target">
+							<path style="fill: #afb9d2" d="M494.345,467.862H17.655C7.904,467.862,0,459.958,0,450.207V61.793 c0-9.751,7.904-17.655,17.655-17.655h476.69c9.751,0,17.655,7.904,17.655,17.655v388.414 C512,459.958,504.096,467.862,494.345,467.862z" />
+							<rect x="88.276" y="44.138" style="fill: #959cb3" width="335.448" height="88.276" />
+							<g>
+								<path style="fill: #707487" d="M476.69,432.552H35.31c-9.751,0-17.655-7.904-17.655-17.655V150.069 c0-9.751,7.904-17.655,17.655-17.655H476.69c9.751,0,17.655,7.904,17.655,17.655v264.828 C494.345,424.648,486.441,432.552,476.69,432.552z" />
+								<circle style="fill: #707487" cx="150.069" cy="88.276" r="26.483" />
+							</g>
+							<path style="fill: #ffd764" d="M450.207,397.241H61.793c-4.875,0-8.828-3.953-8.828-8.828V211.862c0-4.875,3.953-8.828,8.828-8.828 h388.414c4.875,0,8.828,3.953,8.828,8.828v176.552C459.034,393.289,455.082,397.241,450.207,397.241z" />
+							<path style="fill: #e4eaf6" d="M450.207,185.379H61.793c-4.875,0-8.828-3.953-8.828-8.828s3.953-8.828,8.828-8.828h388.414 c4.875,0,8.828,3.953,8.828,8.828S455.082,185.379,450.207,185.379z" />
+							<path style="fill: #ffd764" d="M308.966,105.931H203.034c-4.875,0-8.828-3.953-8.828-8.828V79.448c0-4.875,3.953-8.828,8.828-8.828 h105.931c4.875,0,8.828,3.953,8.828,8.828v17.655C317.793,101.978,313.841,105.931,308.966,105.931z" />
+							<g>
+								<path style="fill: #ffe678" d="M246.06,336.561c-2.259,0-4.518-0.862-6.241-2.586l-86.966-87c-3.448-3.448-3.448-9.038,0-12.483 c3.448-3.448,9.035-3.448,12.483,0l86.966,87c3.448,3.448,3.448,9.038,0,12.483C250.578,335.699,248.319,336.561,246.06,336.561z" />
+								<path style="fill: #ffe678" d="M344.276,383.996c-2.259,0-4.517-0.862-6.241-2.586l-48.518-48.53 c-3.448-3.448-3.448-9.038,0-12.483c3.448-3.448,9.035-3.448,12.483,0l48.517,48.53c3.448,3.448,3.448,9.038,0,12.483 C348.793,383.134,346.535,383.996,344.276,383.996z" />
+							</g>
+							<path style="fill: #fff08c" d="M269.284,308.983c-2.259,0-4.522-0.862-6.241-2.586L243.156,286.5c-3.448-3.448-3.448-9.038,0-12.483 c3.448-3.448,9.043-3.448,12.483,0l19.887,19.896c3.448,3.448,3.448,9.038,0,12.483C273.802,308.12,271.543,308.983,269.284,308.983z" />
+							<path style="fill: #ffbe5a" d="M450.207,203.034H61.793c-4.875,0-8.828,3.953-8.828,8.828v17.655c0-4.875,3.953-8.828,8.828-8.828 h388.414c4.875,0,8.828,3.953,8.828,8.828v-17.655C459.034,206.987,455.082,203.034,450.207,203.034z" />
+							<path style="fill: #afb9d2" d="M167.724,114.759c-2.259,0-4.518-0.862-6.241-2.586l-35.31-35.31c-3.448-3.448-3.448-9.035,0-12.483 c3.448-3.448,9.035-3.448,12.483,0l35.31,35.31c3.448,3.448,3.448,9.035,0,12.483C172.242,113.897,169.983,114.759,167.724,114.759z" />
+							<circle style="fill: #707487" cx="361.931" cy="88.276" r="26.483" />
+							<path style="fill: #afb9d2" d="M379.586,114.759c-2.259,0-4.518-0.862-6.241-2.586l-35.31-35.31c-3.448-3.448-3.448-9.035,0-12.483 c3.448-3.448,9.035-3.448,12.483,0l35.31,35.31c3.448,3.448,3.448,9.035,0,12.483C384.104,113.897,381.845,114.759,379.586,114.759z" />
+						</g>
+					</g>
+
+					<!-- 主干粗黑线(三相动力电,三火一地总线),从吊顶引下来,在左上方分出4根灰色线(参照手绘示意图布局) -->
+					<g class="hotspot" data-id="mainCable" data-touch="true" data-test="true">
+						<rect class="hit" x="105" y="0" width="70" height="100" fill="transparent" />
+						<line x1="140" y1="10" x2="140" y2="85" stroke="#111111" stroke-width="12" stroke-linecap="round" class="glow-target" />
+						<rect x="118" y="76" width="44" height="20" rx="4" fill="#2b2f33" />
+					</g>
+
+					<!-- 2根没用到的灰线(备用相线),短短地留在半空中,没有接到任何设备上 -->
+					<g class="hotspot" data-id="wire3" data-touch="true" data-test="true">
+						<rect class="hit" x="45" y="80" width="105" height="105" fill="transparent" />
+						<path d="M140,85 L55,175" fill="none" stroke="#9aa0a6" stroke-width="7" stroke-linecap="round" />
+						<circle cx="55" cy="175" r="5" fill="#2b2f33" />
+					</g>
+					<g class="hotspot" data-id="wire4" data-touch="true" data-test="true">
+						<rect class="hit" x="90" y="80" width="60" height="145" fill="transparent" />
+						<path d="M140,85 L100,215" fill="none" stroke="#9aa0a6" stroke-width="7" stroke-linecap="round" />
+						<circle cx="100" cy="215" r="5" fill="#2b2f33" />
+					</g>
+
+					<!-- 红线:接到了一根火线上,接头包扎完好,摸着安全 -->
+					<g class="hotspot" data-id="wire1" data-touch="true" data-test="true">
+						<rect class="hit" x="135" y="80" width="125" height="120" fill="transparent" />
+						<rect class="hit" x="250" y="190" width="180" height="105" fill="transparent" />
+						<path d="M140,85 L255,195" fill="none" stroke="#9aa0a6" stroke-width="7" stroke-linecap="round" />
+						<path d="M255,195 L420,290" fill="none" stroke="#b23a2e" stroke-width="6" stroke-linecap="round" />
+					</g>
+
+					<!-- 蓝线:本该接零线,老板图省事接到了这根地线上,接头是裸铜线缠绕,没有包好绝缘 -->
+					<g class="hotspot" data-id="wire2" data-touch="true" data-test="true">
+						<rect class="hit" x="135" y="80" width="70" height="160" fill="transparent" />
+						<rect class="hit" x="195" y="230" width="230" height="65" fill="transparent" />
+						<path d="M140,85 L200,235" fill="none" stroke="#9aa0a6" stroke-width="7" stroke-linecap="round" />
+						<g id="wire2BadSplice">
+							<path d="M200,235 L420,290" fill="none" stroke="#2f6fb0" stroke-width="6" stroke-linecap="round" />
+						</g>
+					</g>
+
+					<!-- 修好之后:蓝线改接到新拉来的真零线上,不再借道地线 -->
+					<g id="wire2FixedGroup" style="display: none">
+						<line x1="320" y1="15" x2="320" y2="150" stroke="#2f6fb0" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 6" />
+						<path d="M320,150 L420,290" fill="none" stroke="#2f6fb0" stroke-width="6" stroke-linecap="round" />
+						<text x="320" y="10" text-anchor="middle" fill="#164a24" font-size="14" font-weight="bold" font-family="'Courier New',monospace">N</text>
+					</g>
+
+					<!-- 备用零线卷:拖到蓝线错接的地方(200,235)即可完成维修 -->
+					<g id="neutralCoil" style="display: none; cursor: grab" transform="translate(90,500)">
+						<rect class="hit" x="-26" y="-20" width="52" height="40" fill="transparent" />
+						<circle r="20" fill="none" stroke="#2f6fb0" stroke-width="7" />
+						<circle r="20" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="3 5" opacity="0.5" />
+						<text x="0" y="40" text-anchor="middle" data-i18n="neutralCoilLbl" font-family="'Courier New',monospace" font-size="14" font-weight="bold" fill="#164a24" paint-order="stroke" stroke="#fff" stroke-width="4" stroke-linejoin="round">备用零线,拖到蓝线接头处</text>
+					</g>
+
+					<text x="450" y="60" text-anchor="middle" fill="#2b2016" font-size="24" font-weight="bold" font-family="Georgia,serif" letter-spacing="2" data-i18n="sceneLabel_s3">后厨 · 烤箱接线</text>
+					<text x="450" y="82" text-anchor="middle" class="lbl" font-size="13" data-i18n="sceneHint_s3">检查烤箱的接线</text>
+				</svg>
+			</div>
+
+			<!-- ================= SHARED CHROME (inside game window) ================= -->
+			<div class="nav-arrow left" id="navLeft" data-i18n-title="navLeftTitle" title="上一个场景">
+				<svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</div>
+			<div class="nav-arrow right" id="navRight" data-i18n-title="navRightTitle" title="下一个场景">
+				<svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" stroke="#2b2016" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</div>
+
+			<!-- 验电笔由 guide.js 的 GameUI.initMeter() 动态注入到本容器内 -->
+
+			<div class="notebook-btn" id="notebookBtn" data-i18n-title="notebookTitle" title="线索笔记本">📓<span class="notebook-badge" id="notebookBadge" style="display: none">0</span></div>
+			<!-- 血条由 guide.js 的 GameUI.initHUD() 动态注入到本容器内 -->
+
+			<div class="casefile" id="casefileBtn" data-i18n-title="casefileTitle" title="结案报告">📁</div>
+
+			<div class="toast" id="toast"><b data-i18n="toastNewClue">发现新线索</b><span id="toastText"></span></div>
+		</div>
+
+		<!-- clue notebook modal -->
+		<div class="modal-bg" id="cluesModal">
+			<div class="modal notebook-modal">
+				<h3 data-i18n="notebookTitle">线索笔记本</h3>
+				<div class="sub" id="cluesProgress">已发现 0 / 8 条线索</div>
+				<div id="cluesList"></div>
+				<button class="modal-close" data-i18n="closeNotebookBtn" onclick="closeModal('cluesModal')">合上笔记本</button>
+			</div>
+		</div>
+
+		<!-- note zoom modal: 纸条特写,右键验电后弹出放大 -->
+		<div class="modal-bg" id="noteZoomModal">
+			<div class="modal">
+				<p style="font-size: 17px; font-weight: bold; text-align: center; line-height: 1.8" data-i18n="noteZoomText">注意：每天9点以后有漏电</p>
+				<button class="modal-close" data-i18n="closeZoomBtn" onclick="closeModal('noteZoomModal')">合上</button>
+			</div>
+		</div>
+
+		<!-- final report modal -->
+		<div class="modal-bg" id="reportModal">
+			<div class="modal report">
+				<h3 data-i18n="casefileTitle">结案报告</h3>
+				<div class="sub" data-i18n="reportCaseFile">CASE FILE · B1 · 商铺漏电检查</div>
+
+				<p data-i18n-html="report_p1">这条美食街整条街<b>每天早上9点之后开始漏电</b>。原因是3号铺"面包店"老板擅自把单相商用烤箱(一零一火)接在了<b>三火一地</b>的三相电线路上,把地线当零线接了,而且店里的<b>漏电保护器</b>已经损坏。</p>
+				<p data-i18n-html="report_p2">通电后,这股本该走零线回路的电流顺着地线网络"倒灌",让全街道接地的金属外壳和墙壁都悄悄带上了电。解法是:给漏保换新,并且专门为烤箱拉一根真正的零线接上,让电流走正规的回路,不再借道地线。</p>
+
+				<div class="section-t" data-i18n="reportSuggestTitle">整改建议</div>
+				<ul>
+					<li data-i18n="reportLi1">三相动力电(三火一地)没有零线,不能直接给220V单相设备接线;大功率单相设备必须由专业电工重新拉一路真正的零线,绝不能拿地线代替零线使用。</li>
+					<li data-i18n="reportLi2">更换已损坏的漏电保护器,并定期按下测试钮检查它是否能正常跳闸。</li>
+					<li data-i18n="reportLi3">检修完成前,任何接地的金属外壳都可能带电,操作前务必先用验电笔隔着测试,不要直接用手触碰。</li>
+					<li data-i18n="reportLi4">排查沿街其他商铺的分闸及接地系统,确认没有类似的私拉乱接问题。</li>
+				</ul>
+
+				<button class="modal-close" data-i18n="closeReportBtn" onclick="closeModal('reportModal')">合上卷宗</button>
+			</div>
+		</div>
+
+		<!-- 死亡结算弹窗 / 重生欢迎弹窗 均由 guide.js 的 GameUI.initHUD() 动态注入 -->
+
+		<!-- repair complete modal -->
+		<div class="modal-bg" id="repairModal">
+			<div class="modal repair-modal">
+				<h3 data-i18n="repairTitle">✔ 维修完成</h3>
+				<div class="sub" data-i18n="repairSub">维修完成</div>
+				<div class="repair-analysis">
+					<p data-i18n="repairP1">这条美食街整条街每天早上9点之后开始漏电,原因是3号铺"面包店"老板擅自把单相商用烤箱(一零一火)接在了三火一地的三相电线路上,把地线当零线接了,而且店里的漏电保护器已经损坏。</p>
+					<p data-i18n="repairP2">通电后,这股本该走零线回路的电流顺着地线网络倒灌,让全街道接地的金属外壳和墙壁都带上了电。真正的解法是:给漏保换新,并且专门为烤箱拉一根真正的零线接上,让电流走正规的回路,不再借道地线。</p>
+				</div>
+				<div class="repair-btns">
+					<button class="modal-close repair-btn" id="levelMapBtn" data-i18n="levelMapBtn">返回关卡地图</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ESC 菜单(语言选择 / 继续游戏 / 放弃本关) 由 guide.js 的 GameUI.initMenu() 动态注入 -->
+
+		<!-- 共用组件（血条 / 死亡画面 / 重生画面 / 帮助弹窗）：必须先于下方主脚本加载，因为主脚本会调用 GameUI.initHUD() -->
+		<script src="guideB.js"></script>
+
+		<script>
+			/* ========================= DATA =========================
+			   本关只完整填写了中文(zh-CN);其余语言先留出空对象占位,
+			   applyLang() 会用 Object.assign({}, I18N["zh-CN"], I18N[code]) 兜底,
+			   所以在语言切换菜单里选择这些语言时,文案会自动回退显示中文,
+			   之后翻译时只需要把对应语言的 key 填进各自的对象里即可。 */
+			const I18N = {
+				"zh-CN": {
+					cabinetHeader_s1: `三相动力电(三火一地)`,
+					shopLabel1: `1号铺`,
+					shopSub1: `拉面`,
+					shopLabel2: `2号铺`,
+					shopSub2: `BBQ`,
+					shopLabel3: `3号铺`,
+					shopSub3: `面包店`,
+					shopLabel4: `4号铺`,
+					shopSub4: `薯条王`,
+					noteHint: `右键验电,查看纸条`,
+					noteZoomText: `注意：每天9点以后有漏电`,
+					closeZoomBtn: `合上`,
+					sceneLabel_s1: `沿街总配电箱`,
+					sceneHint_s1: `先测出是哪一家商铺漏电`,
+					cabinetHeader_s2: `户内配电箱`,
+					shopMainLabel: `总闸`,
+					shopRcdLabel: `漏电保护器`,
+					rcdStatusBroken: `状态:已损坏`,
+					rcdStatusFixed: `状态:已更换`,
+					replaceRcdLabel: `更换漏保`,
+					sceneLabel_s2: `面包店总闸`,
+					sceneHint_s2: `检查自家配电箱`,
+					neutralCoilLbl: `备用零线,拖到蓝线接头处`,
+					sceneLabel_s3: `后厨 · 烤箱接线`,
+					sceneHint_s3: `检查烤箱的接线`,
+					navLeftTitle: `上一个场景`,
+					navRightTitle: `下一个场景`,
+					meterHead: `右键验电`,
+					meterStandby: `待机`,
+					notebookTitle: `线索笔记本`,
+					hpTitle: `生命值`,
+					casefileTitle: `结案报告`,
+					toastNewClue: `发现新线索`,
+					closeNotebookBtn: `合上笔记本`,
+					undiscoveredClue: `尚未发现的线索`,
+					lockedHint: `先在沿街总配电箱那边测出是哪一家商铺漏电,才能查下去。`,
+					branch3OffHint: `3号铺已断电,漏电暂时消失了,但这只是应急,故障还没真正修好。`,
+					branch3OnHint: `3号铺重新通电,漏电又回来了,小心,先验电再动手!`,
+					reportCaseFile: `CASE FILE · B1 · 商铺漏电检查`,
+					report_p1: `这条美食街整条街<b>每天早上9点之后开始漏电</b>。原因是3号铺"面包店"老板擅自把单相商用烤箱(一零一火)接在了<b>三火一地</b>的三相电线路上,把地线当零线接了,而且店里的<b>漏电保护器</b>已经损坏。`,
+					report_p2: `通电后,这股本该走零线回路的电流顺着地线网络"倒灌",让全街道接地的金属外壳和墙壁都悄悄带上了电。解法是:给漏保换新,并且专门为烤箱拉一根真正的零线接上,让电流走正规的回路,不再借道地线。`,
+					reportSuggestTitle: `整改建议`,
+					reportLi1: `三相动力电(三火一地)没有零线,不能直接给220V单相设备接线;大功率单相设备必须由专业电工重新拉一路真正的零线,绝不能拿地线代替零线使用。`,
+					reportLi2: `更换已损坏的漏电保护器,并定期按下测试钮检查它是否能正常跳闸。`,
+					reportLi3: `检修完成前,任何接地的金属外壳都可能带电,操作前务必先用验电笔隔着测试,不要直接用手触碰。`,
+					reportLi4: `排查沿街其他商铺的分闸及接地系统,确认没有类似的私拉乱接问题。`,
+					closeReportBtn: `合上卷宗`,
+					gameOverTitle: `⚡ 你被电死了。`,
+					gameOverSub: `下辈子注意点。`,
+					rebornBtnText: `开启下一世`,
+					rebornTitle: `我重生了！`,
+					rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因为粗心不小心被电死。这一世,我要成为电工王！`,
+					rebornStartBtn: `这一世,开始`,
+					repairTitle: `✔ 维修完成`,
+					repairSub: `维修完成`,
+					repairP1: `这条美食街整条街每天早上9点之后开始漏电,原因是3号铺"面包店"老板擅自把单相商用烤箱(一零一火)接在了三火一地的三相电线路上,把地线当零线接了,而且店里的漏电保护器已经损坏。`,
+					repairP2: `通电后,这股本该走零线回路的电流顺着地线网络倒灌,让全街道接地的金属外壳和墙壁都带上了电。真正的解法是:给漏保换新,并且专门为烤箱拉一根真正的零线接上,让电流走正规的回路,不再借道地线。`,
+					levelMapBtn: `返回关卡地图`,
+					penNone: `无电`,
+					penLow: `有微弱电压`,
+					penDanger: `危险`,
+					cluesProgress: `已发现 {d} / {t} 条线索`,
+					menuTitle: `游戏菜单`,
+					menuLangTitle: `选择语言`,
+					resumeBtn: `继续游戏`,
+					giveUpBtn: `放弃本关，返回主页`,
+					giveUpConfirm: `确定要放弃本关并返回主页吗？当前进度不会保存。`,
+					clues: {
+						clue_note_warning: { t: `墙上的安全提示`, d: `右键验电确认纸条本身不带电后,凑近放大细看:上面写着"注意:每天9点以后有漏电",提醒商户务必先验电再动手——正是这次要查的问题。` },
+						clue_wall_live: { t: `裸露的墙面测出带电`, d: `验电笔碰到配电箱旁边裸露的墙面砖缝,指示灯直接冲到危险档——配电箱本体做了绝缘处理,内部是安全的,危险来自漏电流顺着接地网络"倒灌"进了墙体本身。` },
+						clue_branch_found: { t: `3号铺(面包店)嫌疑最大`, d: `一家一家验过去:3号铺"面包店"通电时测出危险电压,把它的闸拉下断电后再测,墙面立刻恢复安全——不管是哪种测法,都指向了这家面包店,可以进一步去店里查了。` },
+						clue_other_shops_ok: { t: `其余商铺分闸正常`, d: `1号铺、2号铺、4号铺的分闸区域测试都是安全的,和这次漏电没有关系。` },
+						clue_rcd_broken: { t: `饭馆漏电保护器已损坏`, d: `按下漏电保护器上的测试钮,应该立刻跳闸才对,可它毫无反应——这只漏保早就坏了,形同虚设,一直没能在漏电发生时切断电源。` },
+						clue_oven_live: { t: `烤箱外壳带电`, d: `验电笔碰到烤箱的金属外壳,指示灯直接冲到危险档——凡是接了地线的电器外壳,现在都顶着接近220V的电压,这正是后厨最容易被摸到的危险点。` },
+						clue_wrong_splice: { t: `烤箱的零线接到地线上去了`, d: `扒开烤箱上方的接线才发现:红线接的是一根火线,没问题;可蓝线本该接零线,老板图省事却把它接到了地线上——地线被当成零线在用,这就是漏电电流的真正来源。` },
+						clue_other_phases_ok: { t: `其余几根线接头都是好的`, d: `验电笔测这几根线都会跳到危险档——它们本来就是带电的火线,这很正常。红线接的这根火线接头包扎完好,另外两根备用相线也好好包着头、没有接到烤箱上,摸着都安全——排除了它们的嫌疑,问题只出在蓝线接错的那一根上。` },
+					},
+				},
+				en: {
+					cabinetHeader_s1: `Three-Phase Power (3 Live + 1 Ground)`,
+					shopLabel1: `Unit 1`,
+					shopSub1: `Ramen`,
+					shopLabel2: `Unit 2`,
+					shopSub2: `BBQ`,
+					shopLabel3: `Unit 3`,
+					shopSub3: `Bakery`,
+					shopLabel4: `Unit 4`,
+					shopSub4: `Fry King`,
+					noteHint: `Right-click to test, then read the note`,
+					noteZoomText: `Warning: Leakage occurs every day after 9 AM`,
+					closeZoomBtn: `Close`,
+					sceneLabel_s1: `Street Distribution Panel`,
+					sceneHint_s1: `Find out which shop is leaking first`,
+					cabinetHeader_s2: `Indoor Panel`,
+					shopMainLabel: `Main`,
+					shopRcdLabel: `RCD`,
+					rcdStatusBroken: `Status: Broken`,
+					rcdStatusFixed: `Status: Replaced`,
+					replaceRcdLabel: `Replace RCD`,
+					sceneLabel_s2: `Bakery Main Breaker`,
+					sceneHint_s2: `Check the shop's own panel`,
+					neutralCoilLbl: `Spare neutral wire, drag onto the blue wire's joint`,
+					sceneLabel_s3: `Kitchen · Oven Wiring`,
+					sceneHint_s3: `Check the oven's wiring`,
+					navLeftTitle: `Previous scene`,
+					navRightTitle: `Next scene`,
+					meterHead: `Right-click to test`,
+					meterStandby: `Standby`,
+					notebookTitle: `Clue Notebook`,
+					hpTitle: `Health`,
+					casefileTitle: `Case File`,
+					toastNewClue: `New clue found`,
+					closeNotebookBtn: `Close notebook`,
+					undiscoveredClue: `Undiscovered clue`,
+					lockedHint: `Test the street panel first to find out which shop is leaking.`,
+					branch3OffHint: `Unit 3 is powered off. The leak is gone for now, but this is only a stopgap - the fault isn't actually fixed.`,
+					branch3OnHint: `Unit 3 is powered on again. The leak is back - be careful, test before you touch!`,
+					reportCaseFile: `CASE FILE · B1 · Shop Leakage Inspection`,
+					report_p1: `This food street <b>starts leaking every day after 9 AM</b>. The cause: the owner of Unit 3 "Bakery" wired a single-phase commercial oven (needs 1 live + 1 neutral) straight onto the <b>3-phase, 3-live-1-ground</b> supply, using the ground wire as if it were neutral - and the shop's <b>RCD</b> was already broken.`,
+					report_p2: `Once powered on, the current that should have returned via neutral instead flowed back through the earth network, quietly energizing every grounded metal casing and wall along the whole street. The fix: replace the RCD, and run a proper neutral wire to the oven so the current takes the correct path instead of borrowing the ground wire.`,
+					reportSuggestTitle: `RECOMMENDED ACTIONS`,
+					reportLi1: `Three-phase power (3 live + 1 ground) has no neutral conductor - it can't be wired directly to 220V single-phase equipment. High-power single-phase appliances need a licensed electrician to run a genuine neutral wire; never substitute the ground wire for neutral.`,
+					reportLi2: `Replace the broken RCD, and periodically press its test button to confirm it still trips correctly.`,
+					reportLi3: `Until repairs are complete, any grounded metal casing may be live - always test with a voltage tester through insulation first, never touch bare-handed.`,
+					reportLi4: `Check the other shops' breakers and grounding along the street for the same kind of unauthorized wiring, and fix it while you're there.`,
+					closeReportBtn: `Close file`,
+					gameOverTitle: `⚡ You were electrocuted.`,
+					gameOverSub: `Be more careful next time.`,
+					rebornBtnText: `Begin next life`,
+					rebornTitle: `I've been reborn!`,
+					rebornSub: `NEW LIFE`,
+					rebornP: `In my last life, I carelessly got myself electrocuted at work. This time, I'm going to become a master electrician!`,
+					rebornStartBtn: `Begin this life`,
+					repairTitle: `✔ Repair Complete`,
+					repairSub: `REPAIR COMPLETE`,
+					repairP1: `This food street starts leaking every day after 9 AM. The cause: the owner of Unit 3 "Bakery" wired a single-phase commercial oven (needs 1 live + 1 neutral) straight onto the 3-phase, 3-live-1-ground supply, using the ground wire as if it were neutral - and the shop's RCD was already broken.`,
+					repairP2: `Once powered on, the current that should have returned via neutral instead flowed back through the earth network, quietly energizing every grounded metal casing and wall along the whole street. The real fix: replace the RCD, and run a proper neutral wire to the oven so the current takes the correct path instead of borrowing the ground wire.`,
+					levelMapBtn: `Back to Level Map`,
+					penNone: `No voltage`,
+					penLow: `Slight voltage`,
+					penDanger: `Danger`,
+					cluesProgress: `{d} / {t} clues found`,
+					menuTitle: `Menu`,
+					menuLangTitle: `Select Language`,
+					resumeBtn: `Resume`,
+					giveUpBtn: `Abandon level and return home`,
+					giveUpConfirm: `Abandon this level and return to the home screen? Current progress in this level will not be saved.`,
+					clues: {
+						clue_note_warning: { t: `The safety notice on the wall`, d: `After testing it's safe (right-click), zoom in and read the note: "Warning: leakage occurs every day after 9 AM" - a reminder to always test before touching, which turns out to be exactly the issue this time.` },
+						clue_wall_live: { t: `The exposed wall tests live`, d: `Touching the tester to the bare brick beside the panel sends the reading straight to danger - the panel enclosure itself has been insulated and is safe; the hazard comes from leakage current flowing back through the ground network into the wall itself.` },
+						clue_branch_found: { t: `Unit 3 (Bakery) is the prime suspect`, d: `Testing shop by shop: Unit 3 "Bakery" reads dangerous while powered, and the wall goes safe again the moment its breaker is cut - either way points straight at this bakery. Time to go check inside.` },
+						clue_other_shops_ok: { t: `The other shops' breakers are fine`, d: `Units 1, 2, and 4 all test safe at their breaker areas - unrelated to this leak.` },
+						clue_rcd_broken: { t: `The bakery's RCD is broken`, d: `Pressing the RCD's test button should trip it instantly - but nothing happens. This RCD has been dead for a while, doing nothing to cut power when a leak occurs.` },
+						clue_oven_live: { t: `The oven's casing is live`, d: `Touching the tester to the oven's metal body sends the reading straight to danger - any grounded appliance casing now carries close to 220V. This is the most likely spot for someone in the kitchen to get shocked.` },
+						clue_wrong_splice: { t: `The oven's neutral was wired to the ground wire`, d: `Opening up the wiring above the oven reveals it: the red wire is properly on a live phase, fine. But the blue wire, which should be neutral, was carelessly spliced onto the ground wire instead - the ground wire is doing neutral's job, and that's the real source of the leak.` },
+						clue_other_phases_ok: { t: `The remaining wires are properly terminated`, d: `The tester reads danger on all of these - they're genuinely live phase wires, which is normal. The red wire's splice is properly insulated, and the two spare phase wires are capped and never connected to the oven at all - safe to touch, and cleared of suspicion. The problem is only the misconnected blue wire.` },
+					},
+				},
+				"es-LA": {
+					cabinetHeader_s1: `Electricidad trifásica (3 fases + 1 tierra)`,
+					shopLabel1: `Local 1`,
+					shopSub1: `Ramen`,
+					shopLabel2: `Local 2`,
+					shopSub2: `BBQ`,
+					shopLabel3: `Local 3`,
+					shopSub3: `Panadería`,
+					shopLabel4: `Local 4`,
+					shopSub4: `Rey de la Papa Frita`,
+					noteHint: `Clic derecho para probar y leer la nota`,
+					noteZoomText: `Aviso: hay fuga eléctrica todos los días después de las 9 AM`,
+					closeZoomBtn: `Cerrar`,
+					sceneLabel_s1: `Panel general de la calle`,
+					sceneHint_s1: `Averigua primero qué local tiene la fuga`,
+					cabinetHeader_s2: `Panel eléctrico interior`,
+					shopMainLabel: `Principal`,
+					shopRcdLabel: `Diferencial`,
+					rcdStatusBroken: `Estado: dañado`,
+					rcdStatusFixed: `Estado: reemplazado`,
+					replaceRcdLabel: `Reemplazar diferencial`,
+					sceneLabel_s2: `Interruptor principal de la panadería`,
+					sceneHint_s2: `Revisa el panel del propio local`,
+					neutralCoilLbl: `Cable neutro de repuesto, arrástralo al empalme del cable azul`,
+					sceneLabel_s3: `Cocina · Cableado del horno`,
+					sceneHint_s3: `Revisa el cableado del horno`,
+					navLeftTitle: `Escena anterior`,
+					navRightTitle: `Escena siguiente`,
+					meterHead: `Clic derecho para probar`,
+					meterStandby: `En espera`,
+					notebookTitle: `Cuaderno de pistas`,
+					hpTitle: `Salud`,
+					casefileTitle: `Expediente`,
+					toastNewClue: `Nueva pista encontrada`,
+					closeNotebookBtn: `Cerrar cuaderno`,
+					undiscoveredClue: `Pista sin descubrir`,
+					lockedHint: `Primero prueba en el panel general de la calle para averiguar qué local tiene la fuga.`,
+					branch3OffHint: `El local 3 se quedó sin electricidad. La fuga desaparece por ahora, pero es solo algo temporal - el problema no está realmente resuelto.`,
+					branch3OnHint: `El local 3 volvió a tener electricidad. La fuga regresó, cuidado, ¡prueba antes de tocar!`,
+					reportCaseFile: `EXPEDIENTE · B1 · Inspección de fuga en un local comercial`,
+					report_p1: `Esta calle de comida <b>empieza a tener fugas todos los días después de las 9 AM</b>. La causa: el dueño del local 3 "Panadería" conectó por su cuenta un horno comercial monofásico (necesita fase y neutro) directamente a la línea <b>trifásica de 3 fases y 1 tierra</b>, usando el cable de tierra como si fuera el neutro - y el <b>diferencial</b> del local ya estaba dañado.`,
+					report_p2: `Al encender el horno, la corriente que debía volver por el neutro regresó en cambio por la red de tierra, dejando con tensión discretamente todas las carcasas metálicas y paredes conectadas a tierra a lo largo de toda la calle. La solución: reemplazar el diferencial y tender un cable neutro de verdad hasta el horno, para que la corriente tome el camino correcto en lugar de usar el cable de tierra.`,
+					reportSuggestTitle: `RECOMENDACIONES`,
+					reportLi1: `La electricidad trifásica (3 fases + 1 tierra) no tiene neutro - no se le puede conectar directamente un equipo monofásico de 220V. Los electrodomésticos monofásicos de alta potencia necesitan que un electricista certificado tienda un cable neutro de verdad; nunca sustituir el neutro por el cable de tierra.`,
+					reportLi2: `Reemplazar el diferencial dañado y presionar periódicamente su botón de prueba para confirmar que sigue disparando correctamente.`,
+					reportLi3: `Hasta que termine la reparación, cualquier carcasa metálica conectada a tierra puede estar energizada - prueba siempre con un probador de voltaje antes de tocar con la mano.`,
+					reportLi4: `Revisar los interruptores y la puesta a tierra de los demás locales de la calle por si tienen el mismo tipo de conexión no autorizada, y solucionarlo de una vez.`,
+					closeReportBtn: `Cerrar expediente`,
+					gameOverTitle: `⚡ Has muerto electrocutado.`,
+					gameOverSub: `Ten más cuidado en la próxima vida.`,
+					rebornBtnText: `Comenzar la próxima vida`,
+					rebornTitle: `¡He renacido!`,
+					rebornSub: `NUEVA VIDA`,
+					rebornP: `En mi vida anterior, me electrocuté por descuido en el trabajo. ¡Esta vez, voy a convertirme en un maestro electricista!`,
+					rebornStartBtn: `Comenzar esta vida`,
+					repairTitle: `✔ Reparación completa`,
+					repairSub: `REPARACIÓN COMPLETA`,
+					repairP1: `Esta calle de comida empieza a tener fugas todos los días después de las 9 AM. La causa: el dueño del local 3 "Panadería" conectó por su cuenta un horno comercial monofásico (necesita fase y neutro) directamente a la línea trifásica de 3 fases y 1 tierra, usando el cable de tierra como si fuera el neutro - y el diferencial del local ya estaba dañado.`,
+					repairP2: `Al encender el horno, la corriente que debía volver por el neutro regresó en cambio por la red de tierra, dejando con tensión discretamente todas las carcasas metálicas y paredes conectadas a tierra a lo largo de toda la calle. La solución real: reemplazar el diferencial y tender un cable neutro de verdad hasta el horno, para que la corriente tome el camino correcto en lugar de usar el cable de tierra.`,
+					levelMapBtn: `Volver al mapa de niveles`,
+					penNone: `Sin tensión`,
+					penLow: `Tensión leve`,
+					penDanger: `Peligro`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menú`,
+					menuLangTitle: `Seleccionar idioma`,
+					resumeBtn: `Reanudar`,
+					giveUpBtn: `Abandonar nivel y volver al inicio`,
+					giveUpConfirm: `¿Abandonar este nivel y volver a la pantalla de inicio? El progreso actual en este nivel no se guardará.`,
+					clues: {
+						clue_note_warning: { t: `El aviso de seguridad en la pared`, d: `Después de probar con el detector (clic derecho) y confirmar que es seguro, se ve de cerca: "Aviso: hay fuga eléctrica todos los días después de las 9 AM" - un recordatorio de probar siempre antes de tocar, que resulta ser justo el problema esta vez.` },
+						clue_wall_live: { t: `La pared expuesta da lectura de tensión`, d: `Al tocar la pared de ladrillo junto al panel con el probador, el indicador salta directo a peligro - el propio gabinete del panel está aislado y es seguro; el peligro viene de la corriente de fuga que regresa por la red de tierra hacia la pared misma.` },
+						clue_branch_found: { t: `El local 3 (Panadería) es el principal sospechoso`, d: `Probando local por local: el local 3 "Panadería" da lectura peligrosa mientras tiene electricidad, y la pared vuelve a estar segura en cuanto se corta su interruptor - de cualquier forma, todo apunta a esta panadería. Hay que ir a revisar adentro.` },
+						clue_other_shops_ok: { t: `Los demás interruptores están bien`, d: `Los locales 1, 2 y 4 dan lecturas seguras en sus áreas de interruptor - no tienen relación con esta fuga.` },
+						clue_rcd_broken: { t: `El diferencial de la panadería está dañado`, d: `Presionar el botón de prueba del diferencial debería dispararlo de inmediato - pero no pasa nada. Este diferencial lleva tiempo muerto, sin cortar la corriente cuando ocurre una fuga.` },
+						clue_oven_live: { t: `La carcasa del horno está energizada`, d: `Al tocar la carcasa metálica del horno con el probador, el indicador salta directo a peligro - cualquier carcasa de aparato conectada a tierra ahora lleva casi 220V. Este es el punto donde alguien en la cocina más fácilmente recibiría una descarga.` },
+						clue_wrong_splice: { t: `El neutro del horno quedó conectado al cable de tierra`, d: `Al abrir el cableado sobre el horno se descubre: el cable rojo está bien conectado a una fase, sin problema. Pero el cable azul, que debería ser el neutro, quedó empalmado por descuido al cable de tierra - la tierra está haciendo el trabajo del neutro, y ese es el verdadero origen de la fuga.` },
+						clue_other_phases_ok: { t: `Los demás cables están bien terminados`, d: `El probador marca peligro en todos ellos - son fases realmente energizadas, lo cual es normal. El empalme del cable rojo está bien aislado, y las otras dos fases de repuesto están tapadas y nunca se conectaron al horno - seguras de tocar, y quedan descartadas. El problema está solo en el cable azul mal conectado.` },
+					},
+				},
+				ko: {
+					cabinetHeader_s1: `삼상 동력전(삼상삼선일지)`,
+					shopLabel1: `1호점`,
+					shopSub1: `라멘`,
+					shopLabel2: `2호점`,
+					shopSub2: `바베큐`,
+					shopLabel3: `3호점`,
+					shopSub3: `베이커리`,
+					shopLabel4: `4호점`,
+					shopSub4: `감자튀김킹`,
+					noteHint: `우클릭으로 검전 후 쪽지 확인`,
+					noteZoomText: `주의: 매일 아침 9시 이후 누전 발생`,
+					closeZoomBtn: `닫기`,
+					sceneLabel_s1: `가로변 총배전함`,
+					sceneHint_s1: `먼저 어느 가게에서 누전되는지 확인하세요`,
+					cabinetHeader_s2: `실내 배전함`,
+					shopMainLabel: `총개폐기`,
+					shopRcdLabel: `누전차단기`,
+					rcdStatusBroken: `상태: 고장`,
+					rcdStatusFixed: `상태: 교체완료`,
+					replaceRcdLabel: `누전차단기 교체`,
+					sceneLabel_s2: `베이커리 총개폐기`,
+					sceneHint_s2: `가게 자체 배전함 점검`,
+					neutralCoilLbl: `예비 중성선, 파란선 접속부로 끌어다 놓으세요`,
+					sceneLabel_s3: `주방 · 오븐 배선`,
+					sceneHint_s3: `오븐 배선 점검`,
+					navLeftTitle: `이전 장면`,
+					navRightTitle: `다음 장면`,
+					meterHead: `우클릭으로 검전`,
+					meterStandby: `대기 중`,
+					notebookTitle: `단서 수첩`,
+					hpTitle: `체력`,
+					casefileTitle: `사건 보고서`,
+					toastNewClue: `새로운 단서 발견`,
+					closeNotebookBtn: `수첩 닫기`,
+					undiscoveredClue: `아직 발견하지 못한 단서`,
+					lockedHint: `먼저 가로변 총배전함에서 어느 가게가 누전인지 확인해야 합니다.`,
+					branch3OffHint: `3호점 전기가 끊겼습니다. 누전 현상은 잠시 사라졌지만, 이는 임시방편일 뿐 근본적으로 고쳐진 것은 아닙니다.`,
+					branch3OnHint: `3호점에 다시 전기가 들어왔습니다. 누전이 다시 시작됐습니다. 조심하세요, 먼저 검전한 뒤 손대세요!`,
+					reportCaseFile: `사건 파일 · B1 · 상가 누전 조사`,
+					report_p1: `이 먹자골목은 <b>매일 아침 9시 이후부터 누전</b>이 시작된다. 원인은 3호점 "베이커리" 사장이 단상 상업용 오븐(상선 1가닥과 중성선 1가닥 필요)을 <b>삼상삼선일지</b> 배선에 마음대로 연결하면서 접지선을 중성선처럼 사용했고, 게다가 가게의 <b>누전차단기</b>까지 이미 고장 나 있었기 때문이다.`,
+					report_p2: `전원이 들어오자, 원래 중성선을 통해 돌아가야 할 전류가 대신 접지망을 타고 역류하면서 거리 전체의 접지된 금속 외함과 벽체에 은밀히 전압이 걸리게 되었다. 해법은: 누전차단기를 새것으로 교체하고, 오븐 전용으로 진짜 중성선을 새로 연결해 전류가 접지선을 거치지 않고 정상적인 경로로 흐르게 하는 것이다.`,
+					reportSuggestTitle: `개선 권고 사항`,
+					reportLi1: `삼상 동력전(삼상삼선일지)에는 중성선이 없어 220V 단상 기기를 직접 연결할 수 없다. 고출력 단상 기기는 반드시 전문 전기기사가 진짜 중성선을 새로 배선해야 하며, 접지선을 중성선 대신 사용해서는 절대 안 된다.`,
+					reportLi2: `고장 난 누전차단기를 교체하고, 정기적으로 테스트 버튼을 눌러 정상적으로 차단되는지 확인한다.`,
+					reportLi3: `수리가 끝나기 전까지는 접지된 금속 외함이라면 어디든 전기가 흐를 수 있으므로, 작업 전 반드시 검전기로 먼저 확인하고 맨손으로 직접 만지지 않는다.`,
+					reportLi4: `거리의 다른 가게들의 분전반과 접지 시스템도 같은 식의 무단 배선이 있는지 점검하여 함께 처리한다.`,
+					closeReportBtn: `서류 닫기`,
+					gameOverTitle: `⚡ 감전사했습니다.`,
+					gameOverSub: `다음 생에는 조심하세요.`,
+					rebornBtnText: `다음 생 시작하기`,
+					rebornTitle: `다시 태어났다!`,
+					rebornSub: `새로운 삶`,
+					rebornP: `전생에는 일하다 부주의로 감전사하고 말았다. 이번 생에는 전기 기술의 달인이 되겠다!`,
+					rebornStartBtn: `이번 생 시작하기`,
+					repairTitle: `✔ 수리 완료`,
+					repairSub: `수리 완료`,
+					repairP1: `이 먹자골목은 매일 아침 9시 이후부터 누전이 시작된다. 원인은 3호점 "베이커리" 사장이 단상 상업용 오븐(상선 1가닥과 중성선 1가닥 필요)을 삼상삼선일지 배선에 마음대로 연결하면서 접지선을 중성선처럼 사용했고, 게다가 가게의 누전차단기까지 이미 고장 나 있었기 때문이다.`,
+					repairP2: `전원이 들어오자, 원래 중성선을 통해 돌아가야 할 전류가 대신 접지망을 타고 역류하면서 거리 전체의 접지된 금속 외함과 벽체에 은밀히 전압이 걸리게 되었다. 진짜 해법은: 누전차단기를 새것으로 교체하고, 오븐 전용으로 진짜 중성선을 새로 연결해 전류가 접지선을 거치지 않고 정상적인 경로로 흐르게 하는 것이다.`,
+					levelMapBtn: `레벨 맵으로 돌아가기`,
+					penNone: `무전압`,
+					penLow: `약한 전압 감지`,
+					penDanger: `위험`,
+					cluesProgress: `{d} / {t}개 단서 발견`,
+					menuTitle: `메뉴`,
+					menuLangTitle: `언어 선택`,
+					resumeBtn: `게임 계속하기`,
+					giveUpBtn: `레벨 포기하고 홈으로`,
+					giveUpConfirm: `이 레벨을 포기하고 홈 화면으로 돌아가시겠습니까? 현재 레벨의 진행 상황은 저장되지 않습니다.`,
+					clues: {
+						clue_note_warning: { t: `벽에 붙은 안전 안내문`, d: `검전기로 먼저 안전을 확인한 뒤(우클릭) 가까이서 확대해 보니: "주의: 매일 아침 9시 이후 누전 발생"이라고 적혀 있다 - 항상 만지기 전에 검전하라는 경고인데, 이번에 정확히 그 문제였다.` },
+						clue_wall_live: { t: `노출된 벽면에서 전기가 검출됨`, d: `배전함 옆 드러난 벽돌 틈에 검전기를 대자 지시등이 곧바로 위험 단계까지 치솟는다 - 배전함 본체는 절연 처리가 되어 있어 안전하지만, 누전 전류가 접지망을 타고 벽체 자체로 역류해 들어온 것이 위험의 원인이다.` },
+						clue_branch_found: { t: `3호점(베이커리)이 가장 유력하다`, d: `한 가게씩 검전해 보니: 3호점 "베이커리"는 전기가 들어와 있을 때 위험 전압이 측정되고, 그 가게 분전반을 내리면 벽면도 곧바로 안전해진다 - 어느 쪽으로 확인하든 이 베이커리를 가리킨다. 이제 가게 안으로 들어가 확인할 차례다.` },
+						clue_other_shops_ok: { t: `나머지 가게 분전반은 정상`, d: `1호점, 2호점, 4호점의 분전반 구역은 모두 검전 결과 안전하며, 이번 누전과는 관계가 없다.` },
+						clue_rcd_broken: { t: `베이커리의 누전차단기가 고장났다`, d: `누전차단기의 테스트 버튼을 누르면 즉시 차단되어야 하는데, 아무 반응이 없다 - 이 누전차단기는 이미 오래전에 고장 나 누전이 발생해도 전원을 차단하지 못하고 있었다.` },
+						clue_oven_live: { t: `오븐 외함에 전기가 흐른다`, d: `검전기를 오븐의 금속 몸체에 대자 지시등이 곧바로 위험 단계까지 치솟는다 - 접지된 전자제품 외함은 이제 모두 220V에 가까운 전압을 띠고 있다. 주방에서 가장 감전되기 쉬운 지점이다.` },
+						clue_wrong_splice: { t: `오븐의 중성선이 접지선에 연결되어 있었다`, d: `오븐 위쪽 배선을 열어 보니: 빨간선은 상선에 제대로 연결되어 있어 문제없다. 그런데 원래 중성선이어야 할 파란선이, 사장이 대충 처리하느라 접지선에 연결되어 있었다 - 접지선이 중성선 역할을 하고 있었던 것이며, 이것이 바로 누전의 진짜 근원이다.` },
+						clue_other_phases_ok: { t: `나머지 선들은 접속부가 멀쩡하다`, d: `검전기로 재면 이 선들은 모두 위험 단계로 나온다 - 원래 전기가 흐르는 상선이니 정상이다. 빨간선의 접속부는 절연 처리가 잘 되어 있고, 나머지 예비 상선 두 가닥도 끝이 잘 마감되어 있으며 오븐에는 전혀 연결되어 있지 않다 - 만져도 안전하며 혐의를 벗었다. 문제는 오직 잘못 연결된 파란선뿐이다.` },
+					},
+				},
+				"zh-TW": {
+					cabinetHeader_s1: `三相動力電(三火一地)`,
+					shopLabel1: `1號鋪`,
+					shopSub1: `拉麵`,
+					shopLabel2: `2號鋪`,
+					shopSub2: `BBQ`,
+					shopLabel3: `3號鋪`,
+					shopSub3: `麵包店`,
+					shopLabel4: `4號鋪`,
+					shopSub4: `薯條王`,
+					noteHint: `右鍵驗電,查看紙條`,
+					noteZoomText: `注意：每天9點以後有漏電`,
+					closeZoomBtn: `合上`,
+					sceneLabel_s1: `沿街總配電箱`,
+					sceneHint_s1: `先測出是哪一家商鋪漏電`,
+					cabinetHeader_s2: `戶內配電箱`,
+					shopMainLabel: `總開關`,
+					shopRcdLabel: `漏電保護器`,
+					rcdStatusBroken: `狀態:已損壞`,
+					rcdStatusFixed: `狀態:已更換`,
+					replaceRcdLabel: `更換漏保`,
+					sceneLabel_s2: `麵包店總開關`,
+					sceneHint_s2: `檢查自家配電箱`,
+					neutralCoilLbl: `備用零線,拖到藍線接頭處`,
+					sceneLabel_s3: `後廚 · 烤箱接線`,
+					sceneHint_s3: `檢查烤箱的接線`,
+					navLeftTitle: `上一個場景`,
+					navRightTitle: `下一個場景`,
+					meterHead: `右鍵驗電`,
+					meterStandby: `待機`,
+					notebookTitle: `線索筆記本`,
+					hpTitle: `生命值`,
+					casefileTitle: `結案報告`,
+					toastNewClue: `發現新線索`,
+					closeNotebookBtn: `合上筆記本`,
+					undiscoveredClue: `尚未發現的線索`,
+					lockedHint: `先在沿街總配電箱那邊測出是哪一家商鋪漏電,才能查下去。`,
+					branch3OffHint: `3號鋪已斷電,漏電暫時消失了,但這只是應急,故障還沒真正修好。`,
+					branch3OnHint: `3號鋪重新通電,漏電又回來了,小心,先驗電再動手!`,
+					reportCaseFile: `CASE FILE · B1 · 商鋪漏電檢查`,
+					report_p1: `這條美食街整條街<b>每天早上9點之後開始漏電</b>。原因是3號鋪"麵包店"老闆擅自把單相商用烤箱(一零一火)接在了<b>三火一地</b>的三相電線路上,把地線當零線接了,而且店裡的<b>漏電保護器</b>已經損壞。`,
+					report_p2: `通電後,這股本該走零線迴路的電流順著地線網路"倒灌",讓全街道接地的金屬外殼和牆壁都悄悄帶上了電。解法是:給漏保換新,並且專門為烤箱拉一根真正的零線接上,讓電流走正規的迴路,不再借道地線。`,
+					reportSuggestTitle: `整改建議`,
+					reportLi1: `三相動力電(三火一地)沒有零線,不能直接給220V單相設備接線;大功率單相設備必須由專業電工重新拉一路真正的零線,絕不能拿地線代替零線使用。`,
+					reportLi2: `更換已損壞的漏電保護器,並定期按下測試鈕檢查它是否能正常跳閘。`,
+					reportLi3: `檢修完成前,任何接地的金屬外殼都可能帶電,操作前務必先用驗電筆隔著測試,不要直接用手觸碰。`,
+					reportLi4: `排查沿街其他商鋪的分閘及接地系統,確認沒有類似的私拉亂接問題。`,
+					closeReportBtn: `合上卷宗`,
+					gameOverTitle: `⚡ 你被電死了。`,
+					gameOverSub: `下輩子注意點。`,
+					rebornBtnText: `開啟下一世`,
+					rebornTitle: `我重生了！`,
+					rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因為粗心不小心被電死。這一世,我要成為電工王！`,
+					rebornStartBtn: `這一世,開始`,
+					repairTitle: `✔ 維修完成`,
+					repairSub: `維修完成`,
+					repairP1: `這條美食街整條街每天早上9點之後開始漏電,原因是3號鋪"麵包店"老闆擅自把單相商用烤箱(一零一火)接在了三火一地的三相電線路上,把地線當零線接了,而且店裡的漏電保護器已經損壞。`,
+					repairP2: `通電後,這股本該走零線迴路的電流順著地線網路倒灌,讓全街道接地的金屬外殼和牆壁都帶上了電。真正的解法是:給漏保換新,並且專門為烤箱拉一根真正的零線接上,讓電流走正規的迴路,不再借道地線。`,
+					levelMapBtn: `返回關卡地圖`,
+					penNone: `無電`,
+					penLow: `有微弱電壓`,
+					penDanger: `危險`,
+					cluesProgress: `已發現 {d} / {t} 條線索`,
+					menuTitle: `遊戲選單`,
+					menuLangTitle: `選擇語言`,
+					resumeBtn: `繼續遊戲`,
+					giveUpBtn: `放棄本關，返回主頁`,
+					giveUpConfirm: `確定要放棄本關並返回主頁嗎？目前進度不會保存。`,
+					clues: {
+						clue_note_warning: { t: `牆上的安全提示`, d: `右鍵驗電確認紙條本身不帶電後,湊近放大細看:上面寫著"注意:每天9點以後有漏電",提醒商戶務必先驗電再動手——正是這次要查的問題。` },
+						clue_wall_live: { t: `裸露的牆面測出帶電`, d: `驗電筆碰到配電箱旁邊裸露的牆面磚縫,指示燈直接衝到危險檔——配電箱本體做了絕緣處理,內部是安全的,危險來自漏電流順著接地網路"倒灌"進了牆體本身。` },
+						clue_branch_found: { t: `3號鋪(麵包店)嫌疑最大`, d: `一家一家驗過去:3號鋪"麵包店"通電時測出危險電壓,把它的閘拉下斷電後再測,牆面立刻恢復安全——不管是哪種測法,都指向了這家麵包店,可以進一步去店裡查了。` },
+						clue_other_shops_ok: { t: `其餘商鋪分閘正常`, d: `1號鋪、2號鋪、4號鋪的分閘區域測試都是安全的,和這次漏電沒有關係。` },
+						clue_rcd_broken: { t: `麵包店漏電保護器已損壞`, d: `按下漏電保護器上的測試鈕,應該立刻跳閘才對,可它毫無反應——這只漏保早就壞了,形同虛設,一直沒能在漏電發生時切斷電源。` },
+						clue_oven_live: { t: `烤箱外殼帶電`, d: `驗電筆碰到烤箱的金屬外殼,指示燈直接衝到危險檔——凡是接了地線的電器外殼,現在都頂著接近220V的電壓,這正是後廚最容易被摸到的危險點。` },
+						clue_wrong_splice: { t: `烤箱的零線接到地線上去了`, d: `扒開烤箱上方的接線才發現:紅線接的是一根火線,沒問題;可藍線本該接零線,老闆圖省事卻把它接到了地線上——地線被當成零線在用,這就是漏電電流的真正來源。` },
+						clue_other_phases_ok: { t: `其餘幾根線接頭都是好的`, d: `驗電筆測這幾根線都會跳到危險檔——它們本來就是帶電的火線,這很正常。紅線接的這根火線接頭包紮完好,另外兩根備用相線也好好包著頭、沒有接到烤箱上,摸著都安全——排除了它們的嫌疑,問題只出在藍線接錯的那一根上。` },
+					},
+				},
+				de: {
+					cabinetHeader_s1: `Dreiphasenstrom (3 Außenleiter + 1 Erde)`,
+					shopLabel1: `Laden 1`,
+					shopSub1: `Ramen`,
+					shopLabel2: `Laden 2`,
+					shopSub2: `BBQ`,
+					shopLabel3: `Laden 3`,
+					shopSub3: `Bäckerei`,
+					shopLabel4: `Laden 4`,
+					shopSub4: `Pommes-King`,
+					noteHint: `Rechtsklick zum Prüfen, dann den Zettel lesen`,
+					noteZoomText: `Achtung: Jeden Tag nach 9 Uhr tritt ein Erdschluss auf`,
+					closeZoomBtn: `Schließen`,
+					sceneLabel_s1: `Hauptverteiler an der Straße`,
+					sceneHint_s1: `Finde zuerst heraus, welcher Laden den Fehlerstrom hat`,
+					cabinetHeader_s2: `Hausinterner Verteilerkasten`,
+					shopMainLabel: `Hauptschalter`,
+					shopRcdLabel: `FI-Schutzschalter`,
+					rcdStatusBroken: `Status: defekt`,
+					rcdStatusFixed: `Status: ersetzt`,
+					replaceRcdLabel: `FI-Schalter ersetzen`,
+					sceneLabel_s2: `Hauptschalter der Bäckerei`,
+					sceneHint_s2: `Verteilerkasten des Ladens prüfen`,
+					neutralCoilLbl: `Ersatz-Nullleiter, auf die Verbindungsstelle des blauen Kabels ziehen`,
+					sceneLabel_s3: `Küche · Ofenverkabelung`,
+					sceneHint_s3: `Verkabelung des Ofens prüfen`,
+					navLeftTitle: `Vorherige Szene`,
+					navRightTitle: `Nächste Szene`,
+					meterHead: `Rechtsklick zum Prüfen`,
+					meterStandby: `Bereit`,
+					notebookTitle: `Hinweisheft`,
+					hpTitle: `Gesundheit`,
+					casefileTitle: `Fallakte`,
+					toastNewClue: `Neuer Hinweis gefunden`,
+					closeNotebookBtn: `Heft schließen`,
+					undiscoveredClue: `Unentdeckter Hinweis`,
+					lockedHint: `Prüfe zuerst am Hauptverteiler an der Straße, welcher Laden den Fehlerstrom hat.`,
+					branch3OffHint: `Laden 3 ist stromlos. Der Fehlerstrom ist vorübergehend weg, aber das ist nur eine Notlösung - das eigentliche Problem ist noch nicht behoben.`,
+					branch3OnHint: `Laden 3 hat wieder Strom. Der Fehlerstrom ist zurück - Vorsicht, erst prüfen, dann anfassen!`,
+					reportCaseFile: `FALLAKTE · B1 · Untersuchung eines Erdschlusses in einem Ladengeschäft`,
+					report_p1: `In dieser Straße mit vielen Imbissständen <b>tritt jeden Tag nach 9 Uhr ein Erdschluss auf</b>. Ursache: Der Inhaber von Laden 3 "Bäckerei" hat eigenmächtig einen einphasigen Gewerbeofen (braucht Außenleiter und Nullleiter) direkt an die <b>Dreiphasenleitung mit 3 Außenleitern und 1 Erde</b> angeschlossen und dabei den Erdleiter wie einen Nullleiter benutzt - außerdem war der <b>FI-Schutzschalter</b> des Ladens bereits defekt.`,
+					report_p2: `Nach dem Einschalten floss der Strom, der eigentlich über den Nullleiter zurückfließen sollte, stattdessen über das Erdungsnetz zurück und setzte unbemerkt alle geerdeten Metallgehäuse und Wände der ganzen Straße unter Spannung. Die Lösung: den FI-Schalter durch einen neuen ersetzen und eigens für den Ofen einen echten Nullleiter verlegen, damit der Strom den richtigen Weg nimmt, statt den Erdleiter zu missbrauchen.`,
+					reportSuggestTitle: `EMPFEHLUNGEN`,
+					reportLi1: `Dreiphasenstrom (3 Außenleiter + 1 Erde) hat keinen Nullleiter - er darf nicht direkt an 220V-Einphasengeräte angeschlossen werden. Leistungsstarke Einphasengeräte benötigen einen von einer Fachkraft neu verlegten echten Nullleiter; der Erdleiter darf niemals als Ersatz für den Nullleiter verwendet werden.`,
+					reportLi2: `Den defekten FI-Schutzschalter ersetzen und regelmäßig die Testtaste drücken, um zu prüfen, ob er noch korrekt auslöst.`,
+					reportLi3: `Bis die Reparatur abgeschlossen ist, kann jedes geerdete Metallgehäuse unter Spannung stehen - vor jeder Berührung immer erst mit einem Spannungsprüfer testen, niemals mit bloßen Händen anfassen.`,
+					reportLi4: `Die Schalter und Erdungssysteme der anderen Läden in der Straße auf dieselbe Art von unsachgemäßer Verkabelung überprüfen und gleich mit beheben.`,
+					closeReportBtn: `Akte schließen`,
+					gameOverTitle: `⚡ Du wurdest tödlich verletzt.`,
+					gameOverSub: `Sei im nächsten Leben vorsichtiger.`,
+					rebornBtnText: `Nächstes Leben beginnen`,
+					rebornTitle: `Ich wurde wiedergeboren!`,
+					rebornSub: `NEUES LEBEN`,
+					rebornP: `In meinem letzten Leben habe ich mich bei der Arbeit aus Unachtsamkeit selbst tödlich verletzt. Dieses Mal werde ich ein Elektriker-Meister!`,
+					rebornStartBtn: `Dieses Leben beginnen`,
+					repairTitle: `✔ Reparatur abgeschlossen`,
+					repairSub: `REPARATUR ABGESCHLOSSEN`,
+					repairP1: `In dieser Straße mit vielen Imbissständen tritt jeden Tag nach 9 Uhr ein Erdschluss auf. Ursache: Der Inhaber von Laden 3 "Bäckerei" hat eigenmächtig einen einphasigen Gewerbeofen (braucht Außenleiter und Nullleiter) direkt an die Dreiphasenleitung mit 3 Außenleitern und 1 Erde angeschlossen und dabei den Erdleiter wie einen Nullleiter benutzt - außerdem war der FI-Schutzschalter des Ladens bereits defekt.`,
+					repairP2: `Nach dem Einschalten floss der Strom, der eigentlich über den Nullleiter zurückfließen sollte, stattdessen über das Erdungsnetz zurück und setzte unbemerkt alle geerdeten Metallgehäuse und Wände der ganzen Straße unter Spannung. Die eigentliche Lösung: den FI-Schalter durch einen neuen ersetzen und eigens für den Ofen einen echten Nullleiter verlegen, damit der Strom den richtigen Weg nimmt, statt den Erdleiter zu missbrauchen.`,
+					levelMapBtn: `Zurück zur Levelkarte`,
+					penNone: `Keine Spannung`,
+					penLow: `Schwache Spannung`,
+					penDanger: `Gefahr`,
+					cluesProgress: `{d} / {t} Hinweise gefunden`,
+					menuTitle: `Menü`,
+					menuLangTitle: `Sprache wählen`,
+					resumeBtn: `Fortsetzen`,
+					giveUpBtn: `Level abbrechen und zum Start zurückkehren`,
+					giveUpConfirm: `Dieses Level abbrechen und zum Startbildschirm zurückkehren? Der aktuelle Fortschritt in diesem Level wird nicht gespeichert.`,
+					clues: {
+						clue_note_warning: { t: `Der Sicherheitshinweis an der Wand`, d: `Nachdem der Zettel geprüft (Rechtsklick) und für sicher befunden wurde, steht bei näherem Hinsehen: "Achtung: Jeden Tag nach 9 Uhr tritt ein Erdschluss auf" - eine Erinnerung, immer erst zu prüfen, bevor man etwas anfasst, und genau das ist diesmal das Problem.` },
+						clue_wall_live: { t: `Die freiliegende Wand steht unter Spannung`, d: `Hält man den Prüfer an das freiliegende Mauerwerk neben dem Verteilerkasten, springt die Anzeige direkt auf Gefahr - das Gehäuse des Verteilerkastens selbst ist isoliert und sicher; die Gefahr kommt vom Fehlerstrom, der über das Erdungsnetz in die Wand selbst zurückfließt.` },
+						clue_branch_found: { t: `Laden 3 (Bäckerei) ist der Hauptverdächtige`, d: `Beim Durchprüfen aller Läden: Laden 3 "Bäckerei" zeigt bei eingeschaltetem Strom eine gefährliche Spannung an, und sobald sein Schalter ausgeschaltet wird, ist die Wand sofort wieder sicher - so oder so deutet alles auf diese Bäckerei hin. Zeit, drinnen nachzusehen.` },
+						clue_other_shops_ok: { t: `Die Schalter der anderen Läden sind in Ordnung`, d: `Die Läden 1, 2 und 4 zeigen an ihren Schalterbereichen alle sicher an - stehen nicht mit diesem Fehlerstrom in Verbindung.` },
+						clue_rcd_broken: { t: `Der FI-Schalter der Bäckerei ist defekt`, d: `Das Drücken der Testtaste des FI-Schalters sollte ihn sofort auslösen - aber nichts passiert. Dieser FI-Schalter ist schon lange defekt und konnte den Strom bei einem Fehlerstrom nie abschalten.` },
+						clue_oven_live: { t: `Das Ofengehäuse steht unter Spannung`, d: `Hält man den Prüfer an das Metallgehäuse des Ofens, springt die Anzeige direkt auf Gefahr - jedes geerdete Gerätegehäuse führt jetzt fast 220V. Das ist die Stelle in der Küche, an der man sich am ehesten einen Stromschlag holt.` },
+						clue_wrong_splice: { t: `Der Nullleiter des Ofens wurde an den Erdleiter angeschlossen`, d: `Öffnet man die Verkabelung über dem Ofen, zeigt sich: Das rote Kabel ist korrekt an einen Außenleiter angeschlossen, kein Problem. Aber das blaue Kabel, das eigentlich der Nullleiter sein sollte, wurde aus Bequemlichkeit stattdessen an den Erdleiter angeschlossen - der Erdleiter übernimmt die Aufgabe des Nullleiters, und das ist die eigentliche Ursache des Fehlerstroms.` },
+						clue_other_phases_ok: { t: `Die übrigen Kabel sind ordnungsgemäß abgeschlossen`, d: `Der Prüfer zeigt bei all diesen Kabeln Gefahr an - es sind tatsächlich stromführende Außenleiter, das ist normal. Die Verbindungsstelle des roten Kabels ist ordentlich isoliert, und die beiden übrigen Reserve-Außenleiter sind verschlossen und niemals an den Ofen angeschlossen worden - gefahrlos zu berühren und vom Verdacht befreit. Das Problem liegt allein beim falsch angeschlossenen blauen Kabel.` },
+					},
+				},
+				fr: {
+					cabinetHeader_s1: `Électricité triphasée (3 phases + 1 terre)`,
+					shopLabel1: `Boutique 1`,
+					shopSub1: `Ramen`,
+					shopLabel2: `Boutique 2`,
+					shopSub2: `BBQ`,
+					shopLabel3: `Boutique 3`,
+					shopSub3: `Boulangerie`,
+					shopLabel4: `Boutique 4`,
+					shopSub4: `Roi de la Frite`,
+					noteHint: `Clic droit pour tester, puis lire le mot`,
+					noteZoomText: `Attention : une fuite électrique se produit chaque jour après 9h`,
+					closeZoomBtn: `Fermer`,
+					sceneLabel_s1: `Tableau général de la rue`,
+					sceneHint_s1: `Trouve d'abord quelle boutique a la fuite`,
+					cabinetHeader_s2: `Tableau électrique intérieur`,
+					shopMainLabel: `Disjoncteur principal`,
+					shopRcdLabel: `Disjoncteur différentiel`,
+					rcdStatusBroken: `État : endommagé`,
+					rcdStatusFixed: `État : remplacé`,
+					replaceRcdLabel: `Remplacer le différentiel`,
+					sceneLabel_s2: `Disjoncteur principal de la boulangerie`,
+					sceneHint_s2: `Vérifier le tableau de la boutique`,
+					neutralCoilLbl: `Fil neutre de rechange, faites-le glisser sur le raccord du fil bleu`,
+					sceneLabel_s3: `Cuisine · Câblage du four`,
+					sceneHint_s3: `Vérifier le câblage du four`,
+					navLeftTitle: `Scène précédente`,
+					navRightTitle: `Scène suivante`,
+					meterHead: `Clic droit pour tester`,
+					meterStandby: `En veille`,
+					notebookTitle: `Carnet d'indices`,
+					hpTitle: `Santé`,
+					casefileTitle: `Dossier`,
+					toastNewClue: `Nouvel indice trouvé`,
+					closeNotebookBtn: `Fermer le carnet`,
+					undiscoveredClue: `Indice non découvert`,
+					lockedHint: `Teste d'abord au tableau général de la rue pour savoir quelle boutique a la fuite.`,
+					branch3OffHint: `La boutique 3 est hors tension. La fuite a disparu pour l'instant, mais ce n'est qu'un pis-aller - le problème n'est pas vraiment résolu.`,
+					branch3OnHint: `La boutique 3 est de nouveau sous tension. La fuite est revenue, attention, teste avant de toucher !`,
+					reportCaseFile: `DOSSIER · B1 · Inspection d'une fuite électrique dans une boutique`,
+					report_p1: `Cette rue de restauration <b>commence à avoir une fuite électrique chaque jour après 9h</b>. Cause : le propriétaire de la boutique 3 "Boulangerie" a branché de sa propre initiative un four commercial monophasé (nécessite une phase et un neutre) directement sur la ligne <b>triphasée à 3 phases et 1 terre</b>, en utilisant le fil de terre comme s'il s'agissait du neutre - et le <b>disjoncteur différentiel</b> de la boutique était déjà endommagé.`,
+					report_p2: `Une fois sous tension, le courant qui aurait dû revenir par le neutre est reparti par le réseau de terre à la place, mettant discrètement sous tension tous les boîtiers métalliques reliés à la terre et les murs tout le long de la rue. La solution : remplacer le différentiel, et tirer un vrai fil neutre jusqu'au four pour que le courant emprunte le bon chemin au lieu de passer par le fil de terre.`,
+					reportSuggestTitle: `RECOMMANDATIONS`,
+					reportLi1: `L'électricité triphasée (3 phases + 1 terre) n'a pas de neutre - elle ne peut pas être branchée directement sur un équipement monophasé 220V. Les appareils monophasés de forte puissance nécessitent qu'un électricien qualifié tire un vrai fil neutre ; ne jamais substituer le fil de terre au neutre.`,
+					reportLi2: `Remplacer le différentiel endommagé et appuyer régulièrement sur son bouton de test pour vérifier qu'il se déclenche toujours correctement.`,
+					reportLi3: `Tant que la réparation n'est pas terminée, tout boîtier métallique relié à la terre peut être sous tension - toujours tester avec un vérificateur de tension avant de toucher à mains nues.`,
+					reportLi4: `Vérifier les disjoncteurs et la mise à la terre des autres boutiques de la rue pour le même type de branchement non autorisé, et régler le problème tant qu'on y est.`,
+					closeReportBtn: `Fermer le dossier`,
+					gameOverTitle: `⚡ Tu as été électrocuté.`,
+					gameOverSub: `Sois plus prudent la prochaine vie.`,
+					rebornBtnText: `Commencer la prochaine vie`,
+					rebornTitle: `Je suis réincarné !`,
+					rebornSub: `NOUVELLE VIE`,
+					rebornP: `Dans ma vie précédente, je me suis électrocuté par imprudence au travail. Cette fois, je vais devenir un maître électricien !`,
+					rebornStartBtn: `Commencer cette vie`,
+					repairTitle: `✔ Réparation terminée`,
+					repairSub: `RÉPARATION TERMINÉE`,
+					repairP1: `Cette rue de restauration commence à avoir une fuite électrique chaque jour après 9h. Cause : le propriétaire de la boutique 3 "Boulangerie" a branché de sa propre initiative un four commercial monophasé (nécessite une phase et un neutre) directement sur la ligne triphasée à 3 phases et 1 terre, en utilisant le fil de terre comme s'il s'agissait du neutre - et le disjoncteur différentiel de la boutique était déjà endommagé.`,
+					repairP2: `Une fois sous tension, le courant qui aurait dû revenir par le neutre est reparti par le réseau de terre à la place, mettant discrètement sous tension tous les boîtiers métalliques reliés à la terre et les murs tout le long de la rue. La vraie solution : remplacer le différentiel, et tirer un vrai fil neutre jusqu'au four pour que le courant emprunte le bon chemin au lieu de passer par le fil de terre.`,
+					levelMapBtn: `Retour à la carte des niveaux`,
+					penNone: `Pas de tension`,
+					penLow: `Tension faible`,
+					penDanger: `Danger`,
+					cluesProgress: `{d} / {t} indices trouvés`,
+					menuTitle: `Menu`,
+					menuLangTitle: `Choisir la langue`,
+					resumeBtn: `Reprendre`,
+					giveUpBtn: `Abandonner le niveau et retourner à l'accueil`,
+					giveUpConfirm: `Abandonner ce niveau et retourner à l'écran d'accueil ? La progression actuelle de ce niveau ne sera pas sauvegardée.`,
+					clues: {
+						clue_note_warning: { t: `L'avis de sécurité sur le mur`, d: `Après avoir testé (clic droit) et confirmé que c'est sans danger, on peut zoomer et lire : "Attention : une fuite électrique se produit chaque jour après 9h" - un rappel de toujours tester avant de toucher, ce qui s'avère être exactement le problème cette fois.` },
+						clue_wall_live: { t: `Le mur exposé indique une tension`, d: `En touchant avec le testeur la brique nue à côté du tableau, l'indicateur passe directement sur danger - le boîtier du tableau lui-même a été isolé et est sûr ; le danger vient du courant de fuite qui remonte par le réseau de terre jusque dans le mur lui-même.` },
+						clue_branch_found: { t: `La boutique 3 (Boulangerie) est la principale suspecte`, d: `En testant boutique par boutique : la boutique 3 "Boulangerie" indique une tension dangereuse quand elle est sous tension, et le mur redevient sûr dès que son disjoncteur est coupé - dans un cas comme dans l'autre, tout pointe vers cette boulangerie. Il est temps d'aller vérifier à l'intérieur.` },
+						clue_other_shops_ok: { t: `Les disjoncteurs des autres boutiques sont bons`, d: `Les boutiques 1, 2 et 4 indiquent toutes une zone de disjoncteur sûre - sans rapport avec cette fuite.` },
+						clue_rcd_broken: { t: `Le différentiel de la boulangerie est endommagé`, d: `Appuyer sur le bouton de test du différentiel devrait le déclencher instantanément - mais rien ne se passe. Ce différentiel est mort depuis un moment, incapable de couper le courant en cas de fuite.` },
+						clue_oven_live: { t: `Le boîtier du four est sous tension`, d: `En touchant avec le testeur le corps métallique du four, l'indicateur passe directement sur danger - tout boîtier d'appareil relié à la terre porte désormais près de 220V. C'est l'endroit de la cuisine où l'on risque le plus de recevoir une décharge.` },
+						clue_wrong_splice: { t: `Le neutre du four a été branché sur le fil de terre`, d: `En ouvrant le câblage au-dessus du four, on découvre : le fil rouge est correctement branché sur une phase, aucun problème. Mais le fil bleu, censé être le neutre, a été raccordé par négligence sur le fil de terre à la place - le fil de terre fait le travail du neutre, et c'est là la véritable origine de la fuite.` },
+						clue_other_phases_ok: { t: `Les autres fils sont correctement raccordés`, d: `Le testeur indique danger sur tous ces fils - ce sont bien des phases réellement sous tension, ce qui est normal. Le raccord du fil rouge est bien isolé, et les deux autres phases de réserve sont capuchonnées et n'ont jamais été branchées au four - sûres à toucher, et hors de cause. Le problème vient uniquement du fil bleu mal branché.` },
+					},
+				},
+				ru: {
+					cabinetHeader_s1: `Трёхфазное электропитание (3 фазы + 1 земля)`,
+					shopLabel1: `Лавка 1`,
+					shopSub1: `Рамен`,
+					shopLabel2: `Лавка 2`,
+					shopSub2: `Барбекю`,
+					shopLabel3: `Лавка 3`,
+					shopSub3: `Пекарня`,
+					shopLabel4: `Лавка 4`,
+					shopSub4: `Картошка фри Кинг`,
+					noteHint: `ПКМ, чтобы проверить, затем прочитать записку`,
+					noteZoomText: `Внимание: утечка тока происходит каждый день после 9 утра`,
+					closeZoomBtn: `Закрыть`,
+					sceneLabel_s1: `Уличный распределительный щит`,
+					sceneHint_s1: `Сначала выясните, в какой лавке утечка`,
+					cabinetHeader_s2: `Внутренний электрощит`,
+					shopMainLabel: `Главный автомат`,
+					shopRcdLabel: `УЗО`,
+					rcdStatusBroken: `Статус: неисправно`,
+					rcdStatusFixed: `Статус: заменено`,
+					replaceRcdLabel: `Заменить УЗО`,
+					sceneLabel_s2: `Главный автомат пекарни`,
+					sceneHint_s2: `Проверить щит самой лавки`,
+					neutralCoilLbl: `Запасной нулевой провод, перетащите к месту соединения синего провода`,
+					sceneLabel_s3: `Кухня · Проводка духовки`,
+					sceneHint_s3: `Проверить проводку духовки`,
+					navLeftTitle: `Предыдущая сцена`,
+					navRightTitle: `Следующая сцена`,
+					meterHead: `ПКМ для проверки`,
+					meterStandby: `Ожидание`,
+					notebookTitle: `Блокнот улик`,
+					hpTitle: `Здоровье`,
+					casefileTitle: `Дело`,
+					toastNewClue: `Найдена новая улика`,
+					closeNotebookBtn: `Закрыть блокнот`,
+					undiscoveredClue: `Ещё не найденная улика`,
+					lockedHint: `Сначала проверьте на уличном щите, в какой лавке утечка тока.`,
+					branch3OffHint: `В лавке 3 отключено питание. Утечка временно исчезла, но это лишь временная мера - неисправность на самом деле не устранена.`,
+					branch3OnHint: `В лавке 3 снова есть питание. Утечка вернулась, осторожно, сначала проверьте, потом трогайте!`,
+					reportCaseFile: `ДЕЛО · B1 · Проверка утечки тока в торговой лавке`,
+					report_p1: `На этой улице с едой <b>каждый день после 9 утра начинается утечка тока</b>. Причина: хозяин лавки 3 "Пекарня" самовольно подключил однофазную коммерческую духовку (нужны фаза и ноль) напрямую к <b>трёхфазной линии с 3 фазами и 1 землёй</b>, используя провод заземления как будто это ноль - к тому же <b>УЗО</b> в лавке уже было неисправно.`,
+					report_p2: `После включения ток, который должен был возвращаться по нулевому проводу, вместо этого потёк обратно по сети заземления, незаметно создав напряжение на всех заземлённых металлических корпусах и стенах по всей улице. Решение: заменить УЗО и проложить для духовки настоящий нулевой провод, чтобы ток шёл по правильному пути, а не через провод заземления.`,
+					reportSuggestTitle: `РЕКОМЕНДАЦИИ`,
+					reportLi1: `У трёхфазного электропитания (3 фазы + 1 земля) нет нулевого провода - его нельзя напрямую подключать к однофазному оборудованию на 220В. Для мощных однофазных приборов квалифицированный электрик должен проложить настоящий нулевой провод; ни в коем случае нельзя использовать провод заземления вместо нуля.`,
+					reportLi2: `Заменить неисправное УЗО и периодически нажимать кнопку теста, чтобы убедиться, что оно по-прежнему срабатывает правильно.`,
+					reportLi3: `Пока ремонт не завершён, любой заземлённый металлический корпус может быть под напряжением - всегда сначала проверяйте индикатором напряжения, никогда не трогайте голыми руками.`,
+					reportLi4: `Проверить автоматы и заземление других лавок на улице на предмет такого же несанкционированного подключения и устранить проблему заодно.`,
+					closeReportBtn: `Закрыть дело`,
+					gameOverTitle: `⚡ Вас убило током.`,
+					gameOverSub: `В следующей жизни будьте осторожнее.`,
+					rebornBtnText: `Начать следующую жизнь`,
+					rebornTitle: `Я переродился!`,
+					rebornSub: `НОВАЯ ЖИЗНЬ`,
+					rebornP: `В прошлой жизни я по неосторожности погиб от удара током на работе. На этот раз я стану мастером-электриком!`,
+					rebornStartBtn: `Начать эту жизнь`,
+					repairTitle: `✔ Ремонт завершён`,
+					repairSub: `РЕМОНТ ЗАВЕРШЁН`,
+					repairP1: `На этой улице с едой каждый день после 9 утра начинается утечка тока. Причина: хозяин лавки 3 "Пекарня" самовольно подключил однофазную коммерческую духовку (нужны фаза и ноль) напрямую к трёхфазной линии с 3 фазами и 1 землёй, используя провод заземления как будто это ноль - к тому же УЗО в лавке уже было неисправно.`,
+					repairP2: `После включения ток, который должен был возвращаться по нулевому проводу, вместо этого потёк обратно по сети заземления, незаметно создав напряжение на всех заземлённых металлических корпусах и стенах по всей улице. Настоящее решение: заменить УЗО и проложить для духовки настоящий нулевой провод, чтобы ток шёл по правильному пути, а не через провод заземления.`,
+					levelMapBtn: `Вернуться к карте уровней`,
+					penNone: `Нет напряжения`,
+					penLow: `Слабое напряжение`,
+					penDanger: `Опасно`,
+					cluesProgress: `Найдено улик: {d} / {t}`,
+					menuTitle: `Меню`,
+					menuLangTitle: `Выбрать язык`,
+					resumeBtn: `Продолжить`,
+					giveUpBtn: `Отказаться от уровня и вернуться домой`,
+					giveUpConfirm: `Отказаться от этого уровня и вернуться на главный экран? Текущий прогресс на этом уровне не будет сохранён.`,
+					clues: {
+						clue_note_warning: { t: `Предупреждение о безопасности на стене`, d: `После проверки (ПКМ) и подтверждения, что записка не под напряжением, можно приблизить и прочитать: "Внимание: утечка тока происходит каждый день после 9 утра" - напоминание всегда проверять перед тем, как трогать, и в этот раз именно это и оказалось проблемой.` },
+						clue_wall_live: { t: `На открытой стене обнаружено напряжение`, d: `При касании тестером открытой кирпичной кладки рядом со щитом индикатор сразу показывает опасность - сам корпус щита изолирован и безопасен; опасность исходит от тока утечки, который возвращается по сети заземления прямо в саму стену.` },
+						clue_branch_found: { t: `Лавка 3 (Пекарня) - главный подозреваемый`, d: `Проверяя лавку за лавкой: лавка 3 "Пекарня" показывает опасное напряжение при включённом питании, а стена снова становится безопасной сразу после отключения её автомата - в любом случае всё указывает на эту пекарню. Пора проверить внутри.` },
+						clue_other_shops_ok: { t: `Автоматы остальных лавок в порядке`, d: `Лавки 1, 2 и 4 все показывают безопасные значения на своих автоматах - никак не связаны с этой утечкой.` },
+						clue_rcd_broken: { t: `УЗО пекарни неисправно`, d: `Нажатие кнопки теста УЗО должно немедленно его отключить - но ничего не происходит. Это УЗО уже давно вышло из строя и не отключало питание при утечке тока.` },
+						clue_oven_live: { t: `Корпус духовки под напряжением`, d: `При касании тестером металлического корпуса духовки индикатор сразу показывает опасность - любой заземлённый корпус прибора теперь несёт напряжение около 220В. Это самое вероятное место, где на кухне можно получить удар током.` },
+						clue_wrong_splice: { t: `Нулевой провод духовки подключён к проводу заземления`, d: `Вскрыв проводку над духовкой, обнаруживается: красный провод правильно подключён к фазе, всё в порядке. Но синий провод, который должен быть нулевым, по небрежности подключили вместо этого к проводу заземления - земля выполняет роль нуля, и это настоящий источник утечки тока.` },
+						clue_other_phases_ok: { t: `Остальные провода подключены правильно`, d: `Тестер показывает опасность на всех этих проводах - это действительно находящиеся под напряжением фазные провода, что нормально. Соединение красного провода хорошо изолировано, а два других запасных фазных провода заглушены и никогда не подключались к духовке - их можно трогать безопасно, и они вне подозрений. Проблема только в неправильно подключённом синем проводе.` },
+					},
+				},
+				ja: {
+					cabinetHeader_s1: `三相動力電源(三相三線+接地)`,
+					shopLabel1: `1号店`,
+					shopSub1: `ラーメン屋`,
+					shopLabel2: `2号店`,
+					shopSub2: `BBQ`,
+					shopLabel3: `3号店`,
+					shopSub3: `パン屋`,
+					shopLabel4: `4号店`,
+					shopSub4: `フライドポテトキング`,
+					noteHint: `右クリックで検電してからメモを読む`,
+					noteZoomText: `注意:毎日午前9時以降に漏電が発生します`,
+					closeZoomBtn: `閉じる`,
+					sceneLabel_s1: `通り沿いの総配電盤`,
+					sceneHint_s1: `まずどの店で漏電しているか調べよう`,
+					cabinetHeader_s2: `屋内配電盤`,
+					shopMainLabel: `主開閉器`,
+					shopRcdLabel: `漏電遮断器`,
+					rcdStatusBroken: `状態:故障`,
+					rcdStatusFixed: `状態:交換済み`,
+					replaceRcdLabel: `漏電遮断器を交換`,
+					sceneLabel_s2: `パン屋の主開閉器`,
+					sceneHint_s2: `自店の配電盤を確認`,
+					neutralCoilLbl: `予備の中性線、青い線の接続部までドラッグ`,
+					sceneLabel_s3: `厨房 · オーブンの配線`,
+					sceneHint_s3: `オーブンの配線を確認`,
+					navLeftTitle: `前のシーン`,
+					navRightTitle: `次のシーン`,
+					meterHead: `右クリックで検電`,
+					meterStandby: `待機中`,
+					notebookTitle: `手がかりノート`,
+					hpTitle: `体力`,
+					casefileTitle: `事件報告書`,
+					toastNewClue: `新しい手がかりを発見`,
+					closeNotebookBtn: `ノートを閉じる`,
+					undiscoveredClue: `未発見の手がかり`,
+					lockedHint: `まず通り沿いの総配電盤でどの店が漏電しているか調べてください。`,
+					branch3OffHint: `3号店の電気が切れました。漏電は一時的に消えましたが、これは応急処置に過ぎず、故障は本当には直っていません。`,
+					branch3OnHint: `3号店に電気が戻りました。漏電が再び発生しています。注意して、触る前に必ず検電してください!`,
+					reportCaseFile: `事件ファイル · B1 · 商店街漏電調査`,
+					report_p1: `このグルメ通りは<b>毎日午前9時以降に漏電</b>が始まる。原因は3号店「パン屋」の店主が単相の業務用オーブン(相線と中性線が必要)を、<b>三相三線+接地</b>の三相電源に無断で接続し、接地線を中性線代わりに使っていたことにある。さらに店の<b>漏電遮断器</b>もすでに故障していた。`,
+					report_p2: `電源を入れると、本来中性線を通って戻るはずの電流が、代わりに接地網を伝って逆流し、通り全体の接地された金属製の外装や壁に気づかぬうちに電圧がかかってしまった。解決策は:漏電遮断器を新品に交換し、オーブン専用に本物の中性線を新たに配線して、電流が接地線を経由せず正規の経路を通るようにすることだ。`,
+					reportSuggestTitle: `改善提案`,
+					reportLi1: `三相動力電源(三相三線+接地)には中性線がなく、220V単相機器を直接接続することはできない。大出力の単相機器は、必ず専門の電気工事士が本物の中性線を新たに配線する必要があり、接地線を中性線の代わりに使ってはならない。`,
+					reportLi2: `故障した漏電遮断器を交換し、定期的にテストボタンを押して正常に作動するか確認すること。`,
+					reportLi3: `修理が完了するまでは、接地された金属製の外装はどこでも通電している可能性がある。作業前には必ず検電器で先に確認し、素手で直接触れないこと。`,
+					reportLi4: `通り沿いの他の店の分岐開閉器や接地系統も同様の無断配線がないか点検し、あわせて対処すること。`,
+					closeReportBtn: `ファイルを閉じる`,
+					gameOverTitle: `⚡ 感電死しました。`,
+					gameOverSub: `来世はもっと気をつけて。`,
+					rebornBtnText: `次の生を始める`,
+					rebornTitle: `生まれ変わった!`,
+					rebornSub: `新しい人生`,
+					rebornP: `前世では、仕事中に不注意で感電死してしまった。今度こそ、電気技術のマスターになる!`,
+					rebornStartBtn: `この生を始める`,
+					repairTitle: `✔ 修理完了`,
+					repairSub: `修理完了`,
+					repairP1: `このグルメ通りは毎日午前9時以降に漏電が始まる。原因は3号店「パン屋」の店主が単相の業務用オーブン(相線と中性線が必要)を、三相三線+接地の三相電源に無断で接続し、接地線を中性線代わりに使っていたことにある。さらに店の漏電遮断器もすでに故障していた。`,
+					repairP2: `電源を入れると、本来中性線を通って戻るはずの電流が、代わりに接地網を伝って逆流し、通り全体の接地された金属製の外装や壁に気づかぬうちに電圧がかかってしまった。本当の解決策は:漏電遮断器を新品に交換し、オーブン専用に本物の中性線を新たに配線して、電流が接地線を経由せず正規の経路を通るようにすることだ。`,
+					levelMapBtn: `レベルマップに戻る`,
+					penNone: `無電圧`,
+					penLow: `弱い電圧を検知`,
+					penDanger: `危険`,
+					cluesProgress: `{d} / {t} 個の手がかりを発見`,
+					menuTitle: `メニュー`,
+					menuLangTitle: `言語選択`,
+					resumeBtn: `ゲームを続ける`,
+					giveUpBtn: `レベルを放棄してホームに戻る`,
+					giveUpConfirm: `このレベルを放棄してホーム画面に戻りますか?現在の進行状況は保存されません。`,
+					clues: {
+						clue_note_warning: { t: `壁に貼られた安全上の注意書き`, d: `右クリックで検電して安全を確認したあと、近づいて拡大して見ると:「注意:毎日午前9時以降に漏電が発生します」と書かれている——常に触る前に検電せよという警告だが、今回まさにそれが問題だった。` },
+						clue_wall_live: { t: `むき出しの壁面から通電を検出`, d: `配電盤の脇のむき出しのレンガの目地に検電器を当てると、指示灯がすぐに危険レベルまで跳ね上がる——配電盤本体は絶縁処理されていて安全だが、危険は漏電電流が接地網を伝って壁そのものに逆流していることに起因する。` },
+						clue_branch_found: { t: `3号店(パン屋)の疑いが最も濃い`, d: `一軒ずつ検電していくと:3号店「パン屋」は通電中に危険な電圧を検出し、その店のブレーカーを落として電源を切ると壁面もすぐに安全に戻る——どちらの方法で調べても、このパン屋を指している。次は店内を調べに行く番だ。` },
+						clue_other_shops_ok: { t: `他の店の分岐開閉器は正常`, d: `1号店、2号店、4号店はいずれも分岐開閉器付近が検電で安全と確認され、今回の漏電とは関係がない。` },
+						clue_rcd_broken: { t: `パン屋の漏電遮断器が故障している`, d: `漏電遮断器のテストボタンを押せばすぐに作動するはずだが、まったく反応がない——この漏電遮断器はとうに故障しており、漏電が発生しても電源を遮断できずにいた。` },
+						clue_oven_live: { t: `オーブンの外装が通電している`, d: `検電器をオーブンの金属製の本体に当てると、指示灯がすぐに危険レベルまで跳ね上がる——接地されている電化製品の外装はすべて、今や220Vに近い電圧を帯びている。厨房で最も感電しやすい箇所だ。` },
+						clue_wrong_splice: { t: `オーブンの中性線が接地線に接続されていた`, d: `オーブン上部の配線を開けてみるとわかったこと:赤い線は相線に正しく接続されており問題ない。しかし本来中性線であるべき青い線が、店主が手間を省いたせいで接地線に接続されていた——接地線が中性線の役割を果たしてしまっており、これこそが漏電の真の原因だ。` },
+						clue_other_phases_ok: { t: `残りの配線の接続部はすべて正常`, d: `検電器で測るとこれらの配線はすべて危険レベルを示す——もともと通電している相線なので、これは正常なこと。赤い線の接続部はしっかり絶縁処理されており、残る2本の予備相線もきちんと処理された状態でオーブンには接続されていない——触っても安全で、疑いは晴れた。問題は誤って接続されたあの青い線だけだ。` },
+					},
+				},
+				"pt-BR": {
+					cabinetHeader_s1: `Energia trifásica (3 fases + 1 terra)`,
+					shopLabel1: `Loja 1`,
+					shopSub1: `Ramen`,
+					shopLabel2: `Loja 2`,
+					shopSub2: `Churrasco`,
+					shopLabel3: `Loja 3`,
+					shopSub3: `Padaria`,
+					shopLabel4: `Loja 4`,
+					shopSub4: `Rei da Batata Frita`,
+					noteHint: `Clique direito para testar e ler o bilhete`,
+					noteZoomText: `Atenção: há fuga de energia todos os dias após as 9h`,
+					closeZoomBtn: `Fechar`,
+					sceneLabel_s1: `Quadro geral da rua`,
+					sceneHint_s1: `Descubra primeiro qual loja está com fuga`,
+					cabinetHeader_s2: `Quadro elétrico interno`,
+					shopMainLabel: `Disjuntor geral`,
+					shopRcdLabel: `Disjuntor diferencial (DR)`,
+					rcdStatusBroken: `Status: danificado`,
+					rcdStatusFixed: `Status: substituído`,
+					replaceRcdLabel: `Substituir DR`,
+					sceneLabel_s2: `Disjuntor geral da padaria`,
+					sceneHint_s2: `Verificar o quadro da própria loja`,
+					neutralCoilLbl: `Fio neutro reserva, arraste até a emenda do fio azul`,
+					sceneLabel_s3: `Cozinha · Fiação do forno`,
+					sceneHint_s3: `Verificar a fiação do forno`,
+					navLeftTitle: `Cena anterior`,
+					navRightTitle: `Próxima cena`,
+					meterHead: `Clique direito para testar`,
+					meterStandby: `Em espera`,
+					notebookTitle: `Caderno de pistas`,
+					hpTitle: `Vida`,
+					casefileTitle: `Relatório do caso`,
+					toastNewClue: `Nova pista encontrada`,
+					closeNotebookBtn: `Fechar caderno`,
+					undiscoveredClue: `Pista não descoberta`,
+					lockedHint: `Primeiro teste no quadro geral da rua para descobrir qual loja está com fuga.`,
+					branch3OffHint: `A loja 3 ficou sem energia. A fuga desaparece por enquanto, mas isso é só um paliativo - o problema não foi realmente resolvido.`,
+					branch3OnHint: `A loja 3 voltou a ter energia. A fuga voltou, cuidado, teste antes de tocar!`,
+					reportCaseFile: `RELATÓRIO DO CASO · B1 · Inspeção de fuga em loja comercial`,
+					report_p1: `Esta rua de comidas <b>começa a ter fuga de energia todos os dias após as 9h</b>. O motivo: o dono da loja 3 "Padaria" ligou por conta própria um forno comercial monofásico (precisa de fase e neutro) direto na linha <b>trifásica de 3 fases e 1 terra</b>, usando o fio terra como se fosse o neutro - e o <b>DR</b> da loja já estava danificado.`,
+					report_p2: `Ao ligar o forno, a corrente que deveria retornar pelo neutro voltou em vez disso pela rede de aterramento, deixando discretamente energizadas todas as carcaças metálicas aterradas e as paredes ao longo de toda a rua. A solução: substituir o DR e puxar um fio neutro de verdade até o forno, para que a corrente siga o caminho correto em vez de usar o fio terra.`,
+					reportSuggestTitle: `RECOMENDAÇÕES`,
+					reportLi1: `A energia trifásica (3 fases + 1 terra) não tem neutro - não pode ser ligada diretamente a um equipamento monofásico de 220V. Aparelhos monofásicos de alta potência precisam que um eletricista qualificado instale um fio neutro de verdade; nunca substituir o neutro pelo fio terra.`,
+					reportLi2: `Substituir o DR danificado e apertar periodicamente o botão de teste para confirmar que ele ainda desarma corretamente.`,
+					reportLi3: `Até que o reparo seja concluído, qualquer carcaça metálica aterrada pode estar energizada - sempre testar com um medidor de tensão antes de tocar com a mão.`,
+					reportLi4: `Verificar os disjuntores e o aterramento das outras lojas da rua em busca do mesmo tipo de ligação irregular, e resolver tudo de uma vez.`,
+					closeReportBtn: `Fechar relatório`,
+					gameOverTitle: `⚡ Você morreu eletrocutado.`,
+					gameOverSub: `Tenha mais cuidado na próxima vida.`,
+					rebornBtnText: `Começar a próxima vida`,
+					rebornTitle: `Eu renasci!`,
+					rebornSub: `NOVA VIDA`,
+					rebornP: `Na minha vida passada, morri eletrocutado por descuido no trabalho. Desta vez, vou me tornar um mestre eletricista!`,
+					rebornStartBtn: `Começar esta vida`,
+					repairTitle: `✔ Reparo concluído`,
+					repairSub: `REPARO CONCLUÍDO`,
+					repairP1: `Esta rua de comidas começa a ter fuga de energia todos os dias após as 9h. O motivo: o dono da loja 3 "Padaria" ligou por conta própria um forno comercial monofásico (precisa de fase e neutro) direto na linha trifásica de 3 fases e 1 terra, usando o fio terra como se fosse o neutro - e o DR da loja já estava danificado.`,
+					repairP2: `Ao ligar o forno, a corrente que deveria retornar pelo neutro voltou em vez disso pela rede de aterramento, deixando discretamente energizadas todas as carcaças metálicas aterradas e as paredes ao longo de toda a rua. A solução real: substituir o DR e puxar um fio neutro de verdade até o forno, para que a corrente siga o caminho correto em vez de usar o fio terra.`,
+					levelMapBtn: `Voltar ao mapa de níveis`,
+					penNone: `Sem tensão`,
+					penLow: `Tensão leve`,
+					penDanger: `Perigo`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menu`,
+					menuLangTitle: `Selecionar idioma`,
+					resumeBtn: `Continuar`,
+					giveUpBtn: `Abandonar nível e voltar ao início`,
+					giveUpConfirm: `Abandonar este nível e voltar à tela inicial? O progresso atual deste nível não será salvo.`,
+					clues: {
+						clue_note_warning: { t: `O aviso de segurança na parede`, d: `Depois de testar (clique direito) e confirmar que é seguro, dá para aproximar e ler: "Atenção: há fuga de energia todos os dias após as 9h" - um lembrete para sempre testar antes de tocar, que acaba sendo exatamente o problema desta vez.` },
+						clue_wall_live: { t: `A parede exposta está energizada`, d: `Ao encostar o testador no tijolo exposto ao lado do quadro, o indicador vai direto para perigo - o próprio gabinete do quadro foi isolado e está seguro; o perigo vem da corrente de fuga que retorna pela rede de aterramento até a própria parede.` },
+						clue_branch_found: { t: `A loja 3 (Padaria) é a principal suspeita`, d: `Testando loja por loja: a loja 3 "Padaria" dá leitura perigosa enquanto está com energia, e a parede volta a ficar segura assim que o disjuntor dela é desligado - de um jeito ou de outro, tudo aponta para essa padaria. Hora de ir verificar lá dentro.` },
+						clue_other_shops_ok: { t: `Os disjuntores das outras lojas estão bem`, d: `As lojas 1, 2 e 4 testam seguras em suas áreas de disjuntor - sem relação com esta fuga.` },
+						clue_rcd_broken: { t: `O DR da padaria está danificado`, d: `Apertar o botão de teste do DR deveria desarmá-lo na hora - mas nada acontece. Esse DR já está inoperante há um tempo, sem cortar a energia quando ocorre uma fuga.` },
+						clue_oven_live: { t: `A carcaça do forno está energizada`, d: `Ao encostar o testador no corpo metálico do forno, o indicador vai direto para perigo - qualquer carcaça de aparelho aterrado agora carrega quase 220V. Esse é o ponto onde alguém na cozinha mais facilmente levaria um choque.` },
+						clue_wrong_splice: { t: `O neutro do forno foi ligado ao fio terra`, d: `Abrindo a fiação acima do forno, descobre-se: o fio vermelho está bem ligado a uma fase, sem problema. Mas o fio azul, que deveria ser o neutro, foi emendado por descuido no fio terra - o terra está fazendo o papel do neutro, e essa é a verdadeira origem da fuga.` },
+						clue_other_phases_ok: { t: `Os demais fios estão bem terminados`, d: `O testador marca perigo em todos eles - são fases realmente energizadas, o que é normal. A emenda do fio vermelho está bem isolada, e as outras duas fases reserva estão tampadas e nunca foram ligadas ao forno - seguras para tocar, e ficam descartadas. O problema está só no fio azul ligado errado.` },
+					},
+				},
+			};
+
+			/* ========================= I18N SUPPORT（通用机制已迁移到 guide.js 的 GameUI，这里只保留本关的文案字典与联动） ========================= */
+			const LANG_STORAGE_KEY = "leak_lang"; // 所有关卡统一用这个 key,才能真正"继承"语言选择
+			const CLUE_IDS = Object.keys(I18N["zh-CN"].clues);
+
+			let currentLang = GameUI.detectInitialLang(I18N, LANG_STORAGE_KEY);
+			let lastPenLevel = null;
+
+			function T() {
+				return Object.assign({}, I18N["zh-CN"], I18N[currentLang]);
+			}
+			function getClue(id) {
+				return (I18N[currentLang] && I18N[currentLang].clues && I18N[currentLang].clues[id]) || I18N["zh-CN"].clues[id];
+			}
+			function getClueText(id) {
+				const c = getClue(id);
+				return c ? c.t : "";
+			}
+			function getClueDesc(id) {
+				const c = getClue(id);
+				return c ? c.d : "";
+			}
+
+			function resolveLangCode(code) {
+				if (!code) return "zh-CN";
+				if (I18N[code]) return code;
+				const base = code.split(/[-_]/)[0].toLowerCase();
+				const keys = Object.keys(I18N);
+				let found = keys.find((k) => k.toLowerCase() === base);
+				if (found) return found;
+				found = keys.find((k) => k.toLowerCase().split(/[-_]/)[0] === base);
+				if (found) return found;
+				return "zh-CN";
+			}
+			function applyLang(code) {
+				code = resolveLangCode(code);
+				currentLang = code;
+				GameUI.saveLang(code, LANG_STORAGE_KEY);
+				GameUI.syncLangUrl(code);
+				const L = T();
+				document.documentElement.lang = code;
+
+				GameUI.applyDataI18n(L, code);
+
+				if (lastPenLevel === null) {
+					GameUI.resetMeterStandby(L.meterStandby);
+				} else {
+					usePen(lastPenLevel);
+				}
+
+				updateRcdVisual();
+
+				const cluesModal = $("#cluesModal");
+				if (cluesModal && cluesModal.classList.contains("show")) renderNotebook();
+
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+
+			const SVG_FIT_MAP = [
+				{ selector: '[data-i18n="cabinetHeader_s1"]', maxWidth: 440 },
+				{ selector: '[data-i18n="cabinetHeader_s2"]', maxWidth: 280 },
+				{ selector: '[data-i18n^="shopSub"]', maxWidth: 90 },
+				{ selector: '[data-i18n="sceneLabel_s3"]', maxWidth: 300 },
+				{ selector: '[data-i18n="neutralCoilLbl"]', maxWidth: 220 },
+			];
+
+			const CORE_IDS = CLUE_IDS.slice();
+
+			let discovered = new Set();
+			let reportShown = false;
+			let repairDone = false;
+
+			let foundBranch = false; // 是否已经在沿街总配电箱测出3号铺(面包店)漏电,决定能否解锁场景2/3
+			let rcdReplaced = false; // 饭馆漏电保护器是否已更换新的
+			let neutralConnected = false; // 烤箱是否已经拉了真正的零线接上
+
+			// 只要漏保没换、零线没接好,这股故障电流就还在往地线网络里灌,全街接地的金属外壳都还带着电
+			// 3号铺(街道分闸)和饭馆自己的总闸,只要有一个被拉下,烤箱就没电、也就没有漏电流可言——
+			// 这只是临时应急断电,不是真正修复;必须回到漏保和零线都修好,危险才会永久解除。
+			function dangerActive() {
+				return branchOn.branch3 && shopMainOn && !(rcdReplaced && neutralConnected);
+			}
+
+			/* ========================= HP / 触电系统（血条 + 死亡画面 + 重生画面，统一由 guide.js 的 GameUI 组件提供） ========================= */
+			GameUI.initHUD({ deadImage: "dead.png" });
+			GameUI.initMeter();
+			function shock(level) {
+				GameUI.shock(level);
+			}
+
+			const SCENES = ["s1", "s2", "s3"];
+			let sceneIndex = 0;
+
+			/* ========================= HELPERS ========================= */
+			function $(s, r = document) {
+				return r.querySelector(s);
+			}
+			function $all(s, r = document) {
+				return [...r.querySelectorAll(s)];
+			}
+
+			function reveal(id) {
+				const existed = discovered.has(id);
+				discovered.add(id);
+				if (!existed) {
+					toast(id);
+					updateNotebookBadge();
+					checkAutoReport();
+				}
+			}
+			function toastMsg(text) {
+				if (!text) return;
+				$("#toastText").textContent = text;
+				const el = $("#toast");
+				el.classList.add("show");
+				clearTimeout(window.__toastTimer);
+				window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+			}
+			function toast(id) {
+				toastMsg(getClueText(id));
+			}
+			function updateNotebookBadge() {
+				const badge = $("#notebookBadge");
+				if (discovered.size > 0) {
+					badge.style.display = "flex";
+					badge.textContent = discovered.size;
+				}
+			}
+			function renderNotebook() {
+				const ids = CLUE_IDS;
+				const L = T();
+				$("#cluesProgress").textContent = L.cluesProgress.replace("{d}", discovered.size).replace("{t}", ids.length);
+				const list = $("#cluesList");
+				list.innerHTML = "";
+				ids.forEach((id) => {
+					const found = discovered.has(id);
+					const div = document.createElement("div");
+					div.className = "clue-item " + (found ? "found" : "locked");
+					div.innerHTML = `<div class="t">${found ? getClueText(id) : L.undiscoveredClue}</div>` + (found ? `<div class="d">${getClueDesc(id)}</div>` : "");
+					list.appendChild(div);
+				});
+			}
+			$("#notebookBtn").addEventListener("click", () => {
+				renderNotebook();
+				openModal("cluesModal");
+			});
+			function checkAutoReport() {
+				if (reportShown) return;
+				const ok = CORE_IDS.every((id) => discovered.has(id));
+				if (ok) {
+					reportShown = true;
+					$("#casefileBtn").classList.add("show");
+					setTimeout(() => openModal("reportModal"), 900);
+				}
+			}
+			$("#casefileBtn").addEventListener("click", () => openModal("reportModal"));
+
+			function checkRepairComplete() {
+				if (repairDone) return;
+				if (rcdReplaced && neutralConnected) {
+					repairDone = true;
+					setTimeout(() => openModal("repairModal"), 500);
+				}
+			}
+
+			// 本关在"关卡地图"页对应的进度存储 key 与关卡编号
+			// 商用三相电章节(b1/b2.html 等)统一用 "leak_progress_b"；
+			// 下面的 LEVEL_NUMBER 按本关在关卡地图中的实际序号调整,这里先按第3关占位。
+			const LEVEL_STORAGE_KEY = "leak_progress_b";
+			const LEVEL_NUMBER = 3;
+			function markThisLevelComplete() {
+				try {
+					let arr = [];
+					const raw = localStorage.getItem(LEVEL_STORAGE_KEY);
+					if (raw) {
+						try {
+							const parsed = JSON.parse(raw);
+							if (Array.isArray(parsed)) arr = parsed;
+						} catch (e) {
+							const v = parseInt(raw, 10);
+							if (!Number.isNaN(v) && v > 0) {
+								for (let i = 1; i <= v; i++) arr.push(i);
+							}
+						}
+					}
+					if (!arr.includes(LEVEL_NUMBER)) arr.push(LEVEL_NUMBER);
+					arr.sort((a, b) => a - b);
+					localStorage.setItem(LEVEL_STORAGE_KEY, JSON.stringify(arr));
+				} catch (e) {}
+			}
+
+			$("#levelMapBtn").addEventListener("click", () => {
+				markThisLevelComplete();
+				closeModal("repairModal");
+				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
+			});
+			function openModal(id) {
+				$("#" + id).classList.add("show");
+			}
+			function closeModal(id) {
+				$("#" + id).classList.remove("show");
+			}
+
+			/* ========================= TOOL: 验电笔(唯一工具,右键验电) ========================= */
+			function usePen(level) {
+				lastPenLevel = level;
+				const L = T();
+				const statusText = level === 0 ? L.penNone : level === 1 ? L.penLow : L.penDanger;
+				if (level === 2) GameUI.playDangerBeep();
+				GameUI.usePen(level, statusText);
+			}
+			function resetTool() {
+				lastPenLevel = null;
+				GameUI.resetMeterStandby(T().meterStandby);
+			}
+
+			/* ========================= SCENE NAV (arrows，场景2/3 在测出漏电分闸前锁定) ========================= */
+			function showScene(idx) {
+				const targetId = SCENES[(idx + SCENES.length) % SCENES.length];
+				if ((targetId === "s2" || targetId === "s3") && !foundBranch) {
+					toastMsg(T().lockedHint);
+					return;
+				}
+				sceneIndex = (idx + SCENES.length) % SCENES.length;
+				$all(".scene").forEach((s) => s.classList.remove("active"));
+				$("#scene-" + SCENES[sceneIndex]).classList.add("active");
+				resetTool();
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+			$("#navLeft").addEventListener("click", () => showScene(sceneIndex - 1));
+			$("#navRight").addEventListener("click", () => showScene(sceneIndex + 1));
+
+			/* ========================= 通用: 竖直拨动开关(toggle knob) ========================= */
+			// on=真: 拨杆在上位、绿色;on=假: 拨杆在下位、指定颜色(默认红色)
+			function setToggleKnob(knobId, on, offColor, offStroke) {
+				const knob = $("#" + knobId);
+				if (!knob) return;
+				knob.setAttribute("cy", on ? -20 : 20);
+				knob.setAttribute("fill", on ? "#3f8a5c" : offColor || "#b23a2e");
+				knob.setAttribute("stroke", on ? "#1f5c38" : offStroke || "#7a1414");
+			}
+
+			/* ========================= SCENE 1 LOGIC: 沿街总配电箱 ========================= */
+			let branchOn = { branch1: true, branch2: true, branch3: true, branch4: true };
+			function setBranchLever(id) {
+				setToggleKnob("knobBranch" + id.replace("branch", ""), branchOn[id]);
+			}
+
+			function s1Touch(id) {
+				if (id === "wall") {
+					if (dangerActive()) shock(2);
+					return;
+				}
+				if (id === "note") {
+					if (dangerActive()) {
+						shock(2);
+					} else {
+						// 已经安全了(断电或修好了),直接伸手就能拿起来看,不用非得用验电笔
+						usePen(0);
+						openModal("noteZoomModal");
+						reveal("clue_note_warning");
+					}
+					return;
+				}
+				if (id === "cabinetBody") {
+					// 配电箱本体做了绝缘处理,内部不带电,随便摸都安全
+					return;
+				}
+				if (branchOn.hasOwnProperty(id)) {
+					// 拨杆本身是绝缘的,随便扳没有危险;拉闸本身不给任何提示,必须验电才知道结果
+					branchOn[id] = !branchOn[id];
+					setBranchLever(id);
+					return;
+				}
+			}
+			function s1Test(id) {
+				if (id === "wall") {
+					const danger = dangerActive();
+					usePen(danger ? 2 : 0);
+					if (danger) {
+						reveal("clue_wall_live");
+					} else if (!foundBranch && !branchOn.branch3 && branchOn.branch1 && branchOn.branch2 && branchOn.branch4) {
+						// 没直接测3号铺的闸,但只关了3号铺、其余三家都还通着电,墙面就立刻恢复安全——
+						// 用排除法也足够锁定嫌疑、解锁其他场景
+						foundBranch = true;
+						reveal("clue_branch_found");
+					}
+					return;
+				}
+				if (id === "cabinetBody") {
+					usePen(0); // 配电箱内部本身不带电,验电永远安全
+					return;
+				}
+				if (id === "note") {
+					usePen(0); // 纸条本身是绝缘的,验电永远安全
+					openModal("noteZoomModal");
+					reveal("clue_note_warning");
+					return;
+				}
+				if (id === "branch3") {
+					const powered = branchOn.branch3;
+					const danger = dangerActive();
+					usePen(danger ? 2 : 0);
+					// 不管测的时候是通电测出危险,还是先拉闸断电、验电确认没电了,
+					// 只要认认真真验过这一根,就足够锁定嫌疑、解锁其他场景
+					const firstTime = !discovered.has("clue_branch_found");
+					foundBranch = true;
+					reveal("clue_branch_found");
+					if (!firstTime && !(rcdReplaced && neutralConnected)) {
+						toastMsg(powered ? T().branch3OnHint : T().branch3OffHint);
+					}
+					return;
+				}
+				if (id === "branch1" || id === "branch2" || id === "branch4") {
+					usePen(0); // 这几家分闸一直正常,和这次漏电没关系
+					reveal("clue_other_shops_ok");
+					return;
+				}
+			}
+
+			/* ========================= SCENE 2 LOGIC: 面包店总闸 ========================= */
+			let shopMainOn = true;
+			function updateRcdVisual() {
+				const L = T();
+				$("#rcdBrokenMark").style.display = rcdReplaced ? "none" : "";
+				setToggleKnob("knobShopRcd", rcdReplaced, "#5c6166", "#3a3f44");
+				$("#rcdStatusText").textContent = rcdReplaced ? L.rcdStatusFixed : L.rcdStatusBroken;
+				$("#rcdStatusText").setAttribute("fill", rcdReplaced ? "#2b6b3a" : "#b23a2e");
+				$("#rcdStatusText").setAttribute("data-i18n", rcdReplaced ? "rcdStatusFixed" : "rcdStatusBroken");
+			}
+			updateRcdVisual();
+
+			function s2Touch(id) {
+				if (id === "shopShell") {
+					if (dangerActive()) shock(2);
+					return;
+				}
+				if (id === "shopRcd") {
+					if (dangerActive()) shock(2);
+					return;
+				}
+				if (id === "shopMain") {
+					// 拨杆本身是绝缘的,随便扳没有危险;拉闸本身不给任何提示,必须验电才知道结果
+					shopMainOn = !shopMainOn;
+					setToggleKnob("knobShopMain", shopMainOn);
+					return;
+				}
+				if (id === "replaceRcd") {
+					if (!rcdReplaced) {
+						rcdReplaced = true;
+						reveal("clue_rcd_broken"); // 就算没先测过,直接换也该知道原来的坏了
+						updateRcdVisual();
+						checkRepairComplete();
+					}
+					return;
+				}
+			}
+			function s2Test(id) {
+				if (id === "shopShell") {
+					usePen(dangerActive() ? 2 : 0);
+					if (dangerActive()) reveal("clue_wall_live");
+					return;
+				}
+				if (id === "shopMain") {
+					usePen(0);
+					if (!(rcdReplaced && neutralConnected)) {
+						toastMsg(shopMainOn ? T().branch3OnHint : T().branch3OffHint);
+					}
+					return;
+				}
+				if (id === "shopRcd") {
+					usePen(dangerActive() ? 2 : 0);
+					reveal("clue_rcd_broken");
+					return;
+				}
+				if (id === "replaceRcd") {
+					usePen(0);
+					return;
+				}
+			}
+
+			/* ========================= SCENE 3 LOGIC: 后厨 · 烤箱接线 ========================= */
+			const OTHER_WIRES = ["wire1", "wire3", "wire4"];
+
+			function s3Touch(id) {
+				if (id === "ovenCase") {
+					if (dangerActive()) shock(2);
+					return;
+				}
+				if (id === "mainCable") {
+					// 总线绝缘完好,不是这次故障的源头,摸着安全
+					return;
+				}
+				if (id === "wire2") {
+					if (!neutralConnected && dangerActive()) shock(2);
+					return;
+				}
+				if (OTHER_WIRES.includes(id)) {
+					// 火线接头和备用相线都已经妥善包好绝缘,摸着安全
+					return;
+				}
+			}
+			function s3Test(id) {
+				if (id === "ovenCase") {
+					usePen(dangerActive() ? 2 : 0);
+					if (dangerActive()) reveal("clue_oven_live");
+					return;
+				}
+				if (id === "mainCable") {
+					usePen(2); // 三相动力电本来就是带电的,总线供电正常,只是里面一根线后面被接错了
+					return;
+				}
+				if (id === "wire2") {
+					usePen(!neutralConnected && dangerActive() ? 2 : 0);
+					reveal("clue_wrong_splice");
+					return;
+				}
+				if (OTHER_WIRES.includes(id)) {
+					// 火线和备用相线本来就是带电的(验电笔如实测出"危险"),但它们绝缘良好、接头包扎完好,伸手摸并不会触电
+					usePen(2);
+					reveal("clue_other_phases_ok");
+					return;
+				}
+			}
+
+			function fixNeutral() {
+				neutralConnected = true;
+				$("#wire2BadSplice").style.display = "none";
+				$("#wire2FixedGroup").style.display = "";
+				checkRepairComplete();
+			}
+
+			/* 备用零线卷:开门/发现故障后出现在左下角,拖到蓝线错接处(580,280)松手即可完成维修,拖偏了就弹回原位 */
+			(function setupCoilDrag() {
+				const svg = $("#svg3");
+				const coil = $("#neutralCoil");
+				const originX = 90,
+					originY = 500;
+				const targetX = 200,
+					targetY = 235;
+				let dragging = false;
+
+				function svgPoint(evt) {
+					const pt = svg.createSVGPoint();
+					pt.x = evt.clientX;
+					pt.y = evt.clientY;
+					const ctm = svg.getScreenCTM().inverse();
+					return pt.matrixTransform(ctm);
+				}
+				function setPos(x, y) {
+					coil.setAttribute("transform", `translate(${x},${y})`);
+				}
+				coil.addEventListener("pointerdown", (e) => {
+					if (neutralConnected || coil.style.display === "none") return;
+					dragging = true;
+					coil.setPointerCapture(e.pointerId);
+					coil.style.cursor = "grabbing";
+					e.preventDefault();
+				});
+				coil.addEventListener("pointermove", (e) => {
+					if (!dragging) return;
+					const p = svgPoint(e);
+					if (!isFinite(p.x) || !isFinite(p.y)) return;
+					setPos(p.x, p.y);
+				});
+				function endDrag() {
+					if (!dragging) return;
+					dragging = false;
+					coil.style.cursor = "grab";
+					const m = /translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/.exec(coil.getAttribute("transform"));
+					const cx = m ? parseFloat(m[1]) : originX;
+					const cy = m ? parseFloat(m[2]) : originY;
+					const dist = Math.hypot(cx - targetX, cy - targetY);
+					if (dist < 32) {
+						setPos(targetX, targetY);
+						coil.style.display = "none";
+						fixNeutral();
+					} else {
+						setPos(originX, originY);
+					}
+				}
+				coil.addEventListener("pointerup", endDrag);
+				coil.addEventListener("pointercancel", endDrag);
+			})();
+
+			/* 发现蓝线接错之后,才把备用零线卷放出来给玩家用 */
+			function maybeShowCoil() {
+				if (!neutralConnected && discovered.has("clue_wrong_splice")) {
+					$("#neutralCoil").style.display = "";
+				}
+			}
+			const _origReveal = reveal;
+			reveal = function (id) {
+				_origReveal(id);
+				if (id === "clue_wrong_splice") maybeShowCoil();
+			};
+
+			/* ========================= INPUT: LEFT CLICK = TOUCH, RIGHT CLICK = TESTER ========================= */
+			document.addEventListener("click", (e) => {
+				const hs = e.target.closest(".hotspot");
+				if (!hs) return;
+				const id = hs.dataset.id;
+				if (!id) return;
+				const scene = hs.closest(".scene").id.replace("scene-", "");
+				if (scene === "s1") s1Touch(id);
+				if (scene === "s2") s2Touch(id);
+				if (scene === "s3") s3Touch(id);
+			});
+
+			document.addEventListener("contextmenu", (e) => {
+				const target = e.target.closest('[data-test="true"]');
+				if (!target) {
+					if (e.target.closest(".game-window")) e.preventDefault();
+					return;
+				}
+				e.preventDefault();
+				const id = target.dataset.id;
+				const scene = target.closest(".scene").id.replace("scene-", "");
+				if (scene === "s1") s1Test(id);
+				if (scene === "s2") s2Test(id);
+				if (scene === "s3") s3Test(id);
+			});
+
+			/* ========================= ESC MENU: 语言切换 + 放弃本关（通用机制已迁移到 guide.js 的 GameUI.initMenu） ========================= */
+			GameUI.initMenu({
+				mapUrl: "index.html",
+				getCurrentLang: () => currentLang,
+				getGiveUpConfirmText: () => T().giveUpConfirm,
+				onLangSelect: applyLang,
+			});
+
+			/* ========================= 初始化语言 ========================= */
+			applyLang(currentLang);
+		</script>
+	</body>
+</html>
