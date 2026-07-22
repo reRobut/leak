@@ -1171,12 +1171,12 @@
 			function s1Touch(id) {
 				if (id === "gloveOld") {
 					reveal("clue_glove_damaged");
-					if (dangerGlove()) shock(2); // 手套没换绝缘的,直接摸设备/摸金属部件会被啪地放电
+					if (dangerGlove()) shock(1); // 手套没换绝缘的,直接摸设备/摸金属部件会被静电啪地放电(弱电,扣一半血)
 					return;
 				}
 				if (id === "worker") {
 					reveal("clue_worker_charged");
-					if (dangerBody()) shock(2); // 没接地又没穿防静电鞋,工人身上堆积的电荷会传给你
+					if (dangerBody()) shock(1); // 没接地又没穿防静电鞋,工人身上堆积的静电荷会传给你(弱电,扣一半血)
 					return;
 				}
 				if (id === "groundStud") {
@@ -1204,12 +1204,12 @@
 						gloveTested = true;
 						$("#glovesNewItem").style.display = ""; // 验出手套带电之后,备件台上才会出现绝缘手套
 					}
-					usePen(dangerGlove() ? 2 : 0);
+					usePen(dangerGlove() ? 1 : 0);
 					reveal("clue_glove_damaged");
 					return;
 				}
 				if (id === "worker") {
-					usePen(dangerBody() ? 2 : 0);
+					usePen(dangerBody() ? 1 : 0);
 					reveal("clue_worker_charged");
 					return;
 				}
