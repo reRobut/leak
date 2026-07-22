@@ -1535,6 +1535,8 @@
 
 			#guideModal.modal-bg {
 				padding: 0;
+				z-index: 97; /* 高于 .hp-bar / .guide-help-btn 的 96,使指南弹窗覆盖游戏UI组件；
+				                其它复用 .modal-bg 的弹窗仍保持 90,不受影响 */
 			}
 			#guideModal .guide-modal-panel {
 				position: relative;
