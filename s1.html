@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Electrostatic Shock - Level S1</title>
+		<style>
+			:root {
+				--paper: #ffffff;
+				--paper-dark: #eef1f6;
+				--ink: #14171a;
+				--ink-dim: #5b6068;
+				--brass: #1a56c4;
+				--brass-light: #4d82d6;
+				--brass-dark: #0f3480;
+				--danger: #d32f2f;
+				--danger-light: #e8908c;
+				--safe: #1a56c4;
+				--crt: #4d82d6;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				height: 100%;
+			}
+			body {
+				margin: 0;
+				background: #000000;
+				color: var(--ink);
+				font-family: Georgia, "Songti SC", serif;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+			}
+
+			/* ---------- FIXED GAME WINDOW ---------- */
+			.game-window {
+				position: relative;
+				width: min(96vw, 960px);
+				aspect-ratio: 900 / 560;
+				border: 4px solid #000;
+				border-radius: 3px;
+				box-shadow:
+					0 0 0 1px var(--brass-dark),
+					0 20px 60px rgba(0, 0, 0, 0.7);
+				overflow: hidden;
+				cursor: default;
+			}
+
+			.scene {
+				position: absolute;
+				inset: 0;
+				display: none;
+			}
+			.scene.active {
+				display: block;
+				animation: fadein 0.35s ease;
+			}
+			@keyframes fadein {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+			.scene svg {
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+
+			.hotspot {
+				cursor: pointer;
+			}
+			.hotspot .hit {
+				fill: transparent;
+			}
+			.lbl {
+				opacity: 0;
+				transition: 0.15s;
+				font-size: 12px;
+				fill: #14171a;
+				font-family: "Courier New", monospace;
+				paint-order: stroke;
+				stroke: #fff;
+				stroke-width: 3px;
+				stroke-linejoin: round;
+			}
+
+			/* ---------- METER WIDGET / HP BAR / GAME OVER / REBORN / MODAL 核心样式:均由 guide.js 的 GameUI 提供 ---------- */
+
+			/* ---------- CASE FILE ICON (appears once solved) ---------- */
+			.casefile {
+				position: absolute;
+				left: 12px;
+				bottom: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				font-size: 20px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+				animation: pulse 1.8s infinite;
+			}
+			.casefile.show {
+				display: flex;
+			}
+			@keyframes pulse {
+				0%,
+				100% {
+					box-shadow: 0 0 8px rgba(26, 86, 196, 0.3);
+				}
+				50% {
+					box-shadow: 0 0 18px rgba(26, 86, 196, 0.75);
+				}
+			}
+
+			/* ---------- NOTEBOOK (top-left, always visible) ---------- */
+			.notebook-btn {
+				position: absolute;
+				left: 12px;
+				top: 12px;
+				z-index: 96;
+				width: 40px;
+				height: 40px;
+				border-radius: 6px;
+				cursor: pointer;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 19px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+			}
+			.notebook-btn:hover {
+				filter: brightness(1.08);
+			}
+			.notebook-badge {
+				position: absolute;
+				top: -6px;
+				right: -6px;
+				min-width: 16px;
+				height: 16px;
+				padding: 0 3px;
+				border-radius: 8px;
+				background: var(--danger);
+				color: #fff;
+				font-size: 10px;
+				font-weight: 700;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: "Courier New", monospace;
+				border: 1px solid var(--ink);
+			}
+
+			.clue-item {
+				padding: 9px 11px;
+				margin: 8px 0;
+				border-radius: 4px;
+				font-size: 12.5px;
+				line-height: 1.6;
+				border: 1px dashed var(--brass);
+				background: var(--paper-dark);
+				color: var(--ink);
+			}
+			.clue-item.locked {
+				opacity: 0.42;
+			}
+			.clue-item.locked .t {
+				color: var(--ink-dim);
+			}
+			.clue-item .t {
+				font-weight: 700;
+				color: var(--brass);
+				margin-bottom: 3px;
+			}
+			.clue-item .t:before {
+				content: "● ";
+			}
+			.clue-item.locked .t:before {
+				content: "○ ";
+			}
+			.clue-item .d {
+			}
+
+			/* ---------- TOAST ---------- */
+			.toast {
+				position: absolute;
+				top: 14px;
+				left: 50%;
+				z-index: 97;
+				background: var(--paper);
+				border: 2px solid var(--brass);
+				padding: 9px 16px;
+				border-radius: 4px;
+				font-size: 12px;
+				max-width: min(78%, 320px);
+				color: var(--ink);
+				font-family: "Courier New", monospace;
+				text-align: center;
+				opacity: 0;
+				transform: translate(-50%, -14px);
+				transition:
+					transform 0.3s ease,
+					opacity 0.3s ease;
+				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+				pointer-events: none;
+			}
+			.toast.show {
+				opacity: 1;
+				transform: translate(-50%, 0);
+			}
+			.toast b {
+				color: var(--brass);
+				display: block;
+				font-size: 10px;
+				letter-spacing: 1px;
+				margin-bottom: 2px;
+			}
+
+			::-webkit-scrollbar {
+				width: 8px;
+			}
+			::-webkit-scrollbar-thumb {
+				background: var(--brass);
+				border-radius: 4px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="game-window" id="gameWindow">
+			<!-- ================= SCENE S1: 喷砂车间(唯一场景) ================= -->
+			<div class="scene active" id="scene-s1">
+				<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" id="svg1">
+					<rect x="0" y="0" width="900" height="560" fill="#f2f1ec" />
+					<rect x="0" y="460" width="900" height="100" fill="#e2e0d6" />
+
+					<text x="450" y="40" text-anchor="middle" fill="#b9c0c6" font-size="22" font-weight="bold" font-family="Georgia,serif" letter-spacing="2" data-i18n="sblastSceneLabel">喷砂车间</text>
+
+					<!-- ===== 喷砂机(Sandblasting Cabinet) ===== -->
+					<g id="cabinetArt">
+						<rect x="60" y="60" width="370" height="370" rx="10" fill="#aeb6bc" stroke="#333b42" stroke-width="5" />
+						<rect x="60" y="60" width="370" height="44" fill="#33424f" />
+						<text x="245" y="89" text-anchor="middle" fill="#e8ebee" font-size="16" font-family="'Courier New',monospace" data-i18n="sblastCabinetLabel">喷砂机</text>
+
+						<!-- 观察窗 -->
+						<rect x="100" y="130" width="290" height="150" rx="6" fill="#bfe3f2" stroke="#33424f" stroke-width="3" />
+						<circle cx="150" cy="170" r="3" fill="#8d8f86" opacity="0.6" />
+						<circle cx="200" cy="210" r="2.4" fill="#8d8f86" opacity="0.6" />
+						<circle cx="260" cy="180" r="2.8" fill="#8d8f86" opacity="0.6" />
+						<circle cx="320" cy="230" r="2.2" fill="#8d8f86" opacity="0.6" />
+						<circle cx="340" cy="160" r="2.6" fill="#8d8f86" opacity="0.6" />
+						<circle cx="230" cy="250" r="2.4" fill="#8d8f86" opacity="0.6" />
+
+						<!-- 控制面板 -->
+						<rect x="100" y="290" width="290" height="30" fill="#7d8890" />
+						<circle cx="140" cy="305" r="9" fill="#f2f2f2" />
+						<circle cx="180" cy="305" r="9" fill="#ff7058" />
+						<circle cx="220" cy="305" r="9" fill="#f2f2f2" />
+
+						<!-- 手套口(固定不变的金属衣领口,里面的手套会随维修状态切换) -->
+						<circle cx="160" cy="380" r="38" fill="#24282b" stroke="#101214" stroke-width="3" />
+						<circle cx="330" cy="380" r="38" fill="#24282b" stroke="#101214" stroke-width="3" />
+					</g>
+
+					<!-- 接地端子(热点:点击即可完成接地) -->
+					<g class="hotspot" data-id="groundStud" data-touch="true" data-test="true">
+						<rect class="hit" x="405" y="330" width="140" height="140" fill="transparent" />
+						<circle cx="430" cy="350" r="9" fill="#c9ccd0" stroke="#33424f" stroke-width="2" class="glow-target" />
+						<path d="M430 440 h34 M438 448 h18 M446 456 h6" stroke="#33424f" stroke-width="4" stroke-linecap="round" fill="none" />
+						<path id="groundWireBad" d="M430,350 C458,376 465,404 445,432" stroke="#c94b3a" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="2 7" />
+						<path id="groundWireGood" style="display: none" d="M430,350 C446,388 436,418 447,438" stroke="#3f8a5c" stroke-width="4" fill="none" stroke-linecap="round" />
+						<text x="475" y="470" text-anchor="middle" class="lbl" data-i18n="sblastGroundLbl">接地端子</text>
+					</g>
+
+					<!-- 操作工人:正对着喷砂机作业,只露出后脑勺和背影,双臂伸进手套口里(热点:测出弱电,危险时触碰会被电一下) -->
+					<g class="hotspot" data-id="worker" data-touch="true" data-test="true">
+						<rect class="hit" x="196" y="286" width="98" height="204" fill="transparent" />
+						<!-- 手臂,伸向左右两个手套口 -->
+						<path d="M228,368 C192,366 176,372 168,380" stroke="#4d6a80" stroke-width="15" stroke-linecap="round" fill="none" />
+						<path d="M262,368 C298,366 314,372 322,380" stroke="#4d6a80" stroke-width="15" stroke-linecap="round" fill="none" />
+						<!-- 双腿与鞋 -->
+						<rect x="222" y="428" width="18" height="48" rx="6" fill="#33424f" />
+						<rect x="250" y="428" width="18" height="48" rx="6" fill="#33424f" />
+						<rect id="shoeL" x="214" y="472" width="30" height="16" rx="4" fill="#1c1c1c" />
+						<rect id="shoeR" x="242" y="472" width="30" height="16" rx="4" fill="#1c1c1c" />
+						<!-- 背影躯干 -->
+						<rect x="213" y="336" width="64" height="100" rx="18" fill="#4d6a80" stroke="#33424f" stroke-width="2" class="glow-target" />
+						<!-- 后脑勺 -->
+						<circle cx="223" cy="318" r="4" fill="#e0b089" />
+						<circle cx="267" cy="318" r="4" fill="#e0b089" />
+						<circle cx="245" cy="315" r="24" fill="#5c4632" stroke="#33424f" stroke-width="2" />
+						<line x1="245" y1="294" x2="245" y2="338" stroke="#3a2c1f" stroke-width="1.5" />
+						<text x="245" y="500" text-anchor="middle" class="lbl" data-i18n="sblastWorkerLbl">操作工人</text>
+					</g>
+
+					<!-- 手套(位于工人手臂前端,盖住袖口;热点:先测后摸,不换会电人) -->
+					<g class="hotspot" data-id="gloveOld" data-touch="true" data-test="true">
+						<rect class="hit" x="105" y="335" width="345" height="90" fill="transparent" />
+						<g id="gloveVisualBad" class="glow-target">
+							<ellipse cx="160" cy="374" rx="30" ry="22" fill="#2b2b2b" stroke="#141414" stroke-width="2" />
+							<ellipse cx="330" cy="374" rx="30" ry="22" fill="#2b2b2b" stroke="#141414" stroke-width="2" />
+							<path d="M182 362 l10 -8 l4 6 l-9 9 z" fill="#c94b3a" />
+							<path d="M352 366 l9 -7 l4 5 l-8 8 z" fill="#c94b3a" />
+						</g>
+						<g id="gloveVisualGood" style="display: none">
+							<ellipse cx="160" cy="374" rx="30" ry="22" fill="#f5c744" stroke="#8a6d00" stroke-width="2" />
+							<ellipse cx="330" cy="374" rx="30" ry="22" fill="#f5c744" stroke="#8a6d00" stroke-width="2" />
+							<rect x="140" y="358" width="40" height="10" rx="5" fill="#2f6fb0" />
+							<rect x="310" y="358" width="40" height="10" rx="5" fill="#2f6fb0" />
+						</g>
+						<text x="245" y="445" text-anchor="middle" class="lbl" data-i18n="sblastGlovesLbl">手套</text>
+					</g>
+
+					<!-- 备件台:防静电鞋(点击直接更换) -->
+					<g class="hotspot" data-id="shoesRack" data-touch="true">
+						<rect class="hit" x="680" y="300" width="120" height="90" fill="transparent" />
+						<rect x="690" y="330" width="100" height="16" rx="3" fill="#8a7f6a" class="glow-target" />
+						<rect x="700" y="308" width="36" height="20" rx="6" fill="#2f6fb0" stroke="#183a5c" stroke-width="2" />
+						<rect x="744" y="308" width="36" height="20" rx="6" fill="#2f6fb0" stroke="#183a5c" stroke-width="2" />
+						<text x="740" y="365" text-anchor="middle" class="lbl" data-i18n="sblastShoesRackLbl">防静电鞋,点击更换</text>
+					</g>
+
+					<!-- 备件台:绝缘手套(先用验电笔测出手套带电之后才会出现,拖到手套口即可更换) -->
+					<g id="glovesNewItem" style="cursor: grab; display: none" transform="translate(730,220)">
+						<rect class="hit" x="-30" y="-24" width="60" height="48" fill="transparent" />
+						<ellipse cx="-12" cy="0" rx="18" ry="14" fill="#f5c744" stroke="#8a6d00" stroke-width="2" />
+						<ellipse cx="14" cy="0" rx="18" ry="14" fill="#f5c744" stroke="#8a6d00" stroke-width="2" />
+						<rect x="-24" y="-10" width="20" height="7" rx="3.5" fill="#2f6fb0" />
+						<rect x="4" y="-10" width="20" height="7" rx="3.5" fill="#2f6fb0" />
+						<text x="0" y="42" text-anchor="middle" data-i18n="sblastGlovesNewLbl" font-family="'Courier New',monospace" font-size="14" font-weight="bold" fill="#1a56c4" paint-order="stroke" stroke="#fff" stroke-width="4" stroke-linejoin="round">绝缘手套,拖到手套口</text>
+					</g>
+				</svg>
+			</div>
+
+			<!-- ================= SHARED CHROME (inside game window) ================= -->
+			<!-- 本关只有一个场景,不需要左右切换箭头 -->
+
+			<!-- 验电笔由 guide.js 的 GameUI.initMeter() 动态注入到本容器内 -->
+
+			<div class="notebook-btn" id="notebookBtn" data-i18n-title="notebookTitle" title="线索笔记本">📓<span class="notebook-badge" id="notebookBadge" style="display: none">0</span></div>
+			<!-- 血条由 guide.js 的 GameUI.initHUD() 动态注入到本容器内 -->
+
+			<div class="casefile" id="casefileBtn" data-i18n-title="casefileTitle" title="结案报告">📁</div>
+
+			<div class="toast" id="toast"><b data-i18n="toastNewClue">发现新线索</b><span id="toastText"></span></div>
+		</div>
+
+		<!-- clue notebook modal -->
+		<div class="modal-bg" id="cluesModal">
+			<div class="modal notebook-modal">
+				<h3 data-i18n="notebookTitle">线索笔记本</h3>
+				<div class="sub" id="cluesProgress">已发现 0 / 4 条线索</div>
+				<div id="cluesList"></div>
+				<button class="modal-close" data-i18n="closeNotebookBtn" onclick="closeModal('cluesModal')">合上笔记本</button>
+			</div>
+		</div>
+
+		<!-- final report modal -->
+		<div class="modal-bg" id="reportModal">
+			<div class="modal report">
+				<h3 data-i18n="casefileTitle">结案报告</h3>
+				<div class="sub" data-i18n="reportCaseFile">CASE FILE · S1 · 静电事故调查</div>
+
+				<p data-i18n-html="report_p1">这台喷砂柜(Sandblasting Cabinet)原本配的是一副<b>绝缘手套</b>,可长期使用后手套磨破了,维修时随手换上了一副没有绝缘等级的普通劳保手套。喷砂作业时,高速砂粒与喷嘴、工件反复摩擦,会在设备和操作者身上不断积累<b>静电荷</b>。</p>
+				<p data-i18n-html="report_p2">手套不绝缘的话,大量电荷就会传导、堆积到穿着普通胶鞋的工人身上,没有地方能把这些电荷放掉,工人一旦伸手碰到<b>接地的金属部件</b>,就会啪啪放电。与此同时,喷砂机外壳一直<b>没有接地</b>,机身上积累的静电荷同样找不到泄放通道;操作工人穿的是普通胶鞋而不是防静电鞋,脚底也隔断了人体对地的泄放路径。三处防护一起失效,静电就这样一路传导、堆积到了工人身上。</p>
+
+				<div class="section-t" data-i18n="reportSuggestTitle">整改建议</div>
+				<ul>
+					<li data-i18n="reportLi1">将破损、不绝缘的手套更换为符合等级要求的绝缘手套,恢复手部与设备之间的绝缘屏障。</li>
+					<li data-i18n="reportLi2">为喷砂机加装可靠的接地线,把设备和作业过程中产生的静电荷及时导入大地。</li>
+					<li data-i18n="reportLi3">给工人配上电阻低的、能帮助工人把电荷从身上导入地下的防静电鞋。</li>
+				</ul>
+
+				<button class="modal-close" data-i18n="closeReportBtn" onclick="closeModal('reportModal')">合上卷宗</button>
+			</div>
+		</div>
+
+		<!-- 死亡结算弹窗 / 重生欢迎弹窗 均由 guide.js 的 GameUI.initHUD() 动态注入 -->
+
+		<!-- repair complete modal -->
+		<div class="modal-bg" id="repairModal">
+			<div class="modal repair-modal">
+				<h3 data-i18n="repairTitle">✔ 维修完成</h3>
+				<div class="sub" data-i18n="repairSub">维修完成</div>
+				<div class="repair-analysis">
+					<p data-i18n="repairP1">这台喷砂柜原本配的是绝缘手套,磨破后被随手换成了不绝缘的普通劳保手套。喷砂作业时,砂粒与设备反复摩擦会不断积累静电荷,手套不绝缘的话,电荷就会传导、堆积到穿着普通胶鞋的工人身上,无法放掉,一碰金属就啪啪放电。</p>
+					<p data-i18n="repairP2">真正的解法有三步都要做到:把手套换成绝缘手套、给喷砂机接地、给工人配上电阻低、能把电荷导入地下的防静电鞋——三处防护同时到位,电荷才有地方可去,不会再堆积到工人身上、伸手碰金属时啪啪放电。</p>
+				</div>
+				<div class="repair-btns">
+					<button class="modal-close repair-btn" id="levelMapBtn" data-i18n="levelMapBtn">返回关卡地图</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ESC 菜单(语言选择 / 继续游戏 / 放弃本关) 由 guide.js 的 GameUI.initMenu() 动态注入 -->
+
+		<!-- 共用组件(血条 / 死亡画面 / 重生画面 / 帮助弹窗):必须先于下方主脚本加载,因为主脚本会调用 GameUI.initHUD() -->
+		<script src="guideS.js"></script>
+
+		<script>
+			/* ========================= DATA ========================= */
+			// 目前只实现中文(zh-CN)。后续如需增加其他语言,按 zh-CN 的字段结构在下方补充语言块即可,
+			// 例如 "en": { ... }, "ja": { ... },结构需与 zh-CN 完全一致(包含 clues 里的每个 key)。
+			const I18N = {
+				"zh-CN": {
+					sblastSceneLabel: `喷砂车间`,
+					sblastCabinetLabel: `喷砂机`,
+					sblastGlovesLbl: `手套`,
+					sblastGlovesNewLbl: `绝缘手套,拖到手套口`,
+					sblastGroundLbl: `接地端子`,
+					sblastShoesRackLbl: `防静电鞋,点击更换`,
+					sblastWorkerLbl: `操作工人`,
+					meterHead: `右键验电`,
+					meterStandby: `待机`,
+					notebookTitle: `线索笔记本`,
+					hpTitle: `生命值`,
+					casefileTitle: `结案报告`,
+					toastNewClue: `发现新线索`,
+					closeNotebookBtn: `合上笔记本`,
+					undiscoveredClue: `尚未发现的线索`,
+					reportCaseFile: `CASE FILE · S1 · 静电事故调查`,
+					report_p1: `这台喷砂柜(Sandblasting Cabinet)原本配的是一副<b>绝缘手套</b>,可长期使用后手套磨破了,维修时随手换上了一副没有绝缘等级的普通劳保手套。喷砂作业时,高速砂粒与喷嘴、工件反复摩擦,会在设备和操作者身上不断积累<b>静电荷</b>。`,
+					report_p2: `手套不绝缘的话,大量电荷就会传导、堆积到穿着普通胶鞋的工人身上,没有地方能把这些电荷放掉,工人一旦伸手碰到<b>接地的金属部件</b>,就会啪啪放电。与此同时,喷砂机外壳一直<b>没有接地</b>,机身上积累的静电荷同样找不到泄放通道;操作工人穿的是普通胶鞋而不是防静电鞋,脚底也隔断了人体对地的泄放路径。三处防护一起失效,静电就这样一路传导、堆积到了工人身上。`,
+					reportSuggestTitle: `整改建议`,
+					reportLi1: `将破损、不绝缘的手套更换为符合等级要求的绝缘手套,恢复手部与设备之间的绝缘屏障。`,
+					reportLi2: `为喷砂机加装可靠的接地线,把设备和作业过程中产生的静电荷及时导入大地。`,
+					reportLi3: `给工人配上电阻低的、能帮助工人把电荷从身上导入地下的防静电鞋。`,
+					closeReportBtn: `合上卷宗`,
+					gameOverTitle: `⚡ 你被电死了。`,
+					gameOverSub: `下辈子注意点。`,
+					rebornBtnText: `开启下一世`,
+					rebornTitle: `我重生了!`,
+					rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因为粗心不小心被电死。这一世,我要成为电工王!`,
+					rebornStartBtn: `这一世,开始`,
+					repairTitle: `✔ 维修完成`,
+					repairSub: `维修完成`,
+					repairP1: `这台喷砂柜原本配的是绝缘手套,磨破后被随手换成了不绝缘的普通劳保手套。喷砂作业时,砂粒与设备反复摩擦会不断积累静电荷,手套不绝缘的话,电荷就会传导、堆积到穿着普通胶鞋的工人身上,无法放掉,一碰金属就啪啪放电。`,
+					repairP2: `真正的解法：把手套换成绝缘手套，给喷砂机接地，给工人配上电阻低、能把电荷导入地下的防静电鞋——这样电荷才有地方可去,不会再堆积到工人身上。`,
+					levelMapBtn: `返回关卡地图`,
+					penNone: `无电`,
+					penLow: `有微弱电压`,
+					penDanger: `危险`,
+					reportPrefix: `📁 结案报告`,
+					cluesProgress: `已发现 {d} / {t} 条线索`,
+					menuTitle: `游戏菜单`,
+					menuLangTitle: `选择语言`,
+					resumeBtn: `继续游戏`,
+					giveUpBtn: `放弃本关,返回主页`,
+					giveUpConfirm: `确定要放弃本关并返回主页吗?当前进度不会保存。`,
+					clues: {
+						clue_glove_damaged: { t: `手套失去了绝缘防护`, d: `凑近看操作手套,原来的绝缘手套已经磨破,不知什么时候被换成了一副没有绝缘等级的普通劳保手套——静电传导的第一道屏障就这样被拆掉了。` },
+						clue_cabinet_ungrounded: { t: `喷砂机没有接地`, d: `喷砂机外壳侧面留着一个接地端子,可连接地线的一头松松地耷拉在旁边,根本没有接到地线排上——设备上积累的静电荷找不到泄放到大地的通道。` },
+						clue_no_antistatic_shoes: { t: `工人没穿防静电鞋`, d: `操作工人脚上是一双普通的劳保鞋,鞋底没有防静电标识——人体本该经由双脚接地泄放静电,这条路也被切断了。` },
+						clue_worker_charged: { t: `工人身上带弱电`, d: `验电笔靠近操作工人,指示灯跳到了微弱电压档——喷砂时产生的静电荷,已经顺着破损的手套一路传导、堆积到了工人身上。` },
+					},
+				},
+				"en": {
+					sblastSceneLabel: `Sandblasting Workshop`,
+					sblastCabinetLabel: `Sandblasting Cabinet`,
+					sblastGlovesLbl: `Gloves`,
+					sblastGlovesNewLbl: `Insulated gloves — drag to glove port`,
+					sblastGroundLbl: `Ground Terminal`,
+					sblastShoesRackLbl: `Anti-static shoes, click to swap`,
+					sblastWorkerLbl: `Operator`,
+					meterHead: `Right-click to test`,
+					meterStandby: `Standby`,
+					notebookTitle: `Clue Notebook`,
+					hpTitle: `Health`,
+					casefileTitle: `Case Report`,
+					toastNewClue: `New clue found`,
+					closeNotebookBtn: `Close Notebook`,
+					undiscoveredClue: `Undiscovered clue`,
+					reportCaseFile: `CASE FILE · S1 · Static Discharge Accident Investigation`,
+					report_p1: `This sandblasting cabinet was originally fitted with a pair of <b>insulated gloves</b>, but after long-term use the gloves wore through, and during a repair someone casually swapped in an ordinary pair of work gloves with no insulation rating. During sandblasting, high-speed abrasive particles repeatedly rub against the nozzle and workpiece, continuously building up <b>static charge</b> on the equipment and the operator.`,
+					report_p2: `Without insulated gloves, large amounts of charge conduct and accumulate on the worker, who is wearing ordinary rubber shoes with nowhere for that charge to discharge — the moment the worker touches a <b>grounded metal part</b>, a spark jumps. Meanwhile, the cabinet's housing was never <b>grounded</b>, so the static charge building up on the machine body also had no path to discharge; the operator wore ordinary shoes instead of anti-static shoes, which also cut off the body's path to ground. With all three safeguards failing at once, the static charge kept conducting and building up on the worker.`,
+					reportSuggestTitle: `Corrective Actions`,
+					reportLi1: `Replace the worn, non-insulated gloves with gloves that meet the required insulation rating, restoring the insulation barrier between hands and equipment.`,
+					reportLi2: `Fit the sandblasting cabinet with a reliable ground wire to promptly discharge static charge generated during operation into the earth.`,
+					reportLi3: `Issue the worker low-resistance anti-static shoes that help conduct charge from the body into the ground.`,
+					closeReportBtn: `Close File`,
+					gameOverTitle: `⚡ You were electrocuted.`,
+					gameOverSub: `Be more careful next life.`,
+					rebornBtnText: `Start Next Life`,
+					rebornTitle: `I'm reborn!`,
+					rebornSub: `A New Life`,
+					rebornP: `In my last life, I was carelessly electrocuted at work. This time, I will become the King of Electricians!`,
+					rebornStartBtn: `Begin This Life`,
+					repairTitle: `✔ Repair Complete`,
+					repairSub: `Repair Complete`,
+					repairP1: `This sandblasting cabinet was originally fitted with insulated gloves, but after they wore through someone casually swapped in ordinary, non-insulated work gloves. During sandblasting, abrasive particles rubbing against the equipment continuously build up static charge; without insulated gloves, that charge conducts and accumulates on the worker (wearing ordinary rubber shoes) with no way to discharge, so touching metal causes a spark.`,
+					repairP2: `The real fix requires all three steps: replace the gloves with insulated ones, ground the sandblasting cabinet, and issue the worker low-resistance anti-static shoes that conduct charge into the ground — only with all three safeguards in place does the charge have somewhere to go, instead of building up on the worker and sparking when they touch metal.`,
+					levelMapBtn: `Back to Level Map`,
+					penNone: `No charge`,
+					penLow: `Weak voltage detected`,
+					penDanger: `Danger`,
+					reportPrefix: `📁 Case Report`,
+					cluesProgress: `{d} / {t} clues found`,
+					menuTitle: `Game Menu`,
+					menuLangTitle: `Select Language`,
+					resumeBtn: `Resume Game`,
+					giveUpBtn: `Give Up Level, Return to Home`,
+					giveUpConfirm: `Are you sure you want to give up this level and return to the home page? Current progress will not be saved.`,
+					clues: {
+						clue_glove_damaged: { t: `The gloves lost their insulation`, d: `A closer look at the work gloves shows the original insulated gloves have worn through and were, at some point, swapped for ordinary work gloves with no insulation rating — the first barrier against static conduction was removed just like that.` },
+						clue_cabinet_ungrounded: { t: `The sandblasting cabinet isn't grounded`, d: `A ground terminal sits on the side of the cabinet housing, with the end that should connect to a ground wire hanging loose beside it, never actually connected to the ground bus — the static charge building up on the equipment has no path to discharge into the earth.` },
+						clue_no_antistatic_shoes: { t: `The worker isn't wearing anti-static shoes`, d: `The operator is wearing ordinary work shoes with no anti-static marking on the soles — the path that should let the body discharge static through the feet has also been cut off.` },
+						clue_worker_charged: { t: `The worker is carrying a weak charge`, d: `Bringing the tester near the operator, the indicator jumps to the weak-voltage range — the static charge generated during sandblasting has already conducted along the worn gloves and built up on the worker.` },
+					},
+				},
+				"zh-TW": {
+					sblastSceneLabel: `噴砂車間`,
+					sblastCabinetLabel: `噴砂機`,
+					sblastGlovesLbl: `手套`,
+					sblastGlovesNewLbl: `絕緣手套,拖到手套口`,
+					sblastGroundLbl: `接地端子`,
+					sblastShoesRackLbl: `防靜電鞋,點擊更換`,
+					sblastWorkerLbl: `操作工人`,
+					meterHead: `右鍵驗電`,
+					meterStandby: `待機`,
+					notebookTitle: `線索筆記本`,
+					hpTitle: `生命值`,
+					casefileTitle: `結案報告`,
+					toastNewClue: `發現新線索`,
+					closeNotebookBtn: `闔上筆記本`,
+					undiscoveredClue: `尚未發現的線索`,
+					reportCaseFile: `CASE FILE · S1 · 靜電事故調查`,
+					report_p1: `這台噴砂櫃(Sandblasting Cabinet)原本配的是一副<b>絕緣手套</b>,可長期使用後手套磨破了,維修時隨手換上了一副沒有絕緣等級的普通勞保手套。噴砂作業時,高速砂粒與噴嘴、工件反覆摩擦,會在設備和操作者身上不斷累積<b>靜電荷</b>。`,
+					report_p2: `手套不絕緣的話,大量電荷就會傳導、堆積到穿著普通膠鞋的工人身上,沒有地方能把這些電荷放掉,工人一旦伸手碰到<b>接地的金屬部件</b>,就會啪啪放電。與此同時,噴砂機外殼一直<b>沒有接地</b>,機身上累積的靜電荷同樣找不到洩放通道;操作工人穿的是普通膠鞋而不是防靜電鞋,腳底也隔斷了人體對地的洩放路徑。三處防護一起失效,靜電就這樣一路傳導、堆積到了工人身上。`,
+					reportSuggestTitle: `整改建議`,
+					reportLi1: `將破損、不絕緣的手套更換為符合等級要求的絕緣手套,恢復手部與設備之間的絕緣屏障。`,
+					reportLi2: `為噴砂機加裝可靠的接地線,把設備和作業過程中產生的靜電荷及時導入大地。`,
+					reportLi3: `給工人配上電阻低的、能幫助工人把電荷從身上導入地下的防靜電鞋。`,
+					closeReportBtn: `闔上卷宗`,
+					gameOverTitle: `⚡ 你被電死了。`,
+					gameOverSub: `下輩子注意點。`,
+					rebornBtnText: `開啟下一世`,
+					rebornTitle: `我重生了!`,
+					rebornSub: `新的一生`,
+					rebornP: `上一世,我在工作中因為粗心不小心被電死。這一世,我要成為電工王!`,
+					rebornStartBtn: `這一世,開始`,
+					repairTitle: `✔ 維修完成`,
+					repairSub: `維修完成`,
+					repairP1: `這台噴砂櫃原本配的是絕緣手套,磨破後被隨手換成了不絕緣的普通勞保手套。噴砂作業時,砂粒與設備反覆摩擦會不斷累積靜電荷,手套不絕緣的話,電荷就會傳導、堆積到穿著普通膠鞋的工人身上,無法放掉,一碰金屬就啪啪放電。`,
+					repairP2: `真正的解法:把手套換成絕緣手套,給噴砂機接地,給工人配上電阻低、能把電荷導入地下的防靜電鞋——這樣電荷才有地方可去,不會再堆積到工人身上。`,
+					levelMapBtn: `返回關卡地圖`,
+					penNone: `無電`,
+					penLow: `有微弱電壓`,
+					penDanger: `危險`,
+					reportPrefix: `📁 結案報告`,
+					cluesProgress: `已發現 {d} / {t} 條線索`,
+					menuTitle: `遊戲選單`,
+					menuLangTitle: `選擇語言`,
+					resumeBtn: `繼續遊戲`,
+					giveUpBtn: `放棄本關,返回主頁`,
+					giveUpConfirm: `確定要放棄本關並返回主頁嗎?目前進度不會保存。`,
+					clues: {
+						clue_glove_damaged: { t: `手套失去了絕緣防護`, d: `湊近看操作手套,原來的絕緣手套已經磨破,不知什麼時候被換成了一副沒有絕緣等級的普通勞保手套——靜電傳導的第一道屏障就這樣被拆掉了。` },
+						clue_cabinet_ungrounded: { t: `噴砂機沒有接地`, d: `噴砂機外殼側面留著一個接地端子,可連接地線的一頭鬆鬆地耷拉在旁邊,根本沒有接到地線排上——設備上累積的靜電荷找不到洩放到大地的通道。` },
+						clue_no_antistatic_shoes: { t: `工人沒穿防靜電鞋`, d: `操作工人腳上是一雙普通的勞保鞋,鞋底沒有防靜電標識——人體本該經由雙腳接地洩放靜電,這條路也被切斷了。` },
+						clue_worker_charged: { t: `工人身上帶弱電`, d: `驗電筆靠近操作工人,指示燈跳到了微弱電壓檔——噴砂時產生的靜電荷,已經順著破損的手套一路傳導、堆積到了工人身上。` },
+					},
+				},
+				"de": {
+					sblastSceneLabel: `Sandstrahl-Werkstatt`,
+					sblastCabinetLabel: `Sandstrahlkabine`,
+					sblastGlovesLbl: `Handschuhe`,
+					sblastGlovesNewLbl: `Isolierhandschuhe – zur Handschuhöffnung ziehen`,
+					sblastGroundLbl: `Erdungsklemme`,
+					sblastShoesRackLbl: `Antistatikschuhe, zum Wechseln klicken`,
+					sblastWorkerLbl: `Bediener`,
+					meterHead: `Rechtsklick zum Prüfen`,
+					meterStandby: `Bereitschaft`,
+					notebookTitle: `Hinweis-Notizbuch`,
+					hpTitle: `Lebenspunkte`,
+					casefileTitle: `Abschlussbericht`,
+					toastNewClue: `Neuer Hinweis gefunden`,
+					closeNotebookBtn: `Notizbuch schließen`,
+					undiscoveredClue: `Unentdeckter Hinweis`,
+					reportCaseFile: `FALLAKTE · S1 · Untersuchung eines elektrostatischen Unfalls`,
+					report_p1: `Diese Sandstrahlkabine war ursprünglich mit <b>Isolierhandschuhen</b> ausgestattet. Nach langem Gebrauch nutzten sich die Handschuhe jedoch ab, und bei einer Reparatur wurden sie kurzerhand gegen gewöhnliche Arbeitshandschuhe ohne Isolierklasse ausgetauscht. Beim Sandstrahlen reibt das schnelle Strahlmittel ständig an Düse und Werkstück, wodurch sich auf Anlage und Bediener kontinuierlich <b>elektrostatische Ladung</b> aufbaut.`,
+					report_p2: `Ohne isolierte Handschuhe leitet und sammelt sich die Ladung auf dem Arbeiter, der gewöhnliche Gummischuhe trägt und keine Möglichkeit hat, die Ladung abzuleiten. Berührt der Arbeiter ein <b>geerdetes Metallteil</b>, kommt es zur Funkenentladung. Gleichzeitig war das Gehäuse der Sandstrahlkabine nie <b>geerdet</b>, sodass die auf der Maschine angesammelte Ladung ebenfalls keinen Abfluss fand; der Arbeiter trug gewöhnliche Schuhe statt Antistatikschuhe, wodurch auch der Ableitweg über die Füße unterbrochen war. Da alle drei Schutzmaßnahmen gleichzeitig versagten, leitete und sammelte sich die statische Ladung immer weiter auf dem Arbeiter.`,
+					reportSuggestTitle: `Empfohlene Maßnahmen`,
+					reportLi1: `Beschädigte, nicht isolierte Handschuhe durch Isolierhandschuhe der vorgeschriebenen Klasse ersetzen, um die Isolierbarriere zwischen Hand und Anlage wiederherzustellen.`,
+					reportLi2: `Die Sandstrahlkabine mit einer zuverlässigen Erdungsleitung ausstatten, um die während des Betriebs entstehende statische Ladung rechtzeitig in die Erde abzuleiten.`,
+					reportLi3: `Dem Arbeiter niederohmige Antistatikschuhe bereitstellen, die helfen, Ladung vom Körper in den Boden abzuleiten.`,
+					closeReportBtn: `Akte schließen`,
+					gameOverTitle: `⚡ Du wurdest tödlich verletzt.`,
+					gameOverSub: `Im nächsten Leben besser aufpassen.`,
+					rebornBtnText: `Nächstes Leben beginnen`,
+					rebornTitle: `Ich wurde wiedergeboren!`,
+					rebornSub: `Ein neues Leben`,
+					rebornP: `In meinem letzten Leben wurde ich aus Unachtsamkeit bei der Arbeit tödlich verletzt. Dieses Mal werde ich der König der Elektriker!`,
+					rebornStartBtn: `Dieses Leben beginnen`,
+					repairTitle: `✔ Reparatur abgeschlossen`,
+					repairSub: `Reparatur abgeschlossen`,
+					repairP1: `Diese Sandstrahlkabine war ursprünglich mit Isolierhandschuhen ausgestattet, die nach ihrem Verschleiß kurzerhand gegen gewöhnliche, nicht isolierte Arbeitshandschuhe ausgetauscht wurden. Beim Sandstrahlen baut die Reibung des Strahlmittels an der Anlage ständig statische Ladung auf; ohne isolierte Handschuhe leitet und sammelt sich diese Ladung auf dem Arbeiter (in gewöhnlichen Gummischuhen), ohne Möglichkeit zur Ableitung – bei Berührung von Metall kommt es zur Funkenentladung.`,
+					repairP2: `Die eigentliche Lösung erfordert alle drei Schritte: Handschuhe gegen Isolierhandschuhe austauschen, die Sandstrahlkabine erden und dem Arbeiter niederohmige Antistatikschuhe bereitstellen, die Ladung in den Boden ableiten – erst wenn alle drei Schutzmaßnahmen greifen, hat die Ladung einen Abfluss und sammelt sich nicht mehr auf dem Arbeiter.`,
+					levelMapBtn: `Zurück zur Levelkarte`,
+					penNone: `Keine Ladung`,
+					penLow: `Schwache Spannung erkannt`,
+					penDanger: `Gefahr`,
+					reportPrefix: `📁 Abschlussbericht`,
+					cluesProgress: `{d} / {t} Hinweise gefunden`,
+					menuTitle: `Spielmenü`,
+					menuLangTitle: `Sprache wählen`,
+					resumeBtn: `Spiel fortsetzen`,
+					giveUpBtn: `Level aufgeben, zur Startseite zurückkehren`,
+					giveUpConfirm: `Möchtest du dieses Level wirklich aufgeben und zur Startseite zurückkehren? Der aktuelle Fortschritt wird nicht gespeichert.`,
+					clues: {
+						clue_glove_damaged: { t: `Die Handschuhe haben ihre Isolierung verloren`, d: `Bei genauerem Hinsehen zeigt sich, dass die ursprünglichen Isolierhandschuhe durchgescheuert und irgendwann gegen gewöhnliche Arbeitshandschuhe ohne Isolierklasse ausgetauscht wurden – die erste Barriere gegen die Ableitung statischer Ladung wurde damit entfernt.` },
+						clue_cabinet_ungrounded: { t: `Die Sandstrahlkabine ist nicht geerdet`, d: `An der Seite des Kabinengehäuses befindet sich eine Erdungsklemme, deren Anschlussende lose danebenhängt und nie mit der Erdungsschiene verbunden wurde – die auf der Anlage angesammelte statische Ladung findet keinen Weg in die Erde.` },
+						clue_no_antistatic_shoes: { t: `Der Arbeiter trägt keine Antistatikschuhe`, d: `Der Bediener trägt gewöhnliche Arbeitsschuhe ohne Antistatik-Kennzeichnung an der Sohle – der Weg, über den der Körper statische Ladung durch die Füße ableiten sollte, ist damit ebenfalls unterbrochen.` },
+						clue_worker_charged: { t: `Der Arbeiter trägt eine schwache Ladung`, d: `Nähert man den Prüfstift dem Bediener, springt die Anzeige auf den Bereich schwacher Spannung – die beim Sandstrahlen erzeugte statische Ladung hat sich bereits über die beschädigten Handschuhe geleitet und auf dem Arbeiter angesammelt.` },
+					},
+				},
+				"fr": {
+					sblastSceneLabel: `Atelier de sablage`,
+					sblastCabinetLabel: `Cabine de sablage`,
+					sblastGlovesLbl: `Gants`,
+					sblastGlovesNewLbl: `Gants isolants — glisser vers l'ouverture`,
+					sblastGroundLbl: `Borne de terre`,
+					sblastShoesRackLbl: `Chaussures antistatiques, cliquer pour changer`,
+					sblastWorkerLbl: `Opérateur`,
+					meterHead: `Clic droit pour tester`,
+					meterStandby: `Veille`,
+					notebookTitle: `Carnet d'indices`,
+					hpTitle: `Points de vie`,
+					casefileTitle: `Rapport d'enquête`,
+					toastNewClue: `Nouvel indice découvert`,
+					closeNotebookBtn: `Fermer le carnet`,
+					undiscoveredClue: `Indice non découvert`,
+					reportCaseFile: `DOSSIER · S1 · Enquête sur un accident électrostatique`,
+					report_p1: `Cette cabine de sablage était à l'origine équipée d'une paire de <b>gants isolants</b>, mais après un usage prolongé, les gants se sont usés et, lors d'une réparation, ont été remplacés sans réfléchir par des gants de travail ordinaires sans indice d'isolation. Pendant le sablage, les particules abrasives projetées à grande vitesse frottent continuellement contre la buse et la pièce, accumulant progressivement une <b>charge électrostatique</b> sur l'équipement et l'opérateur.`,
+					report_p2: `Sans gants isolants, une grande quantité de charge se conduit et s'accumule sur l'ouvrier, qui porte des chaussures en caoutchouc ordinaires sans moyen de l'évacuer. Dès que l'ouvrier touche une <b>pièce métallique mise à la terre</b>, une étincelle jaillit. Par ailleurs, le boîtier de la cabine n'a jamais été <b>mis à la terre</b>, donc la charge accumulée sur la machine n'a elle non plus aucun moyen de s'évacuer ; l'opérateur portait des chaussures ordinaires au lieu de chaussures antistatiques, ce qui coupait également le chemin de décharge du corps vers le sol. Ces trois protections ayant toutes échoué en même temps, l'électricité statique a fini par se conduire et s'accumuler sur l'ouvrier.`,
+					reportSuggestTitle: `Actions correctives`,
+					reportLi1: `Remplacer les gants usés et non isolants par des gants isolants conformes au niveau requis, afin de rétablir la barrière isolante entre les mains et l'équipement.`,
+					reportLi2: `Équiper la cabine de sablage d'un câble de mise à la terre fiable, afin d'évacuer rapidement vers le sol la charge statique produite pendant le travail.`,
+					reportLi3: `Fournir à l'ouvrier des chaussures antistatiques à faible résistance, qui aident à évacuer la charge du corps vers le sol.`,
+					closeReportBtn: `Fermer le dossier`,
+					gameOverTitle: `⚡ Vous avez été électrocuté.`,
+					gameOverSub: `Faites plus attention dans votre prochaine vie.`,
+					rebornBtnText: `Commencer la vie suivante`,
+					rebornTitle: `Je suis réincarné !`,
+					rebornSub: `Une nouvelle vie`,
+					rebornP: `Dans ma vie précédente, j'ai été électrocuté par négligence au travail. Cette fois, je deviendrai le roi des électriciens !`,
+					rebornStartBtn: `Commencer cette vie`,
+					repairTitle: `✔ Réparation terminée`,
+					repairSub: `Réparation terminée`,
+					repairP1: `Cette cabine de sablage était à l'origine équipée de gants isolants, remplacés sans réfléchir par des gants de travail ordinaires non isolants après usure. Pendant le sablage, le frottement des particules abrasives sur l'équipement accumule continuellement une charge statique ; sans gants isolants, cette charge se conduit et s'accumule sur l'ouvrier (en chaussures en caoutchouc ordinaires), sans moyen de s'évacuer, provoquant une étincelle au contact du métal.`,
+					repairP2: `La véritable solution exige trois étapes à la fois : remplacer les gants par des gants isolants, mettre la cabine de sablage à la terre, et fournir à l'ouvrier des chaussures antistatiques à faible résistance qui évacuent la charge vers le sol — ce n'est qu'avec ces trois protections en place que la charge trouve où s'évacuer, au lieu de s'accumuler sur l'ouvrier et de provoquer une étincelle au contact du métal.`,
+					levelMapBtn: `Retour à la carte des niveaux`,
+					penNone: `Aucune charge`,
+					penLow: `Faible tension détectée`,
+					penDanger: `Danger`,
+					reportPrefix: `📁 Rapport d'enquête`,
+					cluesProgress: `{d} / {t} indices découverts`,
+					menuTitle: `Menu du jeu`,
+					menuLangTitle: `Choisir la langue`,
+					resumeBtn: `Reprendre la partie`,
+					giveUpBtn: `Abandonner le niveau, retour à l'accueil`,
+					giveUpConfirm: `Voulez-vous vraiment abandonner ce niveau et retourner à l'accueil ? La progression actuelle ne sera pas sauvegardée.`,
+					clues: {
+						clue_glove_damaged: { t: `Les gants ont perdu leur protection isolante`, d: `En y regardant de plus près, les gants isolants d'origine sont usés et ont été, à un moment donné, remplacés par des gants de travail ordinaires sans indice d'isolation — la première barrière contre la conduction de l'électricité statique a ainsi été supprimée.` },
+						clue_cabinet_ungrounded: { t: `La cabine de sablage n'est pas mise à la terre`, d: `Une borne de terre se trouve sur le côté du boîtier de la cabine, mais l'extrémité censée se raccorder au câble de terre pend librement à côté, jamais réellement connectée au rail de terre — la charge statique accumulée sur l'équipement n'a aucun moyen de s'évacuer vers le sol.` },
+						clue_no_antistatic_shoes: { t: `L'ouvrier ne porte pas de chaussures antistatiques`, d: `L'opérateur porte des chaussures de travail ordinaires, sans marquage antistatique sous la semelle — le chemin par lequel le corps devrait évacuer l'électricité statique via les pieds est également coupé.` },
+						clue_worker_charged: { t: `L'ouvrier porte une faible charge`, d: `En approchant le testeur de l'opérateur, l'indicateur passe en zone de tension faible — la charge statique produite pendant le sablage s'est déjà conduite le long des gants usés et accumulée sur l'ouvrier.` },
+					},
+				},
+				"ru": {
+					sblastSceneLabel: `Пескоструйный цех`,
+					sblastCabinetLabel: `Пескоструйная камера`,
+					sblastGlovesLbl: `Перчатки`,
+					sblastGlovesNewLbl: `Изолирующие перчатки — перетащите к манжете`,
+					sblastGroundLbl: `Клемма заземления`,
+					sblastShoesRackLbl: `Антистатическая обувь, нажмите, чтобы заменить`,
+					sblastWorkerLbl: `Оператор`,
+					meterHead: `ПКМ для проверки`,
+					meterStandby: `Ожидание`,
+					notebookTitle: `Блокнот улик`,
+					hpTitle: `Очки здоровья`,
+					casefileTitle: `Итоговый отчёт`,
+					toastNewClue: `Найдена новая улика`,
+					closeNotebookBtn: `Закрыть блокнот`,
+					undiscoveredClue: `Ещё не найденная улика`,
+					reportCaseFile: `ДЕЛО · S1 · Расследование инцидента со статическим электричеством`,
+					report_p1: `Эта пескоструйная камера изначально была оснащена парой <b>изолирующих перчаток</b>, но после долгой эксплуатации перчатки износились, и при ремонте их без раздумий заменили на обычные рабочие перчатки без класса изоляции. Во время пескоструйной обработки быстро летящие абразивные частицы постоянно трутся о сопло и заготовку, накапливая <b>статический заряд</b> на оборудовании и операторе.`,
+					report_p2: `Без изолирующих перчаток значительное количество заряда проводится и накапливается на рабочем, который носит обычную резиновую обувь и не имеет способа сбросить этот заряд — стоит рабочему коснуться <b>заземлённой металлической детали</b>, как проскакивает искра. При этом корпус пескоструйной камеры никогда не был <b>заземлён</b>, поэтому накопленный на машине заряд тоже не находит пути стока; оператор носил обычную обувь вместо антистатической, что также перекрывало путь заряда от тела к земле. Когда все три уровня защиты отказали одновременно, статическое электричество продолжало проводиться и накапливаться на рабочем.`,
+					reportSuggestTitle: `Рекомендуемые меры`,
+					reportLi1: `Заменить изношенные, неизолирующие перчатки на перчатки требуемого класса изоляции, восстановив изоляционный барьер между руками и оборудованием.`,
+					reportLi2: `Оснастить пескоструйную камеру надёжным заземляющим проводом для своевременного отвода статического заряда, возникающего во время работы, в землю.`,
+					reportLi3: `Обеспечить рабочего низкоомной антистатической обувью, помогающей отводить заряд с тела в землю.`,
+					closeReportBtn: `Закрыть дело`,
+					gameOverTitle: `⚡ Вас поразило током насмерть.`,
+					gameOverSub: `В следующей жизни будьте внимательнее.`,
+					rebornBtnText: `Начать следующую жизнь`,
+					rebornTitle: `Я переродился!`,
+					rebornSub: `Новая жизнь`,
+					rebornP: `В прошлой жизни я по неосторожности погиб от удара током на работе. В этот раз я стану королём электриков!`,
+					rebornStartBtn: `Начать эту жизнь`,
+					repairTitle: `✔ Ремонт завершён`,
+					repairSub: `Ремонт завершён`,
+					repairP1: `Эта пескоструйная камера изначально была оснащена изолирующими перчатками, которые после износа без раздумий заменили на обычные неизолирующие рабочие перчатки. Во время пескоструйной обработки трение абразива об оборудование постоянно накапливает статический заряд; без изолирующих перчаток этот заряд проводится и накапливается на рабочем (в обычной резиновой обуви), не имея выхода, поэтому прикосновение к металлу вызывает искру.`,
+					repairP2: `Настоящее решение требует всех трёх шагов сразу: заменить перчатки на изолирующие, заземлить пескоструйную камеру и обеспечить рабочего низкоомной антистатической обувью, отводящей заряд в землю — только когда все три меры защиты работают вместе, заряду есть куда деваться, и он больше не накапливается на рабочем.`,
+					levelMapBtn: `Вернуться к карте уровней`,
+					penNone: `Нет заряда`,
+					penLow: `Обнаружено слабое напряжение`,
+					penDanger: `Опасно`,
+					reportPrefix: `📁 Итоговый отчёт`,
+					cluesProgress: `Найдено улик: {d} / {t}`,
+					menuTitle: `Меню игры`,
+					menuLangTitle: `Выбор языка`,
+					resumeBtn: `Продолжить игру`,
+					giveUpBtn: `Сдаться и вернуться на главную`,
+					giveUpConfirm: `Вы уверены, что хотите сдаться на этом уровне и вернуться на главную страницу? Текущий прогресс не будет сохранён.`,
+					clues: {
+						clue_glove_damaged: { t: `Перчатки потеряли изоляцию`, d: `При ближайшем рассмотрении видно, что исходные изолирующие перчатки износились и в какой-то момент были заменены на обычные рабочие перчатки без класса изоляции — так была снята первая преграда на пути статического разряда.` },
+						clue_cabinet_ungrounded: { t: `Пескоструйная камера не заземлена`, d: `На боковой стороне корпуса камеры есть клемма заземления, но конец, который должен подключаться к заземляющему проводу, свободно свисает рядом, так и не подключённый к шине заземления — накопленный на оборудовании статический заряд не находит пути в землю.` },
+						clue_no_antistatic_shoes: { t: `Рабочий не носит антистатическую обувь`, d: `На операторе обычная рабочая обувь без маркировки антистатичности на подошве — путь, по которому тело должно отводить статику через ноги в землю, тоже перекрыт.` },
+						clue_worker_charged: { t: `На рабочем слабый заряд`, d: `При приближении тестера к оператору индикатор переходит в диапазон слабого напряжения — статический заряд, возникший при пескоструйной обработке, уже прошёл через изношенные перчатки и накопился на рабочем.` },
+					},
+				},
+				"ja": {
+					sblastSceneLabel: `サンドブラスト作業場`,
+					sblastCabinetLabel: `サンドブラストキャビネット`,
+					sblastGlovesLbl: `手袋`,
+					sblastGlovesNewLbl: `絶縁手袋、グローブポートへドラッグ`,
+					sblastGroundLbl: `接地端子`,
+					sblastShoesRackLbl: `帯電防止靴、クリックで交換`,
+					sblastWorkerLbl: `作業員`,
+					meterHead: `右クリックで検電`,
+					meterStandby: `待機中`,
+					notebookTitle: `手がかりノート`,
+					hpTitle: `体力`,
+					casefileTitle: `事故報告書`,
+					toastNewClue: `新しい手がかりを発見`,
+					closeNotebookBtn: `ノートを閉じる`,
+					undiscoveredClue: `未発見の手がかり`,
+					reportCaseFile: `事件ファイル · S1 · 静電気事故調査`,
+					report_p1: `このサンドブラストキャビネットには元々<b>絶縁手袋</b>が備え付けられていたが、長期使用ですり減り、修理の際に絶縁等級のない普通の作業用手袋に何気なく交換されてしまった。サンドブラスト作業では、高速の研磨材がノズルやワークと繰り返し摩擦し、設備と作業員に<b>静電気</b>が絶えず蓄積していく。`,
+					report_p2: `手袋が絶縁されていないと、大量の電荷が普通のゴム靴を履いた作業員に伝導・蓄積し、逃がす場所がないまま、作業員が<b>接地された金属部品</b>に触れた瞬間にパチッと放電してしまう。同時にキャビネットの外殻も<b>接地されておらず</b>、機体に蓄積した静電気も逃げ場がなかった。作業員は帯電防止靴ではなく普通の靴を履いていたため、足元からの接地経路も断たれていた。三つの防護すべてが同時に機能しなかったことで、静電気はそのまま作業員の体に伝わり蓄積していった。`,
+					reportSuggestTitle: `改善提案`,
+					reportLi1: `破損した非絶縁の手袋を、規定等級を満たす絶縁手袋に交換し、手と設備の間の絶縁バリアを回復する。`,
+					reportLi2: `サンドブラストキャビネットに確実な接地線を取り付け、作業中に発生する静電気を速やかに大地へ逃がす。`,
+					reportLi3: `作業員に低抵抗の帯電防止靴を支給し、体から地面へ電荷を逃がせるようにする。`,
+					closeReportBtn: `ファイルを閉じる`,
+					gameOverTitle: `⚡ 感電死してしまった。`,
+					gameOverSub: `来世は気をつけよう。`,
+					rebornBtnText: `次の人生を始める`,
+					rebornTitle: `生まれ変わった!`,
+					rebornSub: `新しい人生`,
+					rebornP: `前世では、仕事中の不注意で感電死してしまった。今世では電気工の王になる!`,
+					rebornStartBtn: `この人生を始める`,
+					repairTitle: `✔ 修理完了`,
+					repairSub: `修理完了`,
+					repairP1: `このサンドブラストキャビネットには元々絶縁手袋が備え付けられていたが、すり減った後に何気なく非絶縁の普通の作業用手袋に交換されてしまった。サンドブラスト作業では研磨材と設備の摩擦で静電気が絶えず蓄積し、手袋が絶縁されていないと、その電荷が普通のゴム靴を履いた作業員に伝導・蓄積して逃げ場がなくなり、金属に触れるとパチッと放電してしまう。`,
+					repairP2: `本当の解決には三つの手順すべてが必要だ:手袋を絶縁手袋に交換し、サンドブラストキャビネットを接地し、作業員に低抵抗で電荷を地面へ逃がせる帯電防止靴を支給する——この三つの防護が同時に整って初めて、電荷に逃げ場ができ、作業員に蓄積して金属に触れた際に放電することがなくなる。`,
+					levelMapBtn: `レベルマップに戻る`,
+					penNone: `帯電なし`,
+					penLow: `微弱な電圧を検出`,
+					penDanger: `危険`,
+					reportPrefix: `📁 事故報告書`,
+					cluesProgress: `手がかり発見 {d} / {t}`,
+					menuTitle: `ゲームメニュー`,
+					menuLangTitle: `言語を選択`,
+					resumeBtn: `ゲームを再開`,
+					giveUpBtn: `このレベルを放棄してホームへ戻る`,
+					giveUpConfirm: `本当にこのレベルを放棄してホームページに戻りますか?現在の進行状況は保存されません。`,
+					clues: {
+						clue_glove_damaged: { t: `手袋の絶縁保護が失われている`, d: `作業用手袋を近くで見ると、元の絶縁手袋はすでにすり減っており、いつの間にか絶縁等級のない普通の作業用手袋に交換されていた——静電気伝導に対する第一の防壁がこうして取り払われていたのだ。` },
+						clue_cabinet_ungrounded: { t: `サンドブラストキャビネットが接地されていない`, d: `キャビネットの外殻側面には接地端子があるが、接地線をつなぐべき先端はだらりと垂れ下がったままで、接地バーにはまったく接続されていない——設備に蓄積した静電気が大地へ逃げる経路が存在しない。` },
+						clue_no_antistatic_shoes: { t: `作業員が帯電防止靴を履いていない`, d: `作業員の足元は普通の作業靴で、靴底に帯電防止の表示がない——本来足を通じて体の静電気を接地させるべき経路も断たれている。` },
+						clue_worker_charged: { t: `作業員の体に弱い電気が帯びている`, d: `検電器を作業員に近づけると、表示が微弱電圧の範囲まで振れた——サンドブラスト作業で発生した静電気は、すでに破損した手袋を伝って作業員の体に蓄積していたのだ。` },
+					},
+				},
+				"pt-BR": {
+					sblastSceneLabel: `Oficina de Jateamento`,
+					sblastCabinetLabel: `Cabine de Jateamento`,
+					sblastGlovesLbl: `Luvas`,
+					sblastGlovesNewLbl: `Luvas isolantes — arraste até a manga`,
+					sblastGroundLbl: `Terminal de Aterramento`,
+					sblastShoesRackLbl: `Calçado antiestático, clique para trocar`,
+					sblastWorkerLbl: `Operador`,
+					meterHead: `Clique com o botão direito para testar`,
+					meterStandby: `Em espera`,
+					notebookTitle: `Caderno de Pistas`,
+					hpTitle: `Pontos de Vida`,
+					casefileTitle: `Relatório do Caso`,
+					toastNewClue: `Nova pista encontrada`,
+					closeNotebookBtn: `Fechar Caderno`,
+					undiscoveredClue: `Pista ainda não encontrada`,
+					reportCaseFile: `DOSSIÊ · S1 · Investigação de Acidente por Eletricidade Estática`,
+					report_p1: `Esta cabine de jateamento originalmente vinha equipada com um par de <b>luvas isolantes</b>, mas depois de muito uso as luvas se desgastaram e, durante um reparo, foram trocadas sem cuidado por luvas de trabalho comuns, sem grau de isolamento. Durante o jateamento, as partículas abrasivas em alta velocidade atritam repetidamente contra o bico e a peça, acumulando continuamente <b>carga eletrostática</b> no equipamento e no operador.`,
+					report_p2: `Sem luvas isolantes, uma grande quantidade de carga se conduz e se acumula no trabalhador, que usa botas de borracha comuns e não tem para onde descarregar essa carga — assim que o trabalhador toca em uma <b>peça metálica aterrada</b>, ocorre uma faísca. Ao mesmo tempo, a carcaça da cabine nunca foi <b>aterrada</b>, então a carga acumulada na máquina também não tinha caminho de descarga; o operador usava calçado comum em vez de calçado antiestático, o que também cortava o caminho de descarga do corpo para o solo. Com as três proteções falhando ao mesmo tempo, a eletricidade estática continuou se conduzindo e se acumulando no trabalhador.`,
+					reportSuggestTitle: `Ações Corretivas`,
+					reportLi1: `Substituir as luvas desgastadas e sem isolamento por luvas isolantes que atendam ao grau exigido, restaurando a barreira de isolamento entre as mãos e o equipamento.`,
+					reportLi2: `Instalar um fio-terra confiável na cabine de jateamento, para descarregar prontamente na terra a carga estática gerada durante a operação.`,
+					reportLi3: `Fornecer ao trabalhador calçado antiestático de baixa resistência, que ajude a conduzir a carga do corpo para o solo.`,
+					closeReportBtn: `Fechar Dossiê`,
+					gameOverTitle: `⚡ Você morreu eletrocutado.`,
+					gameOverSub: `Tome mais cuidado na próxima vida.`,
+					rebornBtnText: `Começar Próxima Vida`,
+					rebornTitle: `Eu renasci!`,
+					rebornSub: `Uma Nova Vida`,
+					rebornP: `Na minha vida passada, morri eletrocutado por descuido no trabalho. Desta vez, vou me tornar o Rei dos Eletricistas!`,
+					rebornStartBtn: `Começar Esta Vida`,
+					repairTitle: `✔ Reparo Concluído`,
+					repairSub: `Reparo Concluído`,
+					repairP1: `Esta cabine de jateamento originalmente vinha com luvas isolantes, que depois de desgastadas foram trocadas sem cuidado por luvas de trabalho comuns, sem isolamento. Durante o jateamento, o atrito das partículas abrasivas contra o equipamento acumula continuamente carga estática; sem luvas isolantes, essa carga se conduz e se acumula no trabalhador (de botas de borracha comuns), sem forma de descarregar, causando faíscas ao tocar em metal.`,
+					repairP2: `A solução real exige as três etapas juntas: trocar as luvas por isolantes, aterrar a cabine de jateamento e fornecer ao trabalhador calçado antiestático de baixa resistência que conduza a carga para o solo — só com as três proteções em vigor a carga tem para onde ir, deixando de se acumular no trabalhador e de causar faíscas ao tocar em metal.`,
+					levelMapBtn: `Voltar ao Mapa de Fases`,
+					penNone: `Sem carga`,
+					penLow: `Tensão fraca detectada`,
+					penDanger: `Perigo`,
+					reportPrefix: `📁 Relatório do Caso`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menu do Jogo`,
+					menuLangTitle: `Selecionar Idioma`,
+					resumeBtn: `Continuar Jogo`,
+					giveUpBtn: `Desistir da Fase e Voltar ao Início`,
+					giveUpConfirm: `Tem certeza de que deseja desistir desta fase e voltar à página inicial? O progresso atual não será salvo.`,
+					clues: {
+						clue_glove_damaged: { t: `As luvas perderam a proteção isolante`, d: `Observando de perto as luvas de trabalho, as luvas isolantes originais já estão desgastadas e, em algum momento, foram trocadas por luvas de trabalho comuns sem grau de isolamento — assim foi removida a primeira barreira contra a condução de eletricidade estática.` },
+						clue_cabinet_ungrounded: { t: `A cabine de jateamento não está aterrada`, d: `Há um terminal de aterramento na lateral da carcaça da cabine, mas a extremidade que deveria se conectar ao fio-terra fica solta ao lado, nunca de fato ligada à barra de aterramento — a carga estática acumulada no equipamento não tem por onde escoar para a terra.` },
+						clue_no_antistatic_shoes: { t: `O trabalhador não usa calçado antiestático`, d: `O operador está com um calçado de trabalho comum, sem marcação antiestática na sola — o caminho pelo qual o corpo deveria descarregar a eletricidade estática pelos pés também está cortado.` },
+						clue_worker_charged: { t: `O trabalhador está levemente carregado`, d: `Ao aproximar o testador do operador, o indicador salta para a faixa de tensão fraca — a carga estática gerada durante o jateamento já se conduziu pelas luvas danificadas e se acumulou no trabalhador.` },
+					},
+				},
+				"es-419": {
+					sblastSceneLabel: `Taller de Sandblasteo`,
+					sblastCabinetLabel: `Cabina de Sandblasteo`,
+					sblastGlovesLbl: `Guantes`,
+					sblastGlovesNewLbl: `Guantes aislantes, arrastra hasta la manga`,
+					sblastGroundLbl: `Terminal de Tierra`,
+					sblastShoesRackLbl: `Calzado antiestático, haz clic para cambiar`,
+					sblastWorkerLbl: `Operario`,
+					meterHead: `Clic derecho para probar`,
+					meterStandby: `En espera`,
+					notebookTitle: `Cuaderno de Pistas`,
+					hpTitle: `Puntos de Vida`,
+					casefileTitle: `Informe del Caso`,
+					toastNewClue: `Nueva pista encontrada`,
+					closeNotebookBtn: `Cerrar Cuaderno`,
+					undiscoveredClue: `Pista aún no descubierta`,
+					reportCaseFile: `EXPEDIENTE · S1 · Investigación de Accidente Electrostático`,
+					report_p1: `Esta cabina de sandblasteo originalmente venía equipada con un par de <b>guantes aislantes</b>, pero tras un uso prolongado los guantes se desgastaron y, durante una reparación, se cambiaron sin más por unos guantes de trabajo comunes sin grado de aislamiento. Durante el sandblasteo, las partículas abrasivas a alta velocidad rozan repetidamente la boquilla y la pieza, acumulando continuamente <b>carga electrostática</b> en el equipo y en el operario.`,
+					report_p2: `Sin guantes aislantes, una gran cantidad de carga se conduce y se acumula en el trabajador, que usa botas de goma comunes y no tiene forma de descargarla; en cuanto el trabajador toca una <b>pieza metálica conectada a tierra</b>, salta una chispa. Al mismo tiempo, la carcasa de la cabina nunca estuvo <b>conectada a tierra</b>, por lo que la carga acumulada en la máquina tampoco tenía por dónde escapar; el operario usaba calzado común en lugar de calzado antiestático, lo que también cortaba la vía de descarga del cuerpo hacia el suelo. Al fallar las tres protecciones a la vez, la electricidad estática siguió conduciéndose y acumulándose en el trabajador.`,
+					reportSuggestTitle: `Medidas Correctivas`,
+					reportLi1: `Sustituir los guantes desgastados y no aislantes por guantes aislantes que cumplan el grado requerido, restableciendo la barrera aislante entre las manos y el equipo.`,
+					reportLi2: `Instalar un cable de tierra confiable en la cabina de sandblasteo, para descargar a tiempo hacia la tierra la carga estática generada durante la operación.`,
+					reportLi3: `Proporcionar al trabajador calzado antiestático de baja resistencia, que ayude a conducir la carga del cuerpo hacia el suelo.`,
+					closeReportBtn: `Cerrar Expediente`,
+					gameOverTitle: `⚡ Moriste electrocutado.`,
+					gameOverSub: `Ten más cuidado en tu próxima vida.`,
+					rebornBtnText: `Comenzar la Siguiente Vida`,
+					rebornTitle: `¡He renacido!`,
+					rebornSub: `Una Nueva Vida`,
+					rebornP: `En mi vida anterior, morí electrocutado por descuido en el trabajo. ¡Esta vez, me convertiré en el rey de los electricistas!`,
+					rebornStartBtn: `Comenzar Esta Vida`,
+					repairTitle: `✔ Reparación Completada`,
+					repairSub: `Reparación Completada`,
+					repairP1: `Esta cabina de sandblasteo originalmente venía con guantes aislantes que, tras desgastarse, se cambiaron sin más por guantes de trabajo comunes sin aislamiento. Durante el sandblasteo, la fricción de las partículas abrasivas contra el equipo acumula continuamente carga estática; sin guantes aislantes, esa carga se conduce y se acumula en el trabajador (con botas de goma comunes), sin forma de descargarla, provocando chispas al tocar el metal.`,
+					repairP2: `La solución real requiere los tres pasos a la vez: cambiar los guantes por aislantes, conectar a tierra la cabina de sandblasteo y proporcionar al trabajador calzado antiestático de baja resistencia que conduzca la carga hacia el suelo. Solo con las tres protecciones en su lugar la carga tiene adónde ir, en vez de acumularse en el trabajador y provocar chispas al tocar metal.`,
+					levelMapBtn: `Volver al Mapa de Niveles`,
+					penNone: `Sin carga`,
+					penLow: `Voltaje débil detectado`,
+					penDanger: `Peligro`,
+					reportPrefix: `📁 Informe del Caso`,
+					cluesProgress: `{d} / {t} pistas encontradas`,
+					menuTitle: `Menú del Juego`,
+					menuLangTitle: `Seleccionar Idioma`,
+					resumeBtn: `Reanudar Juego`,
+					giveUpBtn: `Abandonar Nivel y Volver al Inicio`,
+					giveUpConfirm: `¿Seguro que deseas abandonar este nivel y volver a la página de inicio? El progreso actual no se guardará.`,
+					clues: {
+						clue_glove_damaged: { t: `Los guantes perdieron su protección aislante`, d: `Al mirar de cerca los guantes de trabajo, los guantes aislantes originales ya están desgastados y, en algún momento, se cambiaron por guantes de trabajo comunes sin grado de aislamiento; así se eliminó la primera barrera contra la conducción de electricidad estática.` },
+						clue_cabinet_ungrounded: { t: `La cabina de sandblasteo no está conectada a tierra`, d: `Hay un terminal de tierra en el costado de la carcasa de la cabina, pero el extremo que debería conectarse al cable de tierra cuelga suelto a un lado, sin conectarse nunca a la barra de tierra; la carga estática acumulada en el equipo no tiene por dónde descargarse hacia la tierra.` },
+						clue_no_antistatic_shoes: { t: `El trabajador no usa calzado antiestático`, d: `El operario lleva calzado de trabajo común, sin marca antiestática en la suela; la vía por la que el cuerpo debería descargar la electricidad estática a través de los pies también está cortada.` },
+						clue_worker_charged: { t: `El trabajador tiene una carga débil`, d: `Al acercar el probador al operario, el indicador salta al rango de voltaje débil; la carga estática generada durante el sandblasteo ya se ha conducido a través de los guantes dañados y se ha acumulado en el trabajador.` },
+					},
+				},
+				"ko": {
+					sblastSceneLabel: `샌드블라스팅 작업장`,
+					sblastCabinetLabel: `샌드블라스팅 캐비닛`,
+					sblastGlovesLbl: `장갑`,
+					sblastGlovesNewLbl: `절연 장갑, 장갑 입구로 드래그`,
+					sblastGroundLbl: `접지 단자`,
+					sblastShoesRackLbl: `정전기 방지화, 클릭하여 교체`,
+					sblastWorkerLbl: `작업자`,
+					meterHead: `우클릭으로 검전`,
+					meterStandby: `대기 중`,
+					notebookTitle: `단서 노트`,
+					hpTitle: `체력`,
+					casefileTitle: `사건 보고서`,
+					toastNewClue: `새 단서 발견`,
+					closeNotebookBtn: `노트 닫기`,
+					undiscoveredClue: `아직 발견되지 않은 단서`,
+					reportCaseFile: `사건 파일 · S1 · 정전기 사고 조사`,
+					report_p1: `이 샌드블라스팅 캐비닛에는 원래 <b>절연 장갑</b> 한 벌이 지급되어 있었지만, 오랜 사용으로 장갑이 닳아 해지자 수리 시 절연 등급이 없는 일반 작업 장갑으로 아무렇게나 교체되었다. 샌드블라스팅 작업 중에는 고속으로 분사되는 연마재가 노즐과 가공물에 계속 마찰되면서 설비와 작업자에게 <b>정전기</b>가 끊임없이 쌓인다.`,
+					report_p2: `장갑이 절연되어 있지 않으면 다량의 전하가 일반 고무 신발을 신은 작업자에게 전도·축적되고, 이를 방전할 곳이 없어 작업자가 <b>접지된 금속 부품</b>에 손을 대는 순간 스파크가 튄다. 동시에 캐비닛 외함은 줄곧 <b>접지되지 않아</b> 본체에 쌓인 정전기 역시 방전 경로가 없었고, 작업자는 정전기 방지화가 아닌 일반 신발을 신고 있어 발을 통한 접지 경로도 끊겨 있었다. 세 가지 보호 조치가 동시에 실패하면서 정전기는 그대로 작업자의 몸에 전도·축적되고 말았다.`,
+					reportSuggestTitle: `개선 권고사항`,
+					reportLi1: `손상되고 절연되지 않은 장갑을 규정 등급을 충족하는 절연 장갑으로 교체하여 손과 설비 사이의 절연 장벽을 복원한다.`,
+					reportLi2: `샌드블라스팅 캐비닛에 신뢰할 수 있는 접지선을 설치하여 작업 중 발생하는 정전기를 즉시 대지로 방전시킨다.`,
+					reportLi3: `작업자에게 저저항의 정전기 방지화를 지급하여 몸의 전하가 땅으로 빠져나가도록 돕는다.`,
+					closeReportBtn: `파일 닫기`,
+					gameOverTitle: `⚡ 감전사했습니다.`,
+					gameOverSub: `다음 생에는 좀 더 조심하세요.`,
+					rebornBtnText: `다음 생 시작하기`,
+					rebornTitle: `나는 환생했다!`,
+					rebornSub: `새로운 삶`,
+					rebornP: `전생에서 나는 작업 중 부주의로 감전사했다. 이번 생에는 전기 기술자의 왕이 되겠다!`,
+					rebornStartBtn: `이번 생 시작`,
+					repairTitle: `✔ 수리 완료`,
+					repairSub: `수리 완료`,
+					repairP1: `이 샌드블라스팅 캐비닛에는 원래 절연 장갑이 지급되어 있었지만, 닳아 해진 뒤 아무렇게나 절연되지 않은 일반 작업 장갑으로 교체되었다. 샌드블라스팅 작업 중에는 연마재와 설비의 마찰로 정전기가 계속 쌓이는데, 장갑이 절연되어 있지 않으면 그 전하가 일반 고무 신발을 신은 작업자에게 전도·축적되어 빠져나갈 곳이 없어지고, 금속에 손을 대면 스파크가 튄다.`,
+					repairP2: `진짜 해결책은 세 단계를 모두 갖추는 것이다: 장갑을 절연 장갑으로 교체하고, 샌드블라스팅 캐비닛을 접지하며, 작업자에게 전하를 땅으로 흘려보낼 수 있는 저저항 정전기 방지화를 지급하는 것 — 이 세 가지 보호 조치가 동시에 갖춰져야 전하가 빠져나갈 곳이 생기고, 작업자에게 더 이상 쌓이거나 금속을 만졌을 때 스파크가 튀지 않는다.`,
+					levelMapBtn: `레벨 맵으로 돌아가기`,
+					penNone: `무전`,
+					penLow: `미약한 전압 감지`,
+					penDanger: `위험`,
+					reportPrefix: `📁 사건 보고서`,
+					cluesProgress: `단서 발견 {d} / {t}`,
+					menuTitle: `게임 메뉴`,
+					menuLangTitle: `언어 선택`,
+					resumeBtn: `게임 계속하기`,
+					giveUpBtn: `이 레벨 포기하고 홈으로 돌아가기`,
+					giveUpConfirm: `이 레벨을 포기하고 홈 화면으로 돌아가시겠습니까? 현재 진행 상황은 저장되지 않습니다.`,
+					clues: {
+						clue_glove_damaged: { t: `장갑이 절연 보호 기능을 잃었다`, d: `작업 장갑을 가까이서 보니 원래의 절연 장갑은 이미 닳아 해져 있었고, 어느 순간 절연 등급이 없는 일반 작업 장갑으로 교체되어 있었다 — 정전기 전도를 막는 첫 번째 방어선이 그렇게 사라진 것이다.` },
+						clue_cabinet_ungrounded: { t: `샌드블라스팅 캐비닛이 접지되어 있지 않다`, d: `캐비닛 외함 옆면에는 접지 단자가 있지만, 접지선과 연결되어야 할 끝부분이 옆에 헐겁게 늘어져 있을 뿐 접지 바에는 전혀 연결되어 있지 않다 — 설비에 쌓인 정전기가 대지로 빠져나갈 통로가 없다.` },
+						clue_no_antistatic_shoes: { t: `작업자가 정전기 방지화를 신지 않았다`, d: `작업자의 발에는 일반 작업화가 신겨져 있고 밑창에는 정전기 방지 표시가 없다 — 발을 통해 몸의 정전기를 접지시켜야 할 경로 역시 끊겨 있는 것이다.` },
+						clue_worker_charged: { t: `작업자의 몸에 약한 전기가 흐르고 있다`, d: `검전기를 작업자에게 가까이 대자 지시등이 미약한 전압 구간으로 튀었다 — 샌드블라스팅 작업 중 발생한 정전기가 이미 손상된 장갑을 따라 작업자의 몸에 전도·축적된 것이다.` },
+					},
+				},
+			};
+
+			/* ========================= I18N SUPPORT(通用机制由 guide.js 的 GameUI 提供,这里只保留本关的文案字典与联动) ========================= */
+			const LANG_STORAGE_KEY = "leak_lang"; // 与其他章节共用同一个 key,保持语言选择在各关之间"继承"
+			const CLUE_IDS = Object.keys(I18N["zh-CN"].clues);
+
+			let currentLang = GameUI.detectInitialLang(I18N, LANG_STORAGE_KEY);
+			let lastPenLevel = null;
+
+			function getClue(id) {
+				return (I18N[currentLang] && I18N[currentLang].clues[id]) || I18N["zh-CN"].clues[id];
+			}
+			function getClueText(id) {
+				const c = getClue(id);
+				return c ? c.t : "";
+			}
+			function getClueDesc(id) {
+				const c = getClue(id);
+				return c ? c.d : "";
+			}
+
+			function resolveLangCode(code) {
+				if (!code) return "zh-CN";
+				if (I18N[code]) return code;
+				const base = code.split(/[-_]/)[0].toLowerCase();
+				const keys = Object.keys(I18N);
+				let found = keys.find((k) => k.toLowerCase() === base);
+				if (found) return found;
+				found = keys.find((k) => k.toLowerCase().split(/[-_]/)[0] === base);
+				if (found) return found;
+				return "zh-CN";
+			}
+			function applyLang(code) {
+				code = resolveLangCode(code);
+				currentLang = code;
+				GameUI.saveLang(code, LANG_STORAGE_KEY);
+				GameUI.syncLangUrl(code);
+				const L = Object.assign({}, I18N["zh-CN"], I18N[code]);
+				document.documentElement.lang = code;
+
+				GameUI.applyDataI18n(L, code);
+
+				if (lastPenLevel === null) {
+					GameUI.resetMeterStandby(L.meterStandby);
+				} else {
+					usePen(lastPenLevel);
+				}
+
+				const cluesModal = $("#cluesModal");
+				if (cluesModal && cluesModal.classList.contains("show")) renderNotebook();
+
+				GameUI.fitAllSvgTexts(SVG_FIT_MAP);
+			}
+
+			// 本关自己独有的、可能超宽需要自动收窄的文字
+			const SVG_FIT_MAP = [
+				{ selector: '[data-i18n="sblastSceneLabel"]', maxWidth: 320 },
+				{ selector: '[data-i18n="sblastGlovesNewLbl"]', maxWidth: 200 },
+				{ selector: '[data-i18n="sblastShoesRackLbl"]', maxWidth: 140 },
+			];
+
+			const CORE_IDS = CLUE_IDS.slice();
+
+			let discovered = new Set();
+			let reportShown = false;
+			let repairDone = false;
+
+			let glovesFixed = false; // 是否已换上绝缘手套
+			let groundFixed = false; // 喷砂机是否已接地
+			let shoesFixed = false; // 工人是否已换上防静电鞋
+			let gloveTested = false; // 是否已用验电笔测出手套带电(测出后备件台才会出现新手套)
+
+			// 手部风险:手套没换绝缘手套,摸设备就可能被电到
+			function dangerGlove() {
+				return !glovesFixed;
+			}
+			// 身体风险:接地和防静电鞋任一没做到位,工人身上就还会带静电
+			function dangerBody() {
+				return !(groundFixed && shoesFixed);
+			}
+
+			/* ========================= HP / 触电系统(血条 + 死亡画面 + 重生画面,统一由 guide.js 的 GameUI 组件提供) ========================= */
+			GameUI.initHUD(); // 不传 deadImage,直接用 guide.js 内置的默认死亡画面组件,避免引用本关目录下并不存在的图片
+			GameUI.initMeter();
+			function shock(level) {
+				GameUI.shock(level);
+			}
+
+			/* ========================= HELPERS ========================= */
+			function $(s, r = document) {
+				return r.querySelector(s);
+			}
+			function $all(s, r = document) {
+				return [...r.querySelectorAll(s)];
+			}
+
+			function reveal(id) {
+				const existed = discovered.has(id);
+				discovered.add(id);
+				if (!existed) {
+					toast(id);
+					updateNotebookBadge();
+					checkAutoReport();
+				}
+			}
+			function toast(id) {
+				const t = getClueText(id);
+				if (!t) return;
+				$("#toastText").textContent = t;
+				const el = $("#toast");
+				el.classList.add("show");
+				clearTimeout(window.__toastTimer);
+				window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+			}
+			function updateNotebookBadge() {
+				const badge = $("#notebookBadge");
+				if (discovered.size > 0) {
+					badge.style.display = "flex";
+					badge.textContent = discovered.size;
+				}
+			}
+			function renderNotebook() {
+				const ids = CLUE_IDS;
+				const L = Object.assign({}, I18N["zh-CN"], I18N[currentLang]);
+				$("#cluesProgress").textContent = L.cluesProgress.replace("{d}", discovered.size).replace("{t}", ids.length);
+				const list = $("#cluesList");
+				list.innerHTML = "";
+				ids.forEach((id) => {
+					const found = discovered.has(id);
+					const div = document.createElement("div");
+					div.className = "clue-item " + (found ? "found" : "locked");
+					div.innerHTML = `<div class="t">${found ? getClueText(id) : L.undiscoveredClue}</div>` + (found ? `<div class="d">${getClueDesc(id)}</div>` : "");
+					list.appendChild(div);
+				});
+			}
+			$("#notebookBtn").addEventListener("click", () => {
+				renderNotebook();
+				openModal("cluesModal");
+			});
+			function checkAutoReport() {
+				if (reportShown) return;
+				const ok = CORE_IDS.every((id) => discovered.has(id));
+				if (ok) {
+					reportShown = true;
+					$("#casefileBtn").classList.add("show");
+					setTimeout(() => openModal("reportModal"), 900);
+				}
+			}
+			$("#casefileBtn").addEventListener("click", () => openModal("reportModal"));
+
+			function checkRepairComplete() {
+				if (repairDone) return;
+				if (glovesFixed && groundFixed && shoesFixed) {
+					repairDone = true;
+					setTimeout(() => openModal("repairModal"), 500);
+				}
+			}
+			// 本关在"关卡地图"页对应的进度存储 key 与关卡编号
+			// 静电章节(s1.html 起)统一用 "leak_progress_s"。
+			// 存储格式是 JSON 数组,例如 "[1,3]" 表示第1、3关通关,不代表第2关也通关。
+			const LEVEL_STORAGE_KEY = "leak_progress_s";
+			const LEVEL_NUMBER = 1;
+			function markThisLevelComplete() {
+				try {
+					let arr = [];
+					const raw = localStorage.getItem(LEVEL_STORAGE_KEY);
+					if (raw) {
+						try {
+							const parsed = JSON.parse(raw);
+							if (Array.isArray(parsed)) arr = parsed;
+						} catch (e) {
+							const v = parseInt(raw, 10);
+							if (!Number.isNaN(v) && v > 0) {
+								for (let i = 1; i <= v; i++) arr.push(i);
+							}
+						}
+					}
+					if (!arr.includes(LEVEL_NUMBER)) arr.push(LEVEL_NUMBER);
+					arr.sort((a, b) => a - b);
+					localStorage.setItem(LEVEL_STORAGE_KEY, JSON.stringify(arr));
+				} catch (e) {}
+			}
+
+			$("#levelMapBtn").addEventListener("click", () => {
+				markThisLevelComplete();
+				closeModal("repairModal");
+				location.href = `index.html?lang=${encodeURIComponent(currentLang)}`;
+			});
+			function openModal(id) {
+				$("#" + id).classList.add("show");
+			}
+			function closeModal(id) {
+				$("#" + id).classList.remove("show");
+			}
+
+			/* ========================= TOOL: 验电笔(唯一工具,右键验电) ========================= */
+			function usePen(level) {
+				lastPenLevel = level;
+				const L = Object.assign({}, I18N["zh-CN"], I18N[currentLang]);
+				const statusText = level === 0 ? L.penNone : level === 1 ? L.penLow : L.penDanger;
+				if (level === 2) GameUI.playDangerBeep();
+				GameUI.usePen(level, statusText);
+			}
+
+			/* ========================= SCENE S1 LOGIC ========================= */
+			function updateGroundVisual() {
+				$("#groundWireBad").style.display = groundFixed ? "none" : "";
+				$("#groundWireGood").style.display = groundFixed ? "" : "none";
+			}
+			function updateShoesVisual() {
+				const c = shoesFixed ? "#2f8a86" : "#1c1c1c";
+				$("#shoeL").setAttribute("fill", c);
+				$("#shoeR").setAttribute("fill", c);
+			}
+			function fixGloves() {
+				if (glovesFixed) return;
+				glovesFixed = true;
+				$("#gloveVisualBad").style.display = "none";
+				$("#gloveVisualGood").style.display = "";
+				reveal("clue_glove_damaged");
+				checkRepairComplete();
+			}
+
+			function s1Touch(id) {
+				if (id === "gloveOld") {
+					reveal("clue_glove_damaged");
+					if (dangerGlove()) shock(2); // 手套没换绝缘的,直接摸设备/摸金属部件会被啪地放电
+					return;
+				}
+				if (id === "worker") {
+					reveal("clue_worker_charged");
+					if (dangerBody()) shock(2); // 没接地又没穿防静电鞋,工人身上堆积的电荷会传给你
+					return;
+				}
+				if (id === "groundStud") {
+					if (!groundFixed) {
+						groundFixed = true;
+						updateGroundVisual();
+						reveal("clue_cabinet_ungrounded");
+						checkRepairComplete();
+					}
+					return;
+				}
+				if (id === "shoesRack") {
+					if (!shoesFixed) {
+						shoesFixed = true;
+						updateShoesVisual();
+						reveal("clue_no_antistatic_shoes");
+						checkRepairComplete();
+					}
+					return;
+				}
+			}
+			function s1Test(id) {
+				if (id === "gloveOld") {
+					if (!gloveTested) {
+						gloveTested = true;
+						$("#glovesNewItem").style.display = ""; // 验出手套带电之后,备件台上才会出现绝缘手套
+					}
+					usePen(dangerGlove() ? 2 : 0);
+					reveal("clue_glove_damaged");
+					return;
+				}
+				if (id === "worker") {
+					usePen(dangerBody() ? 2 : 0);
+					reveal("clue_worker_charged");
+					return;
+				}
+				if (id === "groundStud") {
+					usePen(groundFixed ? 0 : 1);
+					reveal("clue_cabinet_ungrounded");
+					return;
+				}
+			}
+
+			/* 绝缘手套:从备件台拖到手套口即可完成更换,拖偏了就弹回原位 */
+			(function setupGloveDrag() {
+				const svg = $("#svg1");
+				const item = $("#glovesNewItem");
+				const originX = 730,
+					originY = 220;
+				const zone = { x1: 105, y1: 335, x2: 450, y2: 425 };
+				let dragging = false;
+
+				function svgPoint(evt) {
+					const pt = svg.createSVGPoint();
+					pt.x = evt.clientX;
+					pt.y = evt.clientY;
+					const ctm = svg.getScreenCTM().inverse();
+					return pt.matrixTransform(ctm);
+				}
+				function setPos(x, y) {
+					item.setAttribute("transform", `translate(${x},${y})`);
+				}
+				item.addEventListener("pointerdown", (e) => {
+					if (glovesFixed || item.style.display === "none") return;
+					dragging = true;
+					item.setPointerCapture(e.pointerId);
+					item.style.cursor = "grabbing";
+					e.preventDefault();
+				});
+				item.addEventListener("pointermove", (e) => {
+					if (!dragging) return;
+					const p = svgPoint(e);
+					if (!isFinite(p.x) || !isFinite(p.y)) return;
+					setPos(p.x, p.y);
+				});
+				function endDrag() {
+					if (!dragging) return;
+					dragging = false;
+					item.style.cursor = "grab";
+					const m = /translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/.exec(item.getAttribute("transform"));
+					const cx = m ? parseFloat(m[1]) : originX;
+					const cy = m ? parseFloat(m[2]) : originY;
+					if (cx >= zone.x1 && cx <= zone.x2 && cy >= zone.y1 && cy <= zone.y2) {
+						item.style.display = "none";
+						fixGloves();
+					} else {
+						setPos(originX, originY);
+					}
+				}
+				item.addEventListener("pointerup", endDrag);
+				item.addEventListener("pointercancel", endDrag);
+			})();
+
+			/* ========================= INPUT: LEFT CLICK = TOUCH, RIGHT CLICK = TESTER ========================= */
+			document.addEventListener("click", (e) => {
+				const hs = e.target.closest(".hotspot");
+				if (!hs) return;
+				const id = hs.dataset.id;
+				if (!id) return;
+				s1Touch(id);
+			});
+
+			document.addEventListener("contextmenu", (e) => {
+				const target = e.target.closest('[data-test="true"]');
+				if (!target) {
+					if (e.target.closest(".game-window")) e.preventDefault();
+					return;
+				}
+				e.preventDefault();
+				const id = target.dataset.id;
+				s1Test(id);
+			});
+
+			/* ========================= ESC MENU: 语言切换 + 放弃本关(通用机制已迁移到 guide.js 的 GameUI.initMenu) ========================= */
+			GameUI.initMenu({
+				mapUrl: "index.html",
+				getCurrentLang: () => currentLang,
+				getGiveUpConfirmText: () => Object.assign({}, I18N["zh-CN"], I18N[currentLang]).giveUpConfirm,
+				onLangSelect: applyLang,
+			});
+
+			/* ========================= 初始化语言 ========================= */
+			applyLang(currentLang);
+		</script>
+	</body>
+</html>
